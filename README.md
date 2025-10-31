@@ -1,2 +1,2 @@
-# whirlpool-go
-Probing go framework
+# starmap
+Registry for Overlay data mesh definitions.
