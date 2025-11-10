@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package starchart;
+
+option go_package = "starchart/proto;proto";
+
+service RegistryService{
+    rpc PutChart(StarChart) returns(PutChartResp){}
+    rpc GetChartMetadata(GetChartFromMetadataReq) returns(GetChartFromMetadataResp){}
+    rpc GetChartsLabels(GetChartsLabelsReq) returns(GetChartsLabelsResp){}
+}
+
+message GetChartsLabelsReq {
+  string namespace = 1;
+  string maintainer = 2;
+  map<string, string> labels = 3;
+}
+
+message GetChartsLabelsResp {
+  repeated GetChartFromMetadataResp charts = 1;
+}
+
+message GetChartFromMetadataReq {
+  string name = 1;
+  string namespace = 2;
+  string maintainer = 3;
+}
+
+message GetChartFromMetadataResp {
+  MetadataChart metadata = 1;
+  Chart chart = 2;
+}
+
+message DataSource {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string path = 4;
+  string resourceName = 5;
+  string description = 6;
+}
+
+message Metadata {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  string prefix = 4;
+  string topic = 5;
+}
+
+message Control {
+  bool disableVirtualization = 1;
+  bool runDetached = 2;
+  bool removeOnStop = 3;
+  string memory = 4;
+  string kernelArgs = 5;
+}
+
+message Features {
+  repeated string networks = 1;
+  repeated string ports = 2;
+  repeated string volumes = 3;
+  repeated string targets = 4;
+  repeated string envVars = 5;
+}
+
+message Links {
+  repeated string softLinks = 1;
+  repeated string hardLinks = 2;
+  repeated string eventLinks = 3;
+}
+
+message StoredProcedure {
+  Metadata metadata = 1;
+  Control control = 2;
+  Features features = 3;
+  Links links = 4;
+}
+
+message Event {
+  Metadata metadata = 1;
+  Control control = 2;
+  Features features = 3;
+}
+
+message EventTrigger {
+  Metadata metadata = 1;
+  Control control = 2;
+  Features features = 3;
+  Links links = 4;
+}
+
+message Chart {
+  map<string, DataSource> dataSources = 1;
+  map<string, StoredProcedure> storedProcedures = 2;
+  map<string, EventTrigger> eventTriggers = 3;
+  map<string, Event> events = 4;
+}
+
+message MetadataChart {
+    string name = 1;
+    string namespace = 2;
+    string maintainer = 3;
+    string description = 4;
+    string visibility = 5;
+    string engine = 6;
+    map<string, string> labels = 7;
+  }
+
+message StarChart {
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string kind = 3;
+
+  MetadataChart metadata = 4;
+  Chart chart = 5;
+}
+
+message PutChartResp {
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string kind = 3;
+  string name = 4;
+  string namespace = 5;
+  string maintainer = 6;
+}
