@@ -577,17 +577,104 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 	return result.(*domain.GetChartsLabelsResp), nil
 }
 
-// func (r *RegistryRepo) DeleteChart(ctx context.Context, id string) error {
-// 	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
-// 		AccessMode: neo4j.AccessModeWrite,
-// 	})
-// 	defer session.Close(ctx)
+func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintainer, apiVersion, schemaVersion, kind string) error {
+	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
+		AccessMode: neo4j.AccessModeWrite,
+	})
+	defer session.Close(ctx)
 
-// 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-// 		query := `MATCH (n {id: $id}) DETACH DELETE n`
-// 		_, err := tx.Run(ctx, query, map[string]any{"id": id})
-// 		return nil, err
-// 	})
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		// Delete Chart node
+		queryChart := `
+			MATCH (c:Chart {name: $name, apiVersion: $apiVersion, schemaVersion: $schemaVersion, kind: $kind})
+			WHERE EXISTS ((:Namespace {name: $namespace})-[:HAS_CHART]->(c))
+			DETACH DELETE c
+			RETURN c
+		`
+		_, err := tx.Run(ctx, queryChart, map[string]any{
+			"name":          name,
+			"namespace":     namespace,
+			"apiVersion":    apiVersion,
+			"schemaVersion": schemaVersion,
+			"kind":          kind,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete Chart: %w", err)
+		}
 
-// 	return err
-// }
+		// Delete Namespace
+		queryNamespace := `
+			MATCH (n:Namespace {name: $namespace})
+			WHERE NOT (n)-[:HAS_CHART]->(:Chart)
+			DETACH DELETE n
+		`
+		_, err = tx.Run(ctx, queryNamespace, map[string]any{
+			"namespace": namespace,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete Namespace: %w", err)
+		}
+
+		// Delete User
+		queryUser := `
+			MATCH (u:User {name: $maintainer})
+			WHERE NOT (u)-[:HAS_NAMESPACE]->(:Namespace)
+			DETACH DELETE u
+		`
+		_, err = tx.Run(ctx, queryUser, map[string]any{
+			"maintainer": maintainer,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete User: %w", err)
+		}
+
+		// Delete DataSources
+		queryDS := `
+			MATCH (d:DataSource)
+			WHERE NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:StoredProcedure) 
+			   AND NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:Trigger)
+			DETACH DELETE d
+		`
+		_, err = tx.Run(ctx, queryDS, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan DataSources: %w", err)
+		}
+
+		// Delete StoredProcedures
+		querySP := `
+			MATCH (s:StoredProcedure)
+			WHERE NOT (:Chart)-[:HAS_PROCEDURE]->(s)
+			DETACH DELETE s
+		`
+		_, err = tx.Run(ctx, querySP, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan StoredProcedures: %w", err)
+		}
+
+		// Delete Triggers
+		queryTriggers := `
+			MATCH (t:Trigger)
+			WHERE NOT (:Chart)-[:HAS_TRIGGER]->(t)
+			DETACH DELETE t
+		`
+		_, err = tx.Run(ctx, queryTriggers, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan Triggers: %w", err)
+		}
+
+		// Delete Events
+		queryEv := `
+			MATCH (e:Event)
+			WHERE NOT (:Trigger)-[:EVENT_LINK]->(e)
+			DETACH DELETE e
+		`
+		_, err = tx.Run(ctx, queryEv, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan Events: %w", err)
+		}
+
+		return nil, nil
+	})
+
+	return err
+}

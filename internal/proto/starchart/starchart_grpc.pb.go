@@ -22,6 +22,7 @@ const (
 	RegistryService_PutChart_FullMethodName         = "/starchart.RegistryService/PutChart"
 	RegistryService_GetChartMetadata_FullMethodName = "/starchart.RegistryService/GetChartMetadata"
 	RegistryService_GetChartsLabels_FullMethodName  = "/starchart.RegistryService/GetChartsLabels"
+	RegistryService_DeleteChart_FullMethodName      = "/starchart.RegistryService/DeleteChart"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -31,6 +32,7 @@ type RegistryServiceClient interface {
 	PutChart(ctx context.Context, in *StarChart, opts ...grpc.CallOption) (*PutChartResp, error)
 	GetChartMetadata(ctx context.Context, in *GetChartFromMetadataReq, opts ...grpc.CallOption) (*GetChartFromMetadataResp, error)
 	GetChartsLabels(ctx context.Context, in *GetChartsLabelsReq, opts ...grpc.CallOption) (*GetChartsLabelsResp, error)
+	DeleteChart(ctx context.Context, in *DeleteChartReq, opts ...grpc.CallOption) (*EmptyMessage, error)
 }
 
 type registryServiceClient struct {
@@ -71,6 +73,16 @@ func (c *registryServiceClient) GetChartsLabels(ctx context.Context, in *GetChar
 	return out, nil
 }
 
+func (c *registryServiceClient) DeleteChart(ctx context.Context, in *DeleteChartReq, opts ...grpc.CallOption) (*EmptyMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyMessage)
+	err := c.cc.Invoke(ctx, RegistryService_DeleteChart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type RegistryServiceServer interface {
 	PutChart(context.Context, *StarChart) (*PutChartResp, error)
 	GetChartMetadata(context.Context, *GetChartFromMetadataReq) (*GetChartFromMetadataResp, error)
 	GetChartsLabels(context.Context, *GetChartsLabelsReq) (*GetChartsLabelsResp, error)
+	DeleteChart(context.Context, *DeleteChartReq) (*EmptyMessage, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedRegistryServiceServer) GetChartMetadata(context.Context, *Get
 }
 func (UnimplementedRegistryServiceServer) GetChartsLabels(context.Context, *GetChartsLabelsReq) (*GetChartsLabelsResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChartsLabels not implemented")
+}
+func (UnimplementedRegistryServiceServer) DeleteChart(context.Context, *DeleteChartReq) (*EmptyMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteChart not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -172,6 +188,24 @@ func _RegistryService_GetChartsLabels_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_DeleteChart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteChartReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).DeleteChart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_DeleteChart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).DeleteChart(ctx, req.(*DeleteChartReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetChartsLabels",
 			Handler:    _RegistryService_GetChartsLabels_Handler,
+		},
+		{
+			MethodName: "DeleteChart",
+			Handler:    _RegistryService_DeleteChart_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -8,6 +8,18 @@ service RegistryService{
     rpc PutChart(StarChart) returns(PutChartResp){}
     rpc GetChartMetadata(GetChartFromMetadataReq) returns(GetChartFromMetadataResp){}
     rpc GetChartsLabels(GetChartsLabelsReq) returns(GetChartsLabelsResp){}
+    rpc DeleteChart(DeleteChartReq) returns(EmptyMessage){}
+}
+
+message EmptyMessage {}
+
+message DeleteChartReq {
+  string name = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  string apiVersion = 4;
+  string schemaVersion = 5;
+  string kind = 6;
 }
 
 message GetChartsLabelsReq {

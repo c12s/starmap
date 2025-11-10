@@ -67,3 +67,12 @@ func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetCha
 
 	return resp, nil
 }
+
+func (s *RegistryService) DeleteChart(ctx context.Context, req *proto.DeleteChartReq) (*proto.EmptyMessage, error) {
+	err := s.repo.DeleteChart(ctx, req.Name, req.Namespace, req.Maintainer, req.ApiVersion, req.SchemaVersion, req.Kind)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete chart: %v", err)
+	}
+
+	return &proto.EmptyMessage{}, nil
+}

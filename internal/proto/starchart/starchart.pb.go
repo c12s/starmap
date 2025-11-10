@@ -21,6 +21,126 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type EmptyMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmptyMessage) Reset() {
+	*x = EmptyMessage{}
+	mi := &file_starchart_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmptyMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmptyMessage) ProtoMessage() {}
+
+func (x *EmptyMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_starchart_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmptyMessage.ProtoReflect.Descriptor instead.
+func (*EmptyMessage) Descriptor() ([]byte, []int) {
+	return file_starchart_proto_rawDescGZIP(), []int{0}
+}
+
+type DeleteChartReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,5,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	Kind          string                 `protobuf:"bytes,6,opt,name=kind,proto3" json:"kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteChartReq) Reset() {
+	*x = DeleteChartReq{}
+	mi := &file_starchart_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteChartReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteChartReq) ProtoMessage() {}
+
+func (x *DeleteChartReq) ProtoReflect() protoreflect.Message {
+	mi := &file_starchart_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteChartReq.ProtoReflect.Descriptor instead.
+func (*DeleteChartReq) Descriptor() ([]byte, []int) {
+	return file_starchart_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DeleteChartReq) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeleteChartReq) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *DeleteChartReq) GetMaintainer() string {
+	if x != nil {
+		return x.Maintainer
+	}
+	return ""
+}
+
+func (x *DeleteChartReq) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *DeleteChartReq) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
+}
+
+func (x *DeleteChartReq) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
 type GetChartsLabelsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
@@ -32,7 +152,7 @@ type GetChartsLabelsReq struct {
 
 func (x *GetChartsLabelsReq) Reset() {
 	*x = GetChartsLabelsReq{}
-	mi := &file_starchart_proto_msgTypes[0]
+	mi := &file_starchart_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +164,7 @@ func (x *GetChartsLabelsReq) String() string {
 func (*GetChartsLabelsReq) ProtoMessage() {}
 
 func (x *GetChartsLabelsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[0]
+	mi := &file_starchart_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +177,7 @@ func (x *GetChartsLabelsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartsLabelsReq.ProtoReflect.Descriptor instead.
 func (*GetChartsLabelsReq) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{0}
+	return file_starchart_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetChartsLabelsReq) GetNamespace() string {
@@ -90,7 +210,7 @@ type GetChartsLabelsResp struct {
 
 func (x *GetChartsLabelsResp) Reset() {
 	*x = GetChartsLabelsResp{}
-	mi := &file_starchart_proto_msgTypes[1]
+	mi := &file_starchart_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -102,7 +222,7 @@ func (x *GetChartsLabelsResp) String() string {
 func (*GetChartsLabelsResp) ProtoMessage() {}
 
 func (x *GetChartsLabelsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[1]
+	mi := &file_starchart_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,7 +235,7 @@ func (x *GetChartsLabelsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartsLabelsResp.ProtoReflect.Descriptor instead.
 func (*GetChartsLabelsResp) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{1}
+	return file_starchart_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetChartsLabelsResp) GetCharts() []*GetChartFromMetadataResp {
@@ -136,7 +256,7 @@ type GetChartFromMetadataReq struct {
 
 func (x *GetChartFromMetadataReq) Reset() {
 	*x = GetChartFromMetadataReq{}
-	mi := &file_starchart_proto_msgTypes[2]
+	mi := &file_starchart_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -148,7 +268,7 @@ func (x *GetChartFromMetadataReq) String() string {
 func (*GetChartFromMetadataReq) ProtoMessage() {}
 
 func (x *GetChartFromMetadataReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[2]
+	mi := &file_starchart_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -161,7 +281,7 @@ func (x *GetChartFromMetadataReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartFromMetadataReq.ProtoReflect.Descriptor instead.
 func (*GetChartFromMetadataReq) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{2}
+	return file_starchart_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetChartFromMetadataReq) GetName() string {
@@ -195,7 +315,7 @@ type GetChartFromMetadataResp struct {
 
 func (x *GetChartFromMetadataResp) Reset() {
 	*x = GetChartFromMetadataResp{}
-	mi := &file_starchart_proto_msgTypes[3]
+	mi := &file_starchart_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -207,7 +327,7 @@ func (x *GetChartFromMetadataResp) String() string {
 func (*GetChartFromMetadataResp) ProtoMessage() {}
 
 func (x *GetChartFromMetadataResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[3]
+	mi := &file_starchart_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -220,7 +340,7 @@ func (x *GetChartFromMetadataResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartFromMetadataResp.ProtoReflect.Descriptor instead.
 func (*GetChartFromMetadataResp) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{3}
+	return file_starchart_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetChartFromMetadataResp) GetMetadata() *MetadataChart {
@@ -251,7 +371,7 @@ type DataSource struct {
 
 func (x *DataSource) Reset() {
 	*x = DataSource{}
-	mi := &file_starchart_proto_msgTypes[4]
+	mi := &file_starchart_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -263,7 +383,7 @@ func (x *DataSource) String() string {
 func (*DataSource) ProtoMessage() {}
 
 func (x *DataSource) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[4]
+	mi := &file_starchart_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -276,7 +396,7 @@ func (x *DataSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataSource.ProtoReflect.Descriptor instead.
 func (*DataSource) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{4}
+	return file_starchart_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DataSource) GetId() string {
@@ -334,7 +454,7 @@ type Metadata struct {
 
 func (x *Metadata) Reset() {
 	*x = Metadata{}
-	mi := &file_starchart_proto_msgTypes[5]
+	mi := &file_starchart_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +466,7 @@ func (x *Metadata) String() string {
 func (*Metadata) ProtoMessage() {}
 
 func (x *Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[5]
+	mi := &file_starchart_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +479,7 @@ func (x *Metadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
 func (*Metadata) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{5}
+	return file_starchart_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Metadata) GetId() string {
@@ -410,7 +530,7 @@ type Control struct {
 
 func (x *Control) Reset() {
 	*x = Control{}
-	mi := &file_starchart_proto_msgTypes[6]
+	mi := &file_starchart_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -422,7 +542,7 @@ func (x *Control) String() string {
 func (*Control) ProtoMessage() {}
 
 func (x *Control) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[6]
+	mi := &file_starchart_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +555,7 @@ func (x *Control) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Control.ProtoReflect.Descriptor instead.
 func (*Control) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{6}
+	return file_starchart_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Control) GetDisableVirtualization() bool {
@@ -486,7 +606,7 @@ type Features struct {
 
 func (x *Features) Reset() {
 	*x = Features{}
-	mi := &file_starchart_proto_msgTypes[7]
+	mi := &file_starchart_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -498,7 +618,7 @@ func (x *Features) String() string {
 func (*Features) ProtoMessage() {}
 
 func (x *Features) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[7]
+	mi := &file_starchart_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +631,7 @@ func (x *Features) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Features.ProtoReflect.Descriptor instead.
 func (*Features) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{7}
+	return file_starchart_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Features) GetNetworks() []string {
@@ -560,7 +680,7 @@ type Links struct {
 
 func (x *Links) Reset() {
 	*x = Links{}
-	mi := &file_starchart_proto_msgTypes[8]
+	mi := &file_starchart_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -572,7 +692,7 @@ func (x *Links) String() string {
 func (*Links) ProtoMessage() {}
 
 func (x *Links) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[8]
+	mi := &file_starchart_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -585,7 +705,7 @@ func (x *Links) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Links.ProtoReflect.Descriptor instead.
 func (*Links) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{8}
+	return file_starchart_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Links) GetSoftLinks() []string {
@@ -621,7 +741,7 @@ type StoredProcedure struct {
 
 func (x *StoredProcedure) Reset() {
 	*x = StoredProcedure{}
-	mi := &file_starchart_proto_msgTypes[9]
+	mi := &file_starchart_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -633,7 +753,7 @@ func (x *StoredProcedure) String() string {
 func (*StoredProcedure) ProtoMessage() {}
 
 func (x *StoredProcedure) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[9]
+	mi := &file_starchart_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -646,7 +766,7 @@ func (x *StoredProcedure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoredProcedure.ProtoReflect.Descriptor instead.
 func (*StoredProcedure) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{9}
+	return file_starchart_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *StoredProcedure) GetMetadata() *Metadata {
@@ -688,7 +808,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_starchart_proto_msgTypes[10]
+	mi := &file_starchart_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -700,7 +820,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[10]
+	mi := &file_starchart_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -713,7 +833,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{10}
+	return file_starchart_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Event) GetMetadata() *Metadata {
@@ -749,7 +869,7 @@ type EventTrigger struct {
 
 func (x *EventTrigger) Reset() {
 	*x = EventTrigger{}
-	mi := &file_starchart_proto_msgTypes[11]
+	mi := &file_starchart_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -761,7 +881,7 @@ func (x *EventTrigger) String() string {
 func (*EventTrigger) ProtoMessage() {}
 
 func (x *EventTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[11]
+	mi := &file_starchart_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -774,7 +894,7 @@ func (x *EventTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventTrigger.ProtoReflect.Descriptor instead.
 func (*EventTrigger) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{11}
+	return file_starchart_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *EventTrigger) GetMetadata() *Metadata {
@@ -817,7 +937,7 @@ type Chart struct {
 
 func (x *Chart) Reset() {
 	*x = Chart{}
-	mi := &file_starchart_proto_msgTypes[12]
+	mi := &file_starchart_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -829,7 +949,7 @@ func (x *Chart) String() string {
 func (*Chart) ProtoMessage() {}
 
 func (x *Chart) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[12]
+	mi := &file_starchart_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -842,7 +962,7 @@ func (x *Chart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Chart.ProtoReflect.Descriptor instead.
 func (*Chart) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{12}
+	return file_starchart_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Chart) GetDataSources() map[string]*DataSource {
@@ -888,7 +1008,7 @@ type MetadataChart struct {
 
 func (x *MetadataChart) Reset() {
 	*x = MetadataChart{}
-	mi := &file_starchart_proto_msgTypes[13]
+	mi := &file_starchart_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +1020,7 @@ func (x *MetadataChart) String() string {
 func (*MetadataChart) ProtoMessage() {}
 
 func (x *MetadataChart) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[13]
+	mi := &file_starchart_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +1033,7 @@ func (x *MetadataChart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetadataChart.ProtoReflect.Descriptor instead.
 func (*MetadataChart) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{13}
+	return file_starchart_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MetadataChart) GetName() string {
@@ -978,7 +1098,7 @@ type StarChart struct {
 
 func (x *StarChart) Reset() {
 	*x = StarChart{}
-	mi := &file_starchart_proto_msgTypes[14]
+	mi := &file_starchart_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -990,7 +1110,7 @@ func (x *StarChart) String() string {
 func (*StarChart) ProtoMessage() {}
 
 func (x *StarChart) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[14]
+	mi := &file_starchart_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1003,7 +1123,7 @@ func (x *StarChart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StarChart.ProtoReflect.Descriptor instead.
 func (*StarChart) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{14}
+	return file_starchart_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StarChart) GetApiVersion() string {
@@ -1055,7 +1175,7 @@ type PutChartResp struct {
 
 func (x *PutChartResp) Reset() {
 	*x = PutChartResp{}
-	mi := &file_starchart_proto_msgTypes[15]
+	mi := &file_starchart_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1187,7 @@ func (x *PutChartResp) String() string {
 func (*PutChartResp) ProtoMessage() {}
 
 func (x *PutChartResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starchart_proto_msgTypes[15]
+	mi := &file_starchart_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1200,7 @@ func (x *PutChartResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutChartResp.ProtoReflect.Descriptor instead.
 func (*PutChartResp) Descriptor() ([]byte, []int) {
-	return file_starchart_proto_rawDescGZIP(), []int{15}
+	return file_starchart_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PutChartResp) GetApiVersion() string {
@@ -1129,7 +1249,19 @@ var File_starchart_proto protoreflect.FileDescriptor
 
 const file_starchart_proto_rawDesc = "" +
 	"\n" +
-	"\x0fstarchart.proto\x12\tstarchart\"\xd0\x01\n" +
+	"\x0fstarchart.proto\x12\tstarchart\"\x0e\n" +
+	"\fEmptyMessage\"\xbc\x01\n" +
+	"\x0eDeleteChartReq\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
+	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\x03 \x01(\tR\n" +
+	"maintainer\x12\x1e\n" +
+	"\n" +
+	"apiVersion\x18\x04 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x05 \x01(\tR\rschemaVersion\x12\x12\n" +
+	"\x04kind\x18\x06 \x01(\tR\x04kind\"\xd0\x01\n" +
 	"\x12GetChartsLabelsReq\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
@@ -1248,11 +1380,12 @@ const file_starchart_proto_rawDesc = "" +
 	"\tnamespace\x18\x05 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
 	"maintainer\x18\x06 \x01(\tR\n" +
-	"maintainer2\x81\x02\n" +
+	"maintainer2\xc6\x02\n" +
 	"\x0fRegistryService\x12;\n" +
 	"\bPutChart\x12\x14.starchart.StarChart\x1a\x17.starchart.PutChartResp\"\x00\x12]\n" +
 	"\x10GetChartMetadata\x12\".starchart.GetChartFromMetadataReq\x1a#.starchart.GetChartFromMetadataResp\"\x00\x12R\n" +
-	"\x0fGetChartsLabels\x12\x1d.starchart.GetChartsLabelsReq\x1a\x1e.starchart.GetChartsLabelsResp\"\x00B\x17Z\x15starchart/proto;protob\x06proto3"
+	"\x0fGetChartsLabels\x12\x1d.starchart.GetChartsLabelsReq\x1a\x1e.starchart.GetChartsLabelsResp\"\x00\x12C\n" +
+	"\vDeleteChart\x12\x19.starchart.DeleteChartReq\x1a\x17.starchart.EmptyMessage\"\x00B\x17Z\x15starchart/proto;protob\x06proto3"
 
 var (
 	file_starchart_proto_rawDescOnce sync.Once
@@ -1266,66 +1399,70 @@ func file_starchart_proto_rawDescGZIP() []byte {
 	return file_starchart_proto_rawDescData
 }
 
-var file_starchart_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_starchart_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_starchart_proto_goTypes = []any{
-	(*GetChartsLabelsReq)(nil),       // 0: starchart.GetChartsLabelsReq
-	(*GetChartsLabelsResp)(nil),      // 1: starchart.GetChartsLabelsResp
-	(*GetChartFromMetadataReq)(nil),  // 2: starchart.GetChartFromMetadataReq
-	(*GetChartFromMetadataResp)(nil), // 3: starchart.GetChartFromMetadataResp
-	(*DataSource)(nil),               // 4: starchart.DataSource
-	(*Metadata)(nil),                 // 5: starchart.Metadata
-	(*Control)(nil),                  // 6: starchart.Control
-	(*Features)(nil),                 // 7: starchart.Features
-	(*Links)(nil),                    // 8: starchart.Links
-	(*StoredProcedure)(nil),          // 9: starchart.StoredProcedure
-	(*Event)(nil),                    // 10: starchart.Event
-	(*EventTrigger)(nil),             // 11: starchart.EventTrigger
-	(*Chart)(nil),                    // 12: starchart.Chart
-	(*MetadataChart)(nil),            // 13: starchart.MetadataChart
-	(*StarChart)(nil),                // 14: starchart.StarChart
-	(*PutChartResp)(nil),             // 15: starchart.PutChartResp
-	nil,                              // 16: starchart.GetChartsLabelsReq.LabelsEntry
-	nil,                              // 17: starchart.Chart.DataSourcesEntry
-	nil,                              // 18: starchart.Chart.StoredProceduresEntry
-	nil,                              // 19: starchart.Chart.EventTriggersEntry
-	nil,                              // 20: starchart.Chart.EventsEntry
-	nil,                              // 21: starchart.MetadataChart.LabelsEntry
+	(*EmptyMessage)(nil),             // 0: starchart.EmptyMessage
+	(*DeleteChartReq)(nil),           // 1: starchart.DeleteChartReq
+	(*GetChartsLabelsReq)(nil),       // 2: starchart.GetChartsLabelsReq
+	(*GetChartsLabelsResp)(nil),      // 3: starchart.GetChartsLabelsResp
+	(*GetChartFromMetadataReq)(nil),  // 4: starchart.GetChartFromMetadataReq
+	(*GetChartFromMetadataResp)(nil), // 5: starchart.GetChartFromMetadataResp
+	(*DataSource)(nil),               // 6: starchart.DataSource
+	(*Metadata)(nil),                 // 7: starchart.Metadata
+	(*Control)(nil),                  // 8: starchart.Control
+	(*Features)(nil),                 // 9: starchart.Features
+	(*Links)(nil),                    // 10: starchart.Links
+	(*StoredProcedure)(nil),          // 11: starchart.StoredProcedure
+	(*Event)(nil),                    // 12: starchart.Event
+	(*EventTrigger)(nil),             // 13: starchart.EventTrigger
+	(*Chart)(nil),                    // 14: starchart.Chart
+	(*MetadataChart)(nil),            // 15: starchart.MetadataChart
+	(*StarChart)(nil),                // 16: starchart.StarChart
+	(*PutChartResp)(nil),             // 17: starchart.PutChartResp
+	nil,                              // 18: starchart.GetChartsLabelsReq.LabelsEntry
+	nil,                              // 19: starchart.Chart.DataSourcesEntry
+	nil,                              // 20: starchart.Chart.StoredProceduresEntry
+	nil,                              // 21: starchart.Chart.EventTriggersEntry
+	nil,                              // 22: starchart.Chart.EventsEntry
+	nil,                              // 23: starchart.MetadataChart.LabelsEntry
 }
 var file_starchart_proto_depIdxs = []int32{
-	16, // 0: starchart.GetChartsLabelsReq.labels:type_name -> starchart.GetChartsLabelsReq.LabelsEntry
-	3,  // 1: starchart.GetChartsLabelsResp.charts:type_name -> starchart.GetChartFromMetadataResp
-	13, // 2: starchart.GetChartFromMetadataResp.metadata:type_name -> starchart.MetadataChart
-	12, // 3: starchart.GetChartFromMetadataResp.chart:type_name -> starchart.Chart
-	5,  // 4: starchart.StoredProcedure.metadata:type_name -> starchart.Metadata
-	6,  // 5: starchart.StoredProcedure.control:type_name -> starchart.Control
-	7,  // 6: starchart.StoredProcedure.features:type_name -> starchart.Features
-	8,  // 7: starchart.StoredProcedure.links:type_name -> starchart.Links
-	5,  // 8: starchart.Event.metadata:type_name -> starchart.Metadata
-	6,  // 9: starchart.Event.control:type_name -> starchart.Control
-	7,  // 10: starchart.Event.features:type_name -> starchart.Features
-	5,  // 11: starchart.EventTrigger.metadata:type_name -> starchart.Metadata
-	6,  // 12: starchart.EventTrigger.control:type_name -> starchart.Control
-	7,  // 13: starchart.EventTrigger.features:type_name -> starchart.Features
-	8,  // 14: starchart.EventTrigger.links:type_name -> starchart.Links
-	17, // 15: starchart.Chart.dataSources:type_name -> starchart.Chart.DataSourcesEntry
-	18, // 16: starchart.Chart.storedProcedures:type_name -> starchart.Chart.StoredProceduresEntry
-	19, // 17: starchart.Chart.eventTriggers:type_name -> starchart.Chart.EventTriggersEntry
-	20, // 18: starchart.Chart.events:type_name -> starchart.Chart.EventsEntry
-	21, // 19: starchart.MetadataChart.labels:type_name -> starchart.MetadataChart.LabelsEntry
-	13, // 20: starchart.StarChart.metadata:type_name -> starchart.MetadataChart
-	12, // 21: starchart.StarChart.chart:type_name -> starchart.Chart
-	4,  // 22: starchart.Chart.DataSourcesEntry.value:type_name -> starchart.DataSource
-	9,  // 23: starchart.Chart.StoredProceduresEntry.value:type_name -> starchart.StoredProcedure
-	11, // 24: starchart.Chart.EventTriggersEntry.value:type_name -> starchart.EventTrigger
-	10, // 25: starchart.Chart.EventsEntry.value:type_name -> starchart.Event
-	14, // 26: starchart.RegistryService.PutChart:input_type -> starchart.StarChart
-	2,  // 27: starchart.RegistryService.GetChartMetadata:input_type -> starchart.GetChartFromMetadataReq
-	0,  // 28: starchart.RegistryService.GetChartsLabels:input_type -> starchart.GetChartsLabelsReq
-	15, // 29: starchart.RegistryService.PutChart:output_type -> starchart.PutChartResp
-	3,  // 30: starchart.RegistryService.GetChartMetadata:output_type -> starchart.GetChartFromMetadataResp
-	1,  // 31: starchart.RegistryService.GetChartsLabels:output_type -> starchart.GetChartsLabelsResp
-	29, // [29:32] is the sub-list for method output_type
-	26, // [26:29] is the sub-list for method input_type
+	18, // 0: starchart.GetChartsLabelsReq.labels:type_name -> starchart.GetChartsLabelsReq.LabelsEntry
+	5,  // 1: starchart.GetChartsLabelsResp.charts:type_name -> starchart.GetChartFromMetadataResp
+	15, // 2: starchart.GetChartFromMetadataResp.metadata:type_name -> starchart.MetadataChart
+	14, // 3: starchart.GetChartFromMetadataResp.chart:type_name -> starchart.Chart
+	7,  // 4: starchart.StoredProcedure.metadata:type_name -> starchart.Metadata
+	8,  // 5: starchart.StoredProcedure.control:type_name -> starchart.Control
+	9,  // 6: starchart.StoredProcedure.features:type_name -> starchart.Features
+	10, // 7: starchart.StoredProcedure.links:type_name -> starchart.Links
+	7,  // 8: starchart.Event.metadata:type_name -> starchart.Metadata
+	8,  // 9: starchart.Event.control:type_name -> starchart.Control
+	9,  // 10: starchart.Event.features:type_name -> starchart.Features
+	7,  // 11: starchart.EventTrigger.metadata:type_name -> starchart.Metadata
+	8,  // 12: starchart.EventTrigger.control:type_name -> starchart.Control
+	9,  // 13: starchart.EventTrigger.features:type_name -> starchart.Features
+	10, // 14: starchart.EventTrigger.links:type_name -> starchart.Links
+	19, // 15: starchart.Chart.dataSources:type_name -> starchart.Chart.DataSourcesEntry
+	20, // 16: starchart.Chart.storedProcedures:type_name -> starchart.Chart.StoredProceduresEntry
+	21, // 17: starchart.Chart.eventTriggers:type_name -> starchart.Chart.EventTriggersEntry
+	22, // 18: starchart.Chart.events:type_name -> starchart.Chart.EventsEntry
+	23, // 19: starchart.MetadataChart.labels:type_name -> starchart.MetadataChart.LabelsEntry
+	15, // 20: starchart.StarChart.metadata:type_name -> starchart.MetadataChart
+	14, // 21: starchart.StarChart.chart:type_name -> starchart.Chart
+	6,  // 22: starchart.Chart.DataSourcesEntry.value:type_name -> starchart.DataSource
+	11, // 23: starchart.Chart.StoredProceduresEntry.value:type_name -> starchart.StoredProcedure
+	13, // 24: starchart.Chart.EventTriggersEntry.value:type_name -> starchart.EventTrigger
+	12, // 25: starchart.Chart.EventsEntry.value:type_name -> starchart.Event
+	16, // 26: starchart.RegistryService.PutChart:input_type -> starchart.StarChart
+	4,  // 27: starchart.RegistryService.GetChartMetadata:input_type -> starchart.GetChartFromMetadataReq
+	2,  // 28: starchart.RegistryService.GetChartsLabels:input_type -> starchart.GetChartsLabelsReq
+	1,  // 29: starchart.RegistryService.DeleteChart:input_type -> starchart.DeleteChartReq
+	17, // 30: starchart.RegistryService.PutChart:output_type -> starchart.PutChartResp
+	5,  // 31: starchart.RegistryService.GetChartMetadata:output_type -> starchart.GetChartFromMetadataResp
+	3,  // 32: starchart.RegistryService.GetChartsLabels:output_type -> starchart.GetChartsLabelsResp
+	0,  // 33: starchart.RegistryService.DeleteChart:output_type -> starchart.EmptyMessage
+	30, // [30:34] is the sub-list for method output_type
+	26, // [26:30] is the sub-list for method input_type
 	26, // [26:26] is the sub-list for extension type_name
 	26, // [26:26] is the sub-list for extension extendee
 	0,  // [0:26] is the sub-list for field type_name
@@ -1342,7 +1479,7 @@ func file_starchart_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starchart_proto_rawDesc), len(file_starchart_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
