@@ -6,7 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"registry/domain"
+
+	"github.com/c12s/starmap/domain"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )

@@ -1,4 +1,4 @@
-module registry
+module github.com/c12s/starmap
 
 go 1.25.1
 

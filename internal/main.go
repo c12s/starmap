@@ -5,11 +5,12 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"registry/config"
-	proto "registry/proto/starchart"
-	"registry/repos"
-	"registry/services"
 	"syscall"
+
+	"github.com/c12s/starmap/config"
+	proto "github.com/c12s/starmap/proto/starchart"
+	"github.com/c12s/starmap/repos"
+	"github.com/c12s/starmap/services"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

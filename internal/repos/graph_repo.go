@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"registry/config"
-	"registry/domain"
+
+	"github.com/c12s/starmap/config"
+	"github.com/c12s/starmap/domain"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )

@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
-	proto "registry/proto/starchart"
-	protomappers "registry/proto_mappers"
-	"registry/repos"
+
+	proto "github.com/c12s/starmap/proto/starchart"
+	protomappers "github.com/c12s/starmap/proto_mappers"
+	"github.com/c12s/starmap/repos"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

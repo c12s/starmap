@@ -1,11 +1,4 @@
 services:
-  # rest-server:
-  #   build:
-  #     context: ./docker/rest
-  #   ports:
-  #     - "8080:8080"
-  #   networks:
-  #     - test
   
   registry-server:
     image: registry-server
