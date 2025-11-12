@@ -1,0 +1,79 @@
+package services
+
+import (
+	"context"
+
+	proto "github.com/c12s/starmap/proto/starchart"
+	protomappers "github.com/c12s/starmap/proto_mappers"
+	"github.com/c12s/starmap/repos"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type RegistryService struct {
+	repo repos.RegistryRepo
+	proto.UnimplementedRegistryServiceServer
+}
+
+func NewRegistryService(repo *repos.RegistryRepo) *RegistryService {
+	return &RegistryService{
+		repo: *repo,
+	}
+}
+
+func (s *RegistryService) PutChart(ctx context.Context, req *proto.StarChart) (*proto.PutChartResp, error) {
+	chart, err := protomappers.ProtoToStarChart(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid chart: %v", err)
+	}
+
+	starChart, err := s.repo.PutChart(ctx, *chart)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to store chart: %v", err)
+	}
+
+	return &proto.PutChartResp{
+		ApiVersion:    starChart.ApiVersion,
+		SchemaVersion: starChart.SchemaVersion,
+		Kind:          starChart.Kind,
+		Name:          starChart.Metadata.Name,
+		Namespace:     starChart.Metadata.Namespace,
+		Maintainer:    starChart.Metadata.Maintainer,
+	}, nil
+
+}
+
+func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartFromMetadataResp, error) {
+	chart, err := s.repo.GetChartMetadata(ctx, req.Name, req.Namespace, req.Maintainer)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get chart metadata: %v", err)
+	}
+
+	return protomappers.ChartMetadataToProto(*chart), nil
+}
+
+func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetChartsLabelsReq) (*proto.GetChartsLabelsResp, error) {
+	charts, err := s.repo.GetChartsLabels(ctx, req.Namespace, req.Maintainer, req.Labels)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get charts by labels: %v", err)
+	}
+
+	resp := &proto.GetChartsLabelsResp{}
+
+	for _, chart := range charts.Charts {
+		chartProto := protomappers.ChartMetadataToProto(chart)
+		resp.Charts = append(resp.Charts, chartProto)
+	}
+
+	return resp, nil
+}
+
+func (s *RegistryService) DeleteChart(ctx context.Context, req *proto.DeleteChartReq) (*proto.EmptyMessage, error) {
+	err := s.repo.DeleteChart(ctx, req.Name, req.Namespace, req.Maintainer, req.ApiVersion, req.SchemaVersion, req.Kind)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete chart: %v", err)
+	}
+
+	return &proto.EmptyMessage{}, nil
+}
