@@ -3,8 +3,8 @@ package protomappers
 import (
 	"errors"
 
-	"github.com/c12s/starmap/domain"
-	proto "github.com/c12s/starmap/proto/starchart"
+	proto "github.com/c12s/starmap/api/proto/starchart"
+	"github.com/c12s/starmap/internal/domain"
 )
 
 func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {

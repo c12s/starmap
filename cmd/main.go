@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/c12s/starmap/config"
-	proto "github.com/c12s/starmap/proto/starchart"
-	"github.com/c12s/starmap/repos"
-	"github.com/c12s/starmap/services"
+	proto "github.com/c12s/starmap/api/proto/starchart"
+	"github.com/c12s/starmap/internal/config"
+	"github.com/c12s/starmap/internal/repos"
+	"github.com/c12s/starmap/internal/services"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
