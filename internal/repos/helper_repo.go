@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/c12s/starmap/domain"
+	"github.com/c12s/starmap/internal/domain"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
@@ -249,4 +249,35 @@ func getStringSliceProp(node neo4j.Node, key string) []string {
 		}
 	}
 	return []string{}
+}
+
+func convertLabelsToList(labels map[string]string) []map[string]string {
+	result := make([]map[string]string, 0, len(labels))
+	for k, v := range labels {
+		result = append(result, map[string]string{
+			"key":   k,
+			"value": v,
+		})
+	}
+	return result
+}
+
+func parseLabelList(v any) map[string]string {
+	labels := make(map[string]string)
+	if v == nil {
+		return labels
+	}
+
+	if arr, ok := v.([]interface{}); ok {
+		for _, item := range arr {
+			if m, ok := item.(map[string]interface{}); ok {
+				key, _ := m["key"].(string)
+				value, _ := m["value"].(string)
+				if key != "" {
+					labels[key] = value
+				}
+			}
+		}
+	}
+	return labels
 }

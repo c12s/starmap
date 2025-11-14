@@ -2,12 +2,11 @@ package repos
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
-	"github.com/c12s/starmap/config"
-	"github.com/c12s/starmap/domain"
+	"github.com/c12s/starmap/internal/config"
+	"github.com/c12s/starmap/internal/domain"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
@@ -77,11 +76,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 		}
 
 		// Chart Node
-		labelsJSON, err := json.Marshal(chart.Metadata.Labels)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal labels: %w", err)
-		}
-
 		queryChart := `
 			MERGE (c:Chart {name: $name})
 			SET c.apiVersion = $apiVersion,
@@ -89,8 +83,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				c.kind = $kind,
 				c.description = $description,
 				c.visibility = $visibility,
-				c.engine = $engine,
-				c.labels = $labels
+				c.engine = $engine
 			WITH c
 			MATCH (n:Namespace {name: $namespace})
 			MERGE (n)-[:HAS_CHART]->(c)
@@ -103,12 +96,29 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			"description":   chart.Metadata.Description,
 			"visibility":    chart.Metadata.Visibility,
 			"engine":        chart.Metadata.Engine,
-			"labels":        string(labelsJSON),
 			"namespace":     chart.Metadata.Namespace,
 			"maintainer":    chart.Metadata.Maintainer,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Chart node: %w", err)
+		}
+
+		// Labels
+		labelsList := convertLabelsToList(chart.Metadata.Labels)
+		if len(labelsList) > 0 {
+			queryLabels := `
+				MATCH (c:Chart {name: $name})
+				UNWIND $labels AS lbl
+				MERGE (l:Label {key: lbl.key, value: lbl.value})
+				MERGE (c)-[:HAS_LABEL]->(l)
+			`
+			_, err = tx.Run(ctx, queryLabels, map[string]any{
+				"name":   chart.Metadata.Name,
+				"labels": labelsList,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to link labels to Chart: %w", err)
+			}
 		}
 
 		// DataSources
@@ -387,19 +397,21 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, name, namespace, ma
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		query := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {name: $chartName})
+			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
+			WITH c, collect({key: l.key, value: l.value}) AS labels
 			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
-			WITH c, collect(DISTINCT sp) as storedProcedures
+			WITH c, labels, collect(DISTINCT sp) as storedProcedures
 			UNWIND storedProcedures as sp
 			OPTIONAL MATCH (sp)-[:HARD_LINK]->(ds1:DataSource)
 			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
-			WITH c, storedProcedures, sp, [ds1, ds2] as spDataSources
+			WITH c, labels, storedProcedures, sp, [ds1, ds2] as spDataSources
 			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
 			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
 			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
 			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
-			WITH c, storedProcedures, collect(DISTINCT t) as triggers, collect(DISTINCT e) as events, collect(DISTINCT spDataSources + [ds3, ds4]) as dataSourcesNested
-			WITH c, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			RETURN c, allDataSources as dataSources, storedProcedures, events, triggers
+			WITH c, labels, storedProcedures, collect(DISTINCT t) as triggers, collect(DISTINCT e) as events, collect(DISTINCT spDataSources + [ds3, ds4]) as dataSourcesNested
+			WITH c, labels, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
+			RETURN c, labels, allDataSources as dataSources, storedProcedures, events, triggers
 		`
 
 		rec, err := tx.Run(ctx, query, map[string]any{
@@ -440,6 +452,13 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, name, namespace, ma
 			}
 		}
 
+		if v, ok := record.Get("labels"); ok {
+			chart.Metadata.Labels = parseLabelList(v)
+		}
+		if chart.Metadata.Labels == nil {
+			chart.Metadata.Labels = map[string]string{}
+		}
+
 		if v, ok := record.Get("dataSources"); ok {
 			chart.DataSources = parseDataSources(v)
 		}
@@ -473,20 +492,23 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 	defer session.Close(ctx)
 
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-		labelFilters := ""
+
 		params := map[string]any{
 			"namespace":  namespace,
 			"maintainer": maintainer,
 		}
 
+		labelMatch := ""
 		if len(labels) > 0 {
-			labelFilters = "WHERE "
 			i := 0
 			for k, v := range labels {
-				if i > 0 {
-					labelFilters += " AND "
-				}
-				labelFilters += fmt.Sprintf("c.labels CONTAINS '\"%s\":\"%s\"'", k, v)
+				paramKey := fmt.Sprintf("key%d", i)
+				paramVal := fmt.Sprintf("val%d", i)
+				labelMatch += fmt.Sprintf(`
+					MATCH (c)-[:HAS_LABEL]->(l%d:Label {key: $%s, value: $%s})
+				`, i, paramKey, paramVal)
+				params[paramKey] = k
+				params[paramVal] = v
 				i++
 			}
 		}
@@ -494,6 +516,8 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 		query := fmt.Sprintf(`
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart)
 			%s
+			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
+			WITH c, collect({key: l.key, value: l.value}) AS labels
 			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
 			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
 			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
@@ -501,14 +525,14 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
 			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
 			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
-			WITH c, 
-				collect(DISTINCT sp) as storedProcedures, 
+			WITH c, labels,
+				collect(DISTINCT sp) as storedProcedures,
 				collect(DISTINCT t) as triggers,
 				collect(DISTINCT e) as events,
 				collect(DISTINCT [ds1, ds2, ds3, ds4]) as dataSourcesNested
-			WITH c, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			RETURN c, allDataSources as dataSources, storedProcedures, triggers, events
-		`, labelFilters)
+			WITH c, labels, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
+			RETURN c, labels, allDataSources as dataSources, storedProcedures, triggers, events
+		`, labelMatch)
 
 		rec, err := tx.Run(ctx, query, params)
 		if err != nil {
@@ -538,25 +562,25 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 					chart.Metadata.Description = getStringProp(node, "description")
 					chart.Metadata.Visibility = getStringProp(node, "visibility")
 					chart.Metadata.Engine = getStringProp(node, "engine")
-					chart.Metadata.Labels = parseLabels(getStringProp(node, "labels"))
-					if chart.Metadata.Labels == nil {
-						chart.Metadata.Labels = map[string]string{}
-					}
 				}
+			}
+
+			if v, ok := record.Get("labels"); ok {
+				chart.Metadata.Labels = parseLabelList(v)
+			}
+			if chart.Metadata.Labels == nil {
+				chart.Metadata.Labels = map[string]string{}
 			}
 
 			if v, ok := record.Get("dataSources"); ok {
 				chart.DataSources = parseDataSources(v)
 			}
-
 			if v, ok := record.Get("storedProcedures"); ok {
 				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v)
 			}
-
 			if v, ok := record.Get("events"); ok {
 				chart.Events = parseEvents(v)
 			}
-
 			if v, ok := record.Get("triggers"); ok {
 				chart.EventTriggers = parseTriggers(ctx, tx, v)
 			}
@@ -603,6 +627,17 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintai
 			return nil, fmt.Errorf("failed to delete Chart: %w", err)
 		}
 
+		// Delete Labels
+		queryLabels := `
+			MATCH (l:Label)
+			WHERE NOT (l)<-[:HAS_LABEL]-(:Chart)
+			DETACH DELETE l
+		`
+		_, err = tx.Run(ctx, queryLabels, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan Labels: %w", err)
+		}
+
 		// Delete Namespace
 		queryNamespace := `
 			MATCH (n:Namespace {name: $namespace})
@@ -629,18 +664,6 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintai
 			return nil, fmt.Errorf("failed to delete User: %w", err)
 		}
 
-		// Delete DataSources
-		queryDS := `
-			MATCH (d:DataSource)
-			WHERE NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:StoredProcedure) 
-			   AND NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:Trigger)
-			DETACH DELETE d
-		`
-		_, err = tx.Run(ctx, queryDS, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to delete orphan DataSources: %w", err)
-		}
-
 		// Delete StoredProcedures
 		querySP := `
 			MATCH (s:StoredProcedure)
@@ -661,6 +684,18 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintai
 		_, err = tx.Run(ctx, queryTriggers, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to delete orphan Triggers: %w", err)
+		}
+
+		// Delete DataSources
+		queryDS := `
+			MATCH (d:DataSource)
+			WHERE NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:StoredProcedure) 
+			   AND NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:Trigger)
+			DETACH DELETE d
+		`
+		_, err = tx.Run(ctx, queryDS, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete orphan DataSources: %w", err)
 		}
 
 		// Delete Events
