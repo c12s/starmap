@@ -73,6 +73,7 @@ type StarChart struct {
 	SchemaVersion string
 	Kind          string
 	Metadata      struct {
+		Id          string
 		Name        string
 		Namespace   string
 		Maintainer  string
@@ -84,8 +85,21 @@ type StarChart struct {
 	Chart Chart
 }
 
+type GetMissingLayers struct {
+	Metadata struct {
+		Id        string
+		Name      string
+		Namespace string
+	}
+	DataSources      map[string]*DataSource
+	StoredProcedures map[string]*StoredProcedure
+	EventTriggers    map[string]*EventTrigger
+	Events           map[string]*Event
+}
+
 type GetChartMetadataResp struct {
 	Metadata struct {
+		Id          string
 		Name        string
 		Namespace   string
 		Maintainer  string

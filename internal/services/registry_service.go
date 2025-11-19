@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	proto "github.com/c12s/starmap/api/proto/starchart"
+	proto "github.com/c12s/starmap/api"
 	protomappers "github.com/c12s/starmap/internal/proto_mappers"
 	"github.com/c12s/starmap/internal/repos"
 
@@ -44,7 +44,7 @@ func (s *RegistryService) PutChart(ctx context.Context, req *proto.StarChart) (*
 
 }
 
-func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartFromMetadataResp, error) {
+func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartResp, error) {
 	chart, err := s.repo.GetChartMetadata(ctx, req.Name, req.Namespace, req.Maintainer)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart metadata: %v", err)
@@ -67,6 +67,30 @@ func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetCha
 	}
 
 	return resp, nil
+}
+
+func (s *RegistryService) GetChartId(ctx context.Context, req *proto.GetChartIdReq) (*proto.GetChartResp, error) {
+	chart, err := s.repo.GetChartId(ctx, req.Namespace, req.Maintainer, req.ChartId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get chart by id: %v", err)
+	}
+
+	return protomappers.ChartMetadataToProto(*chart), nil
+
+}
+
+func (s *RegistryService) GetMissingLayers(ctx context.Context, req *proto.GetMissingLayersReq) (*proto.GetMissingLayersResp, error) {
+	result, err := s.repo.GetMissingLayers(ctx, req.Namespace, req.Maintainer, req.ChartId, req.Layers)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get missing layers: %v", err)
+	}
+
+	protoResp := protomappers.GetMissingLayersToProto(*result)
+	protoResp.ChartId = req.ChartId
+	protoResp.Maintainer = req.Maintainer
+	protoResp.Namespace = req.Namespace
+
+	return protoResp, nil
 }
 
 func (s *RegistryService) DeleteChart(ctx context.Context, req *proto.DeleteChartReq) (*proto.EmptyMessage, error) {

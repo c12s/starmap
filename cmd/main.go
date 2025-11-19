@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	proto "github.com/c12s/starmap/api/proto/starchart"
+	proto "github.com/c12s/starmap/api"
 	"github.com/c12s/starmap/internal/config"
 	"github.com/c12s/starmap/internal/repos"
 	"github.com/c12s/starmap/internal/services"

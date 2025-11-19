@@ -104,14 +104,15 @@ message Chart {
 }
 
 message MetadataChart {
-    string name = 1;
-    string namespace = 2;
-    string maintainer = 3;
-    string description = 4;
-    string visibility = 5;
-    string engine = 6;
-    map<string, string> labels = 7;
-  }
+    string id = 1;
+    string name = 2;
+    string namespace = 3;
+    string maintainer = 4;
+    string description = 5;
+    string visibility = 6;
+    string engine = 7;
+    map<string, string> labels = 8;
+}
 
 message StarChart {
   string apiVersion = 1;
@@ -168,7 +169,7 @@ message GetChartFromMetadataReq {
 
 #### Response - 0 OK
 ```proto
-message GetChartFromMetadataResp {
+message GetChartResp {
   MetadataChart metadata = 1;
   Chart chart = 2;
 }
@@ -189,7 +190,53 @@ message GetChartsLabelsReq {
 #### Response - 0 OK
 ```proto
 message GetChartsLabelsResp {
-  repeated GetChartFromMetadataResp charts = 1;
+  repeated GetChartResp charts = 1;
+}
+```
+
+#### /GetChartId
+The endpoint for querying charts by chartId, namespace, and maintainer.
+
+#### Request body
+```proto
+message GetChartIdReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+}
+```
+
+#### Response - 0 OK
+```proto
+message GetChartResp {
+  MetadataChart metadata = 1;
+  Chart chart = 2;
+}
+```
+
+#### /GetMissingLayers
+Endpoint returns chart layers present in the registry but missing from the provided layer hashes.
+
+#### Request body
+```proto
+message GetMissingLayersReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  repeated string layers = 4;
+}
+```
+
+#### Response - 0 OK
+```proto
+message GetMissingLayersResp {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  map<string, DataSource> dataSources = 4;
+  map<string, StoredProcedure> storedProcedures = 5;
+  map<string, EventTrigger> eventTriggers = 6;
+  map<string, Event> events = 7;
 }
 ```
 
