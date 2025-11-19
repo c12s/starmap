@@ -1,47 +1,9 @@
 syntax = "proto3";
 
-package starchart;
-
-option go_package = "starchart/proto;proto";
-
-service RegistryService{
-    rpc PutChart(StarChart) returns(PutChartResp){}
-    rpc GetChartMetadata(GetChartFromMetadataReq) returns(GetChartFromMetadataResp){}
-    rpc GetChartsLabels(GetChartsLabelsReq) returns(GetChartsLabelsResp){}
-    rpc DeleteChart(DeleteChartReq) returns(EmptyMessage){}
-}
+option go_package="github.com/c12s/starmap/api";
+package proto;
 
 message EmptyMessage {}
-
-message DeleteChartReq {
-  string name = 1;
-  string namespace = 2;
-  string maintainer = 3;
-  string apiVersion = 4;
-  string schemaVersion = 5;
-  string kind = 6;
-}
-
-message GetChartsLabelsReq {
-  string namespace = 1;
-  string maintainer = 2;
-  map<string, string> labels = 3;
-}
-
-message GetChartsLabelsResp {
-  repeated GetChartFromMetadataResp charts = 1;
-}
-
-message GetChartFromMetadataReq {
-  string name = 1;
-  string namespace = 2;
-  string maintainer = 3;
-}
-
-message GetChartFromMetadataResp {
-  MetadataChart metadata = 1;
-  Chart chart = 2;
-}
 
 message DataSource {
   string id = 1;
@@ -110,13 +72,14 @@ message Chart {
 }
 
 message MetadataChart {
-    string name = 1;
-    string namespace = 2;
-    string maintainer = 3;
-    string description = 4;
-    string visibility = 5;
-    string engine = 6;
-    map<string, string> labels = 7;
+    string id = 1;
+    string name = 2;
+    string namespace = 3;
+    string maintainer = 4;
+    string description = 5;
+    string visibility = 6;
+    string engine = 7;
+    map<string, string> labels = 8;
   }
 
 message StarChart {
@@ -126,13 +89,4 @@ message StarChart {
 
   MetadataChart metadata = 4;
   Chart chart = 5;
-}
-
-message PutChartResp {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string kind = 3;
-  string name = 4;
-  string namespace = 5;
-  string maintainer = 6;
 }

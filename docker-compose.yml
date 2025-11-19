@@ -15,7 +15,8 @@ services:
     depends_on:
       neo4j:
         condition: service_healthy
-        
+    networks: 
+      - registry 
 
   neo4j:
     image: neo4j:latest
@@ -35,7 +36,9 @@ services:
       timeout: 5s
       retries: 5
     restart: always
+    networks: 
+      - registry
 
 networks:
-  test:
+  registry:
     driver: bridge
