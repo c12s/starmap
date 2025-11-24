@@ -51,108 +51,143 @@ func parseDataSources(v any) map[string]*domain.DataSource {
 	return result
 }
 
-func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any) map[string]*domain.StoredProcedure {
-	result := make(map[string]*domain.StoredProcedure)
-	for _, node := range processNodes(v) {
-		sp := &domain.StoredProcedure{
-			Metadata: domain.Metadata{
-				Id:     getStringProp(node, "id"),
-				Name:   getStringProp(node, "name"),
-				Image:  getStringProp(node, "image"),
-				Hash:   getStringProp(node, "hash"),
-				Prefix: getStringProp(node, "prefix"),
-				Topic:  getStringProp(node, "topic"),
-			},
-			Control: domain.Control{
-				DisableVirtualization: getBoolProp(node, "disableVirtualization"),
-				RunDetached:           getBoolProp(node, "runDetached"),
-				RemoveOnStop:          getBoolProp(node, "removeOnStop"),
-				Memory:                getStringProp(node, "memory"),
-				KernelArgs:            getStringProp(node, "kernelArgs"),
-			},
-			Features: domain.Features{
-				Networks: getStringSliceProp(node, "networks"),
-				Ports:    getStringSliceProp(node, "ports"),
-				Volumes:  getStringSliceProp(node, "volumes"),
-				Targets:  getStringSliceProp(node, "targets"),
-				EnvVars:  getStringSliceProp(node, "envVars"),
-			},
-		}
-		sp.Links = getLinksForNode(ctx, tx, "StoredProcedure", sp.Metadata.Id)
-		if sp.Metadata.Name != "" {
-			result[sp.Metadata.Name] = sp
-		}
+func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, control domain.Control, features domain.Features) {
+	metadata = domain.Metadata{
+		Id:     getStringFromMap(nodeProps, "id"),
+		Name:   getStringFromMap(relProps, "name"),
+		Image:  getStringFromMap(relProps, "image"),
+		Hash:   getStringFromMap(nodeProps, "hash"),
+		Prefix: getStringFromMap(relProps, "prefix"),
+		Topic:  getStringFromMap(relProps, "topic"),
 	}
-	return result
+
+	control = domain.Control{
+		DisableVirtualization: getBoolFromMap(relProps, "disableVirtualization"),
+		RunDetached:           getBoolFromMap(relProps, "runDetached"),
+		RemoveOnStop:          getBoolFromMap(relProps, "removeOnStop"),
+		Memory:                getStringFromMap(relProps, "memory"),
+		KernelArgs:            getStringFromMap(relProps, "kernelArgs"),
+	}
+
+	features = domain.Features{
+		Networks: getStringSliceFromMap(relProps, "networks"),
+		Ports:    getStringSliceFromMap(relProps, "ports"),
+		Volumes:  getStringSliceFromMap(relProps, "volumes"),
+		Targets:  getStringSliceFromMap(relProps, "targets"),
+		EnvVars:  getStringSliceFromMap(relProps, "envVars"),
+	}
+
+	return
 }
 
-func parseEvents(v any) map[string]*domain.Event {
-	result := make(map[string]*domain.Event)
-	for _, node := range processNodes(v) {
-		ev := &domain.Event{
-			Metadata: domain.Metadata{
-				Id:     getStringProp(node, "id"),
-				Name:   getStringProp(node, "name"),
-				Image:  getStringProp(node, "image"),
-				Hash:   getStringProp(node, "hash"),
-				Prefix: getStringProp(node, "prefix"),
-				Topic:  getStringProp(node, "topic"),
-			},
-			Control: domain.Control{
-				DisableVirtualization: getBoolProp(node, "disableVirtualization"),
-				RunDetached:           getBoolProp(node, "runDetached"),
-				RemoveOnStop:          getBoolProp(node, "removeOnStop"),
-				Memory:                getStringProp(node, "memory"),
-				KernelArgs:            getStringProp(node, "kernelArgs"),
-			},
-			Features: domain.Features{
-				Networks: getStringSliceProp(node, "networks"),
-				Ports:    getStringSliceProp(node, "ports"),
-				Volumes:  getStringSliceProp(node, "volumes"),
-				Targets:  getStringSliceProp(node, "targets"),
-				EnvVars:  getStringSliceProp(node, "envVars"),
-			},
-		}
-		if ev.Metadata.Name != "" {
-			result[ev.Metadata.Name] = ev
+func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any) map[string]*domain.StoredProcedure {
+	result := make(map[string]*domain.StoredProcedure)
+
+	if combinedList, ok := v.([]interface{}); ok {
+		for _, item := range combinedList {
+			if entityMap, ok := item.(map[string]any); ok {
+				nodeProps := entityMap["nodeProps"].(map[string]any)
+				relProps := entityMap["relProps"].(map[string]any)
+
+				metadata, control, features := parseEntity(nodeProps, relProps)
+
+				sp := &domain.StoredProcedure{
+					Metadata: metadata,
+					Control:  control,
+					Features: features,
+					Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
+				}
+
+				result[metadata.Name] = sp
+			}
 		}
 	}
+
 	return result
 }
 
 func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any) map[string]*domain.EventTrigger {
 	result := make(map[string]*domain.EventTrigger)
-	for _, node := range processNodes(v) {
-		tr := &domain.EventTrigger{
-			Metadata: domain.Metadata{
-				Id:     getStringProp(node, "id"),
-				Name:   getStringProp(node, "name"),
-				Image:  getStringProp(node, "image"),
-				Hash:   getStringProp(node, "hash"),
-				Prefix: getStringProp(node, "prefix"),
-				Topic:  getStringProp(node, "topic"),
-			},
-			Control: domain.Control{
-				DisableVirtualization: getBoolProp(node, "disableVirtualization"),
-				RunDetached:           getBoolProp(node, "runDetached"),
-				RemoveOnStop:          getBoolProp(node, "removeOnStop"),
-				Memory:                getStringProp(node, "memory"),
-				KernelArgs:            getStringProp(node, "kernelArgs"),
-			},
-			Features: domain.Features{
-				Networks: getStringSliceProp(node, "networks"),
-				Ports:    getStringSliceProp(node, "ports"),
-				Volumes:  getStringSliceProp(node, "volumes"),
-				Targets:  getStringSliceProp(node, "targets"),
-				EnvVars:  getStringSliceProp(node, "envVars"),
-			},
-		}
-		tr.Links = getLinksForNode(ctx, tx, "Trigger", tr.Metadata.Id)
-		if tr.Metadata.Name != "" {
-			result[tr.Metadata.Name] = tr
+
+	if combinedList, ok := v.([]interface{}); ok {
+		for _, item := range combinedList {
+			if entityMap, ok := item.(map[string]any); ok {
+				nodeProps := entityMap["nodeProps"].(map[string]any)
+				relProps := entityMap["relProps"].(map[string]any)
+
+				metadata, control, features := parseEntity(nodeProps, relProps)
+
+				tr := &domain.EventTrigger{
+					Metadata: metadata,
+					Control:  control,
+					Features: features,
+					Links:    getLinksForNode(ctx, tx, "Trigger", metadata.Id),
+				}
+
+				result[metadata.Name] = tr
+			}
 		}
 	}
+
 	return result
+}
+
+func parseEvents(v any) map[string]*domain.Event {
+	result := make(map[string]*domain.Event)
+
+	if combinedList, ok := v.([]interface{}); ok {
+		for _, item := range combinedList {
+			if entityMap, ok := item.(map[string]any); ok {
+				nodeProps := entityMap["nodeProps"].(map[string]any)
+				relProps := entityMap["relProps"].(map[string]any)
+
+				metadata, control, features := parseEntity(nodeProps, relProps)
+
+				ev := &domain.Event{
+					Metadata: metadata,
+					Control:  control,
+					Features: features,
+				}
+
+				result[metadata.Name] = ev
+			}
+		}
+	}
+
+	return result
+}
+
+func getStringFromMap(m map[string]any, key string) string {
+	if v, ok := m[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func getBoolFromMap(m map[string]any, key string) bool {
+	if v, ok := m[key]; ok {
+		if b, ok := v.(bool); ok {
+			return b
+		}
+	}
+	return false
+}
+
+func getStringSliceFromMap(m map[string]any, key string) []string {
+	if v, ok := m[key]; ok {
+		if arr, ok := v.([]interface{}); ok {
+			res := make([]string, 0, len(arr))
+			for _, e := range arr {
+				if s, ok := e.(string); ok {
+					res = append(res, s)
+				}
+			}
+			return res
+		}
+	}
+	return nil
 }
 
 func getLinksForNode(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel, nodeID string) domain.Links {
@@ -226,33 +261,6 @@ func getStringProp(node neo4j.Node, key string) string {
 		}
 	}
 	return ""
-}
-
-func getBoolProp(node neo4j.Node, key string) bool {
-	if v, ok := node.Props[key]; ok {
-		if b, ok := v.(bool); ok {
-			return b
-		}
-	}
-	return false
-}
-
-func getStringSliceProp(node neo4j.Node, key string) []string {
-	if v, ok := node.Props[key]; ok {
-		switch val := v.(type) {
-		case []interface{}:
-			out := make([]string, 0, len(val))
-			for _, item := range val {
-				if s, ok := item.(string); ok {
-					out = append(out, s)
-				}
-			}
-			return out
-		case []string:
-			return val
-		}
-	}
-	return []string{}
 }
 
 func convertLabelsToList(labels map[string]string) []map[string]string {
