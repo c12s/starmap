@@ -77,11 +77,8 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 
 		// Chart Node
 		queryChart := `
-			MERGE (c:Chart {name: $name})
+			MERGE (c:Chart {name: $name, apiVersion: $apiVersion, schemaVersion: $schemaVersion, kind: $kind})
 			SET c.id = $id,
-				c.apiVersion = $apiVersion,
-				c.schemaVersion = $schemaVersion,
-				c.kind = $kind,
 				c.description = $description,
 				c.visibility = $visibility,
 				c.engine = $engine
@@ -161,31 +158,31 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			querySP := `
 				MERGE (s:StoredProcedure {hash: $hash})
 				ON CREATE SET
-					s.id = $id, 
-					s.name = $name,
-					s.image = $image,
-					s.hash = $hash,
-					s.prefix = $prefix,
-					s.topic = $topic,
-					s.disableVirtualization = $disableVirtualization,
-					s.runDetached = $runDetached,
-					s.removeOnStop = $removeOnStop,
-					s.memory = $memory,
-					s.kernelArgs = $kernelArgs,
-					s.networks = $networks,
-					s.ports = $ports,
-					s.volumes = $volumes,
-					s.targets = $targets,
-					s.envVars = $envVars
+					s.id = $id
 				WITH s
-				MATCH (c:Chart {name: $chartName})
-				MERGE (c)-[:HAS_PROCEDURE]->(s)
+				MATCH (c:Chart {id: $chartId})
+				MERGE (c)-[r:HAS_PROCEDURE]->(s)
+				SET 
+					r.name = $name,
+					r.image = $image,
+					r.prefix = $prefix,
+					r.topic = $topic,
+					r.disableVirtualization = $disableVirtualization,
+					r.runDetached = $runDetached,
+					r.removeOnStop = $removeOnStop,
+					r.memory = $memory,
+					r.kernelArgs = $kernelArgs,
+					r.networks = $networks,
+					r.ports = $ports,
+					r.volumes = $volumes,
+					r.targets = $targets,
+					r.envVars = $envVars
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
+				"hash":                  sp.Metadata.Hash,
 				"name":                  sp.Metadata.Name,
 				"image":                 sp.Metadata.Image,
-				"hash":                  sp.Metadata.Hash,
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"disableVirtualization": sp.Control.DisableVirtualization,
@@ -198,10 +195,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"volumes":               sp.Features.Volumes,
 				"targets":               sp.Features.Targets,
 				"envVars":               sp.Features.EnvVars,
-				"chartName":             chart.Metadata.Name,
+				"chartId":               chart.Metadata.Id,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to create StoredProcedure node for %s: %w", key, err)
+				return nil, fmt.Errorf("failed to create StoredProcedure relation for %s: %w", key, err)
 			}
 
 			for _, hardLink := range sp.Links.HardLinks {
@@ -235,52 +232,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			}
 		}
 
-		// Events
-		for key, ev := range chart.Chart.Events {
-
+		eventMap := map[string]*domain.Event{}
+		for _, ev := range chart.Chart.Events {
 			ev.Metadata.Hash = computeHash(ev.Metadata.Image)
-
-			queryEv := `
-				MERGE (e:Event {hash: $hash})
-				ON CREATE SET 
-					e.id = $id,
-					e.name = $name,
-					e.image = $image,
-					e.hash = $hash,
-					e.prefix = $prefix,
-					e.topic = $topic,
-					e.disableVirtualization = $disableVirtualization,
-					e.runDetached = $runDetached,
-					e.removeOnStop = $removeOnStop,
-					e.memory = $memory,
-					e.kernelArgs = $kernelArgs,
-					e.networks = $networks,
-					e.ports = $ports,
-					e.volumes = $volumes,
-					e.targets = $targets,
-					e.envVars = $envVars
-			`
-			_, err := tx.Run(ctx, queryEv, map[string]any{
-				"id":                    ev.Metadata.Id,
-				"name":                  ev.Metadata.Name,
-				"image":                 ev.Metadata.Image,
-				"hash":                  ev.Metadata.Hash,
-				"prefix":                ev.Metadata.Prefix,
-				"topic":                 ev.Metadata.Topic,
-				"disableVirtualization": ev.Control.DisableVirtualization,
-				"runDetached":           ev.Control.RunDetached,
-				"removeOnStop":          ev.Control.RemoveOnStop,
-				"memory":                ev.Control.Memory,
-				"kernelArgs":            ev.Control.KernelArgs,
-				"networks":              ev.Features.Networks,
-				"ports":                 ev.Features.Ports,
-				"volumes":               ev.Features.Volumes,
-				"targets":               ev.Features.Targets,
-				"envVars":               ev.Features.EnvVars,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Event node for %s: %w", key, err)
-			}
+			eventMap[ev.Metadata.Name] = ev
 		}
 
 		// EventTriggers
@@ -291,25 +246,26 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			queryET := `
 				MERGE (t:Trigger {hash: $hash})
 				ON CREATE SET
-					t.id = $id,	 
-					t.name = $name,
-					t.image = $image,
-					t.hash = $hash,
-					t.prefix = $prefix,
-					t.topic = $topic,
-					t.disableVirtualization = $disableVirtualization,
-					t.runDetached = $runDetached,
-					t.removeOnStop = $removeOnStop,
-					t.memory = $memory,
-					t.kernelArgs = $kernelArgs,
-					t.networks = $networks,
-					t.ports = $ports,
-					t.volumes = $volumes,
-					t.targets = $targets,
-					t.envVars = $envVars
+					t.id = $id
 				WITH t
-				MATCH (c:Chart {name: $chartName})
-				MERGE (c)-[:HAS_TRIGGER]->(t)
+				MATCH (c:Chart {id: $chartId})
+				MERGE (c)-[r:HAS_TRIGGER]->(t)
+				SET
+					r.name = $name,
+					r.image = $image,
+					r.hash = $hash,
+					r.prefix = $prefix,
+					r.topic = $topic,
+					r.disableVirtualization = $disableVirtualization,
+					r.runDetached = $runDetached,
+					r.removeOnStop = $removeOnStop,
+					r.memory = $memory,
+					r.kernelArgs = $kernelArgs,
+					r.networks = $networks,
+					r.ports = $ports,
+					r.volumes = $volumes,
+					r.targets = $targets,
+					r.envVars = $envVars
 			`
 			_, err := tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
@@ -328,7 +284,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"volumes":               et.Features.Volumes,
 				"targets":               et.Features.Targets,
 				"envVars":               et.Features.EnvVars,
-				"chartName":             chart.Metadata.Name,
+				"chartId":               chart.Metadata.Id,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
@@ -364,20 +320,61 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				}
 			}
 
-			for _, eventLink := range et.Links.EventLinks {
+			for _, eventName := range et.Links.EventLinks {
+				ev := eventMap[eventName]
+
 				queryLink := `
+					MERGE (e:Event {hash: $eventHash})
+					ON CREATE SET
+						e.id = $eventId,
+						e.hash = $eventHash
+					WITH e
 					MATCH (t:Trigger {id: $triggerId})
-					MATCH (e:Event {name: $eventName})
-					MERGE (t)-[:EVENT_LINK]->(e)
+					MERGE (t)-[r:EVENT_LINK]->(e)
+					SET
+						r.name = $name,
+						r.image = $image,
+						r.prefix = $prefix,
+						r.topic = $topic,
+						r.disableVirtualization = $disableVirtualization,
+						r.runDetached = $runDetached,
+						r.removeOnStop = $removeOnStop,
+						r.memory = $memory,
+						r.kernelArgs = $kernelArgs,
+						r.networks = $networks,
+						r.ports = $ports,
+						r.volumes = $volumes,
+						r.targets = $targets,
+						r.envVars = $envVars
 				`
+
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"triggerId": et.Metadata.Id,
-					"eventName": eventLink,
+					"eventId":   ev.Metadata.Id,
+					"eventHash": ev.Metadata.Hash,
+
+					// properties for the RELATION
+					"name":                  ev.Metadata.Name,
+					"image":                 ev.Metadata.Image,
+					"hash":                  ev.Metadata.Hash,
+					"prefix":                ev.Metadata.Prefix,
+					"topic":                 ev.Metadata.Topic,
+					"disableVirtualization": ev.Control.DisableVirtualization,
+					"runDetached":           ev.Control.RunDetached,
+					"removeOnStop":          ev.Control.RemoveOnStop,
+					"memory":                ev.Control.Memory,
+					"kernelArgs":            ev.Control.KernelArgs,
+					"networks":              ev.Features.Networks,
+					"ports":                 ev.Features.Ports,
+					"volumes":               ev.Features.Volumes,
+					"targets":               ev.Features.Targets,
+					"envVars":               ev.Features.EnvVars,
 				})
 				if err != nil {
-					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", key, err)
+					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", eventName, err)
 				}
 			}
+
 		}
 
 		return nil, nil
@@ -399,21 +396,36 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, name, namespace, ma
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		query := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {name: $chartName})
+
 			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
 			WITH c, collect({key: l.key, value: l.value}) AS labels
-			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
-			WITH c, labels, collect(DISTINCT sp) as storedProcedures
-			UNWIND storedProcedures as sp
-			OPTIONAL MATCH (sp)-[:HARD_LINK]->(ds1:DataSource)
-			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
-			WITH c, labels, storedProcedures, sp, [ds1, ds2] as spDataSources
-			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
-			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
-			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
-			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
-			WITH c, labels, storedProcedures, collect(DISTINCT t) as triggers, collect(DISTINCT e) as events, collect(DISTINCT spDataSources + [ds3, ds4]) as dataSourcesNested
-			WITH c, labels, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			RETURN c, labels, allDataSources as dataSources, storedProcedures, events, triggers
+
+			OPTIONAL MATCH (c)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WITH c, labels, collect({
+				nodeProps: properties(sp),
+				relProps: properties(spRels)
+			}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			WITH c, labels, storedProcedures, sp, [ds1, ds2] AS spDataSources
+
+			OPTIONAL MATCH (c)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			WITH c, labels, storedProcedures, collect(spDataSources) AS spDataSourcesList,
+				collect({nodeProps: properties(t), relProps: properties(tRels)}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			WITH c, labels, storedProcedures, triggers, collect(spDataSourcesList + [ds3, ds4]) AS dataSourcesNested, tr
+
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			WITH c, labels, storedProcedures, triggers,
+				apoc.coll.flatten([ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL]) AS allDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS events
+
+			RETURN c, labels, storedProcedures, triggers, events, allDataSources AS dataSources
 		`
 
 		rec, err := tx.Run(ctx, query, map[string]any{
@@ -521,20 +533,33 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 			%s
 			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
 			WITH c, collect({key: l.key, value: l.value}) AS labels
-			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
-			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
-			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
-			OPTIONAL MATCH (sp)-[:HARD_LINK]->(ds1:DataSource)
-			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
-			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
-			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
-			WITH c, labels,
-				collect(DISTINCT sp) as storedProcedures,
-				collect(DISTINCT t) as triggers,
-				collect(DISTINCT e) as events,
-				collect(DISTINCT [ds1, ds2, ds3, ds4]) as dataSourcesNested
-			WITH c, labels, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			RETURN c, labels, allDataSources as dataSources, storedProcedures, triggers, events
+
+			OPTIONAL MATCH (c)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WITH c, labels, collect({
+				nodeProps: properties(sp),
+				relProps: properties(spRels)
+			}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			WITH c, labels, storedProcedures, sp, [ds1, ds2] AS spDataSources
+
+			OPTIONAL MATCH (c)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			WITH c, labels, storedProcedures, collect(spDataSources) AS spDataSourcesList,
+				collect({nodeProps: properties(t), relProps: properties(tRels)}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			WITH c, labels, storedProcedures, triggers, collect(spDataSourcesList + [ds3, ds4]) AS dataSourcesNested, tr
+
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			WITH c, labels, storedProcedures, triggers,
+				apoc.coll.flatten([ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL]) AS allDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS events
+
+			RETURN c, labels, storedProcedures, triggers, events, allDataSources AS dataSources
 		`, labelMatch)
 
 		rec, err := tx.Run(ctx, query, params)
@@ -572,6 +597,7 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 			if v, ok := record.Get("labels"); ok {
 				chart.Metadata.Labels = parseLabelList(v)
 			}
+
 			if chart.Metadata.Labels == nil {
 				chart.Metadata.Labels = map[string]string{}
 			}
@@ -579,12 +605,15 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, namespace, maintaine
 			if v, ok := record.Get("dataSources"); ok {
 				chart.DataSources = parseDataSources(v)
 			}
+
 			if v, ok := record.Get("storedProcedures"); ok {
 				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v)
 			}
+
 			if v, ok := record.Get("events"); ok {
 				chart.Events = parseEvents(v)
 			}
+
 			if v, ok := record.Get("triggers"); ok {
 				chart.EventTriggers = parseTriggers(ctx, tx, v)
 			}
@@ -615,21 +644,36 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, namespace, maintainer, ch
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		query := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {id: $chartId})
+
 			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
 			WITH c, collect({key: l.key, value: l.value}) AS labels
-			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
-			WITH c, labels, collect(DISTINCT sp) as storedProcedures
-			UNWIND storedProcedures as sp
-			OPTIONAL MATCH (sp)-[:HARD_LINK]->(ds1:DataSource)
-			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
-			WITH c, labels, storedProcedures, sp, [ds1, ds2] as spDataSources
-			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
-			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
-			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
-			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
-			WITH c, labels, storedProcedures, collect(DISTINCT t) as triggers, collect(DISTINCT e) as events, collect(DISTINCT spDataSources + [ds3, ds4]) as dataSourcesNested
-			WITH c, labels, storedProcedures, triggers, events, [ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			RETURN c, labels, allDataSources as dataSources, storedProcedures, events, triggers
+
+			OPTIONAL MATCH (c)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WITH c, labels, collect({
+				nodeProps: properties(sp),
+				relProps: properties(spRels)
+			}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			WITH c, labels, storedProcedures, sp, [ds1, ds2] AS spDataSources
+
+			OPTIONAL MATCH (c)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			WITH c, labels, storedProcedures, collect(spDataSources) AS spDataSourcesList,
+				collect({nodeProps: properties(t), relProps: properties(tRels)}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			WITH c, labels, storedProcedures, triggers, collect(spDataSourcesList + [ds3, ds4]) AS dataSourcesNested, tr
+
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			WITH c, labels, storedProcedures, triggers,
+				apoc.coll.flatten([ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL]) AS allDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS events
+
+			RETURN c, labels, storedProcedures, triggers, events, allDataSources AS dataSources
 		`
 
 		rec, err := tx.Run(ctx, query, map[string]any{
@@ -714,29 +758,41 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, namespace, maintain
 
 		query := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {id: $chartId})
-			OPTIONAL MATCH (c)-[:HAS_PROCEDURE]->(sp:StoredProcedure)
-			WITH c, collect(DISTINCT sp) as storedProcedures
-			UNWIND storedProcedures as sp
-			OPTIONAL MATCH (sp)-[:HARD_LINK]->(ds1:DataSource)
-			OPTIONAL MATCH (sp)-[:SOFT_LINK]->(ds2:DataSource)
-			WITH c, storedProcedures, sp, [ds1, ds2] as spDataSources
-			OPTIONAL MATCH (c)-[:HAS_TRIGGER]->(t:Trigger)
-			OPTIONAL MATCH (t)-[:HARD_LINK]->(ds3:DataSource)
-			OPTIONAL MATCH (t)-[:SOFT_LINK]->(ds4:DataSource)
-			OPTIONAL MATCH (t)-[:EVENT_LINK]->(e:Event)
-			WITH c, storedProcedures, collect(DISTINCT t) as triggers, collect(DISTINCT e) as events, 
-				collect(DISTINCT spDataSources + [ds3, ds4]) as dataSourcesNested
-			WITH c, storedProcedures, triggers, events, 
-				[ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL] as allDataSources
-			WITH c, 
+
+			OPTIONAL MATCH (c)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WITH c, collect({
+				nodeProps: properties(sp),
+				relProps: properties(spRels)
+			}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			WITH c, storedProcedures, sp, [ds1, ds2] AS spDataSources
+
+			OPTIONAL MATCH (c)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			WITH c, storedProcedures, collect(spDataSources) AS spDataSourcesList,
+				collect({nodeProps: properties(t), relProps: properties(tRels)}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			WITH c, storedProcedures, triggers, collect(spDataSourcesList + [ds3, ds4]) AS dataSourcesNested, tr
+
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			WITH c, storedProcedures, triggers,
+				apoc.coll.flatten([ds IN apoc.coll.flatten(dataSourcesNested) WHERE ds IS NOT NULL]) AS allDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS events
+
+			WITH c,
 				[ds IN allDataSources WHERE NOT ds.hash IN $layers] AS missingDataSources,
-				[sp IN storedProcedures WHERE NOT sp.hash IN $layers] AS missingStoredProcedures,
-				[t IN triggers WHERE NOT t.hash IN $layers] AS missingTriggers,
-				[e IN events WHERE NOT e.hash IN $layers] AS missingEvents
-			RETURN c, 
-				missingDataSources AS dataSources, 
-				missingStoredProcedures AS storedProcedures, 
-				missingEvents AS events, 
+				[sp IN storedProcedures WHERE NOT sp.nodeProps.hash IN $layers] AS missingStoredProcedures,
+				[t IN triggers WHERE NOT t.nodeProps.hash IN $layers] AS missingTriggers,
+				[e IN events WHERE NOT e.nodeProps.hash IN $layers] AS missingEvents
+			RETURN c,
+				missingDataSources AS dataSources,
+				missingStoredProcedures AS storedProcedures,
+				missingEvents AS events,
 				missingTriggers AS triggers
 		`
 
@@ -828,7 +884,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintai
 			DETACH DELETE c
 			RETURN c
 		`
-		_, err := tx.Run(ctx, queryChart, map[string]any{
+		result, err := tx.Run(ctx, queryChart, map[string]any{
 			"name":          name,
 			"namespace":     namespace,
 			"apiVersion":    apiVersion,
@@ -837,6 +893,13 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, name, namespace, maintai
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to delete Chart: %w", err)
+		}
+
+		if !result.Next(ctx) {
+			if result.Err() != nil {
+				return nil, fmt.Errorf("failed to read result: %w", result.Err())
+			}
+			return nil, fmt.Errorf("chart not found: %s/%s", namespace, name)
 		}
 
 		// Delete Labels

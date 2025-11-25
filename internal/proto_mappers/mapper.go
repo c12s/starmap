@@ -155,7 +155,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 }
 
 func ChartMetadataToProto(chart domain.GetChartMetadataResp) *proto.GetChartResp {
-	protoChart := &proto.GetChartResp{
+	return &proto.GetChartResp{
 		Metadata: &proto.MetadataChart{
 			Id:          chart.Metadata.Id,
 			Name:        chart.Metadata.Name,
@@ -167,229 +167,22 @@ func ChartMetadataToProto(chart domain.GetChartMetadataResp) *proto.GetChartResp
 			Labels:      chart.Metadata.Labels,
 		},
 		Chart: &proto.Chart{
-			DataSources:      make(map[string]*proto.DataSource),
-			StoredProcedures: make(map[string]*proto.StoredProcedure),
-			EventTriggers:    make(map[string]*proto.EventTrigger),
-			Events:           make(map[string]*proto.Event),
+			DataSources:      mapDataSourcesToProto(chart.DataSources),
+			StoredProcedures: mapStoredProceduresToProto(chart.StoredProcedures),
+			EventTriggers:    mapEventTriggersToProto(chart.EventTriggers),
+			Events:           mapEventsToProto(chart.Events),
 		},
 	}
-
-	// DataSources
-	for key, ds := range chart.DataSources {
-		protoChart.Chart.DataSources[key] = &proto.DataSource{
-			Id:           ds.Id,
-			Name:         ds.Name,
-			Type:         ds.Type,
-			Path:         ds.Path,
-			ResourceName: ds.ResourceName,
-			Description:  ds.Description,
-		}
-	}
-
-	// StoredProcedures
-	for key, sp := range chart.StoredProcedures {
-		protoChart.Chart.StoredProcedures[key] = &proto.StoredProcedure{
-			Metadata: &proto.Metadata{
-				Id:     sp.Metadata.Id,
-				Name:   sp.Metadata.Name,
-				Image:  sp.Metadata.Image,
-				Prefix: sp.Metadata.Prefix,
-				Topic:  sp.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: sp.Control.DisableVirtualization,
-				RunDetached:           sp.Control.RunDetached,
-				RemoveOnStop:          sp.Control.RemoveOnStop,
-				Memory:                sp.Control.Memory,
-				KernelArgs:            sp.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: sp.Features.Networks,
-				Ports:    sp.Features.Ports,
-				Volumes:  sp.Features.Volumes,
-				Targets:  sp.Features.Targets,
-				EnvVars:  sp.Features.EnvVars,
-			},
-			Links: &proto.Links{
-				SoftLinks:  sp.Links.SoftLinks,
-				HardLinks:  sp.Links.HardLinks,
-				EventLinks: sp.Links.EventLinks,
-			},
-		}
-	}
-
-	// EventTriggers
-	for key, et := range chart.EventTriggers {
-		protoChart.Chart.EventTriggers[key] = &proto.EventTrigger{
-			Metadata: &proto.Metadata{
-				Id:     et.Metadata.Id,
-				Name:   et.Metadata.Name,
-				Image:  et.Metadata.Image,
-				Prefix: et.Metadata.Prefix,
-				Topic:  et.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: et.Control.DisableVirtualization,
-				RunDetached:           et.Control.RunDetached,
-				RemoveOnStop:          et.Control.RemoveOnStop,
-				Memory:                et.Control.Memory,
-				KernelArgs:            et.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: et.Features.Networks,
-				Ports:    et.Features.Ports,
-				Volumes:  et.Features.Volumes,
-				Targets:  et.Features.Targets,
-				EnvVars:  et.Features.EnvVars,
-			},
-			Links: &proto.Links{
-				SoftLinks:  et.Links.SoftLinks,
-				HardLinks:  et.Links.HardLinks,
-				EventLinks: et.Links.EventLinks,
-			},
-		}
-	}
-
-	// Events
-	for key, ev := range chart.Events {
-		protoChart.Chart.Events[key] = &proto.Event{
-			Metadata: &proto.Metadata{
-				Id:     ev.Metadata.Id,
-				Name:   ev.Metadata.Name,
-				Image:  ev.Metadata.Image,
-				Prefix: ev.Metadata.Prefix,
-				Topic:  ev.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: ev.Control.DisableVirtualization,
-				RunDetached:           ev.Control.RunDetached,
-				RemoveOnStop:          ev.Control.RemoveOnStop,
-				Memory:                ev.Control.Memory,
-				KernelArgs:            ev.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: ev.Features.Networks,
-				Ports:    ev.Features.Ports,
-				Volumes:  ev.Features.Volumes,
-				Targets:  ev.Features.Targets,
-				EnvVars:  ev.Features.EnvVars,
-			},
-		}
-	}
-
-	return protoChart
 }
 
 func GetMissingLayersToProto(layers domain.GetMissingLayers) *proto.GetMissingLayersResp {
-	resp := &proto.GetMissingLayersResp{
-		DataSources:      make(map[string]*proto.DataSource),
-		StoredProcedures: make(map[string]*proto.StoredProcedure),
-		EventTriggers:    make(map[string]*proto.EventTrigger),
-		Events:           make(map[string]*proto.Event),
+	return &proto.GetMissingLayersResp{
+		ChartId:          layers.Metadata.Id,
+		Namespace:        layers.Metadata.Namespace,
+		Maintainer:       layers.Metadata.Name,
+		DataSources:      mapDataSourcesToProto(layers.DataSources),
+		StoredProcedures: mapStoredProceduresToProto(layers.StoredProcedures),
+		EventTriggers:    mapEventTriggersToProto(layers.EventTriggers),
+		Events:           mapEventsToProto(layers.Events),
 	}
-
-	// DataSources
-	for key, ds := range layers.DataSources {
-		resp.DataSources[key] = &proto.DataSource{
-			Id:           ds.Id,
-			Name:         ds.Name,
-			Type:         ds.Type,
-			Path:         ds.Path,
-			ResourceName: ds.ResourceName,
-			Description:  ds.Description,
-		}
-	}
-
-	// StoredProcedures
-	for key, sp := range layers.StoredProcedures {
-		resp.StoredProcedures[key] = &proto.StoredProcedure{
-			Metadata: &proto.Metadata{
-				Id:     sp.Metadata.Id,
-				Name:   sp.Metadata.Name,
-				Image:  sp.Metadata.Image,
-				Prefix: sp.Metadata.Prefix,
-				Topic:  sp.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: sp.Control.DisableVirtualization,
-				RunDetached:           sp.Control.RunDetached,
-				RemoveOnStop:          sp.Control.RemoveOnStop,
-				Memory:                sp.Control.Memory,
-				KernelArgs:            sp.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: sp.Features.Networks,
-				Ports:    sp.Features.Ports,
-				Volumes:  sp.Features.Volumes,
-				Targets:  sp.Features.Targets,
-				EnvVars:  sp.Features.EnvVars,
-			},
-			Links: &proto.Links{
-				SoftLinks:  sp.Links.SoftLinks,
-				HardLinks:  sp.Links.HardLinks,
-				EventLinks: sp.Links.EventLinks,
-			},
-		}
-	}
-
-	// Triggers
-	for key, et := range layers.EventTriggers {
-		resp.EventTriggers[key] = &proto.EventTrigger{
-			Metadata: &proto.Metadata{
-				Id:     et.Metadata.Id,
-				Name:   et.Metadata.Name,
-				Image:  et.Metadata.Image,
-				Prefix: et.Metadata.Prefix,
-				Topic:  et.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: et.Control.DisableVirtualization,
-				RunDetached:           et.Control.RunDetached,
-				RemoveOnStop:          et.Control.RemoveOnStop,
-				Memory:                et.Control.Memory,
-				KernelArgs:            et.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: et.Features.Networks,
-				Ports:    et.Features.Ports,
-				Volumes:  et.Features.Volumes,
-				Targets:  et.Features.Targets,
-				EnvVars:  et.Features.EnvVars,
-			},
-			Links: &proto.Links{
-				SoftLinks:  et.Links.SoftLinks,
-				HardLinks:  et.Links.HardLinks,
-				EventLinks: et.Links.EventLinks,
-			},
-		}
-	}
-
-	// Events
-	for key, ev := range layers.Events {
-		resp.Events[key] = &proto.Event{
-			Metadata: &proto.Metadata{
-				Id:     ev.Metadata.Id,
-				Name:   ev.Metadata.Name,
-				Image:  ev.Metadata.Image,
-				Prefix: ev.Metadata.Prefix,
-				Topic:  ev.Metadata.Topic,
-			},
-			Control: &proto.Control{
-				DisableVirtualization: ev.Control.DisableVirtualization,
-				RunDetached:           ev.Control.RunDetached,
-				RemoveOnStop:          ev.Control.RemoveOnStop,
-				Memory:                ev.Control.Memory,
-				KernelArgs:            ev.Control.KernelArgs,
-			},
-			Features: &proto.Features{
-				Networks: ev.Features.Networks,
-				Ports:    ev.Features.Ports,
-				Volumes:  ev.Features.Volumes,
-				Targets:  ev.Features.Targets,
-				EnvVars:  ev.Features.EnvVars,
-			},
-		}
-	}
-
-	return resp
 }
