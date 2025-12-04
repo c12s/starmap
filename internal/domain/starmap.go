@@ -7,6 +7,7 @@ type Metadata struct {
 	Hash   string
 	Prefix string
 	Topic  string
+	Labels map[string]string
 }
 
 type Control struct {
@@ -39,6 +40,7 @@ type DataSource struct {
 	Hash         string
 	ResourceName string
 	Description  string
+	Labels       map[string]string
 }
 
 type StoredProcedure struct {
@@ -87,9 +89,11 @@ type StarChart struct {
 
 type GetMissingLayers struct {
 	Metadata struct {
-		Id        string
-		Name      string
-		Namespace string
+		Id            string
+		Name          string
+		Namespace     string
+		ApiVersion    string
+		SchemaVersion string
 	}
 	DataSources      map[string]*DataSource
 	StoredProcedures map[string]*StoredProcedure
@@ -98,7 +102,9 @@ type GetMissingLayers struct {
 }
 
 type GetChartMetadataResp struct {
-	Metadata struct {
+	ApiVersion    string
+	SchemaVersion string
+	Metadata      struct {
 		Id          string
 		Name        string
 		Namespace   string
@@ -116,4 +122,16 @@ type GetChartMetadataResp struct {
 
 type GetChartsLabelsResp struct {
 	Charts []GetChartMetadataResp
+}
+
+type MetadataResp struct {
+	ApiVersion    string
+	SchemaVersion string
+	Kind          string
+	Metadata      struct {
+		Id         string
+		Name       string
+		Namespace  string
+		Maintainer string
+	}
 }

@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/c12s/starmap/internal/domain"
 
@@ -32,7 +34,7 @@ func processNodes(v any) []neo4j.Node {
 	return nodes
 }
 
-func parseDataSources(v any) map[string]*domain.DataSource {
+func parseDataSources(v any, dsLabels map[string]map[string]string) map[string]*domain.DataSource {
 	result := make(map[string]*domain.DataSource)
 	for _, node := range processNodes(v) {
 		ds := &domain.DataSource{
@@ -44,6 +46,8 @@ func parseDataSources(v any) map[string]*domain.DataSource {
 			ResourceName: getStringProp(node, "resourceName"),
 			Description:  getStringProp(node, "description"),
 		}
+
+		ds.Labels = dsLabels[ds.Id]
 		if ds.Name != "" {
 			result[ds.Name] = ds
 		}
@@ -80,78 +84,136 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 	return
 }
 
-func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any) map[string]*domain.StoredProcedure {
+func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any, spLabels map[string]map[string]string) map[string]*domain.StoredProcedure {
 	result := make(map[string]*domain.StoredProcedure)
+	if v == nil {
+		return result
+	}
 
-	if combinedList, ok := v.([]interface{}); ok {
-		for _, item := range combinedList {
-			if entityMap, ok := item.(map[string]any); ok {
-				nodeProps := entityMap["nodeProps"].(map[string]any)
-				relProps := entityMap["relProps"].(map[string]any)
+	combinedList, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
 
-				metadata, control, features := parseEntity(nodeProps, relProps)
-
-				sp := &domain.StoredProcedure{
-					Metadata: metadata,
-					Control:  control,
-					Features: features,
-					Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
-				}
-
-				result[metadata.Name] = sp
-			}
+	for _, item := range combinedList {
+		entityMap, ok := item.(map[string]any)
+		if !ok {
+			continue
 		}
+
+		nodeProps, ok := entityMap["nodeProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+		relProps, ok := entityMap["relProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		metadata, control, features := parseEntity(nodeProps, relProps)
+
+		sp := &domain.StoredProcedure{
+			Metadata: metadata,
+			Control:  control,
+			Features: features,
+			Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
+		}
+
+		if spLabels != nil {
+			sp.Metadata.Labels = spLabels[sp.Metadata.Id]
+		}
+
+		result[metadata.Name] = sp
 	}
 
 	return result
 }
 
-func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any) map[string]*domain.EventTrigger {
+func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLabels map[string]map[string]string) map[string]*domain.EventTrigger {
 	result := make(map[string]*domain.EventTrigger)
+	if v == nil {
+		return result
+	}
 
-	if combinedList, ok := v.([]interface{}); ok {
-		for _, item := range combinedList {
-			if entityMap, ok := item.(map[string]any); ok {
-				nodeProps := entityMap["nodeProps"].(map[string]any)
-				relProps := entityMap["relProps"].(map[string]any)
+	combinedList, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
 
-				metadata, control, features := parseEntity(nodeProps, relProps)
-
-				tr := &domain.EventTrigger{
-					Metadata: metadata,
-					Control:  control,
-					Features: features,
-					Links:    getLinksForNode(ctx, tx, "Trigger", metadata.Id),
-				}
-
-				result[metadata.Name] = tr
-			}
+	for _, item := range combinedList {
+		entityMap, ok := item.(map[string]any)
+		if !ok {
+			continue
 		}
+
+		nodeProps, ok := entityMap["nodeProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+		relProps, ok := entityMap["relProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		metadata, control, features := parseEntity(nodeProps, relProps)
+
+		tr := &domain.EventTrigger{
+			Metadata: metadata,
+			Control:  control,
+			Features: features,
+			Links:    getLinksForNode(ctx, tx, "Trigger", metadata.Id),
+		}
+
+		if trLabels != nil {
+			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
+		}
+
+		result[metadata.Name] = tr
 	}
 
 	return result
 }
 
-func parseEvents(v any) map[string]*domain.Event {
+func parseEvents(v any, evLabels map[string]map[string]string) map[string]*domain.Event {
 	result := make(map[string]*domain.Event)
+	if v == nil {
+		return result
+	}
 
-	if combinedList, ok := v.([]interface{}); ok {
-		for _, item := range combinedList {
-			if entityMap, ok := item.(map[string]any); ok {
-				nodeProps := entityMap["nodeProps"].(map[string]any)
-				relProps := entityMap["relProps"].(map[string]any)
+	combinedList, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
 
-				metadata, control, features := parseEntity(nodeProps, relProps)
-
-				ev := &domain.Event{
-					Metadata: metadata,
-					Control:  control,
-					Features: features,
-				}
-
-				result[metadata.Name] = ev
-			}
+	for _, item := range combinedList {
+		entityMap, ok := item.(map[string]any)
+		if !ok {
+			continue
 		}
+
+		nodeProps, ok := entityMap["nodeProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		relProps, ok := entityMap["relProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		metadata, control, features := parseEntity(nodeProps, relProps)
+
+		ev := &domain.Event{
+			Metadata: metadata,
+			Control:  control,
+			Features: features,
+		}
+
+		if evLabels != nil {
+			ev.Metadata.Labels = evLabels[ev.Metadata.Id]
+		}
+
+		result[metadata.Name] = ev
 	}
 
 	return result
@@ -292,4 +354,49 @@ func parseLabelList(v any) map[string]string {
 		}
 	}
 	return labels
+}
+
+func parseLabelsIntoMap(v any) map[string]map[string]string {
+	result := make(map[string]map[string]string)
+
+	list, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, item := range list {
+		if m, ok := item.(map[string]any); ok {
+			Id := m["id"].(string)
+			key := m["key"].(string)
+			value := m["value"].(string)
+
+			if result[Id] == nil {
+				result[Id] = make(map[string]string)
+			}
+
+			result[Id][key] = value
+		}
+	}
+
+	return result
+}
+
+func incrementVersion(ver string) string {
+	if !strings.HasPrefix(ver, "v") {
+		return "v1.0.0"
+	}
+
+	ver = strings.TrimPrefix(ver, "v")
+	parts := strings.Split(ver, ".")
+	if len(parts) != 3 {
+		return "v1.0.0"
+	}
+
+	major, _ := strconv.Atoi(parts[0])
+	minor, _ := strconv.Atoi(parts[1])
+	patch, _ := strconv.Atoi(parts[2])
+
+	patch += 1
+
+	return fmt.Sprintf("v%d.%d.%d", major, minor, patch)
 }

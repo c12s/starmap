@@ -23,10 +23,12 @@ const (
 
 type GetMissingLayersReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChartId       string                 `protobuf:"bytes,1,opt,name=chartId,proto3" json:"chartId,omitempty"`
-	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Maintainer    string                 `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	Layers        []string               `protobuf:"bytes,4,rep,name=layers,proto3" json:"layers,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,1,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,2,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	ChartId       string                 `protobuf:"bytes,3,opt,name=chartId,proto3" json:"chartId,omitempty"`
+	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,5,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	Layers        []string               `protobuf:"bytes,6,rep,name=layers,proto3" json:"layers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,6 +61,20 @@ func (x *GetMissingLayersReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetMissingLayersReq.ProtoReflect.Descriptor instead.
 func (*GetMissingLayersReq) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetMissingLayersReq) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetMissingLayersReq) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
 }
 
 func (x *GetMissingLayersReq) GetChartId() string {
@@ -94,10 +110,12 @@ type GetMissingLayersResp struct {
 	ChartId          string                      `protobuf:"bytes,1,opt,name=chartId,proto3" json:"chartId,omitempty"`
 	Namespace        string                      `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Maintainer       string                      `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	DataSources      map[string]*DataSource      `protobuf:"bytes,4,rep,name=dataSources,proto3" json:"dataSources,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	StoredProcedures map[string]*StoredProcedure `protobuf:"bytes,5,rep,name=storedProcedures,proto3" json:"storedProcedures,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	EventTriggers    map[string]*EventTrigger    `protobuf:"bytes,6,rep,name=eventTriggers,proto3" json:"eventTriggers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Events           map[string]*Event           `protobuf:"bytes,7,rep,name=events,proto3" json:"events,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ApiVersion       string                      `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion    string                      `protobuf:"bytes,5,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	DataSources      map[string]*DataSource      `protobuf:"bytes,6,rep,name=dataSources,proto3" json:"dataSources,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	StoredProcedures map[string]*StoredProcedure `protobuf:"bytes,7,rep,name=storedProcedures,proto3" json:"storedProcedures,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	EventTriggers    map[string]*EventTrigger    `protobuf:"bytes,8,rep,name=eventTriggers,proto3" json:"eventTriggers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Events           map[string]*Event           `protobuf:"bytes,9,rep,name=events,proto3" json:"events,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -153,6 +171,20 @@ func (x *GetMissingLayersResp) GetMaintainer() string {
 	return ""
 }
 
+func (x *GetMissingLayersResp) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetMissingLayersResp) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
+}
+
 func (x *GetMissingLayersResp) GetDataSources() map[string]*DataSource {
 	if x != nil {
 		return x.DataSources
@@ -183,9 +215,11 @@ func (x *GetMissingLayersResp) GetEvents() map[string]*Event {
 
 type GetChartIdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChartId       string                 `protobuf:"bytes,1,opt,name=chartId,proto3" json:"chartId,omitempty"`
-	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Maintainer    string                 `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,1,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,2,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	ChartId       string                 `protobuf:"bytes,3,opt,name=chartId,proto3" json:"chartId,omitempty"`
+	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,5,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -220,6 +254,20 @@ func (*GetChartIdReq) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{2}
 }
 
+func (x *GetChartIdReq) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetChartIdReq) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
+}
+
 func (x *GetChartIdReq) GetChartId() string {
 	if x != nil {
 		return x.ChartId
@@ -243,12 +291,13 @@ func (x *GetChartIdReq) GetMaintainer() string {
 
 type DeleteChartReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Maintainer    string                 `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	ApiVersion    string                 `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
-	SchemaVersion string                 `protobuf:"bytes,5,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
-	Kind          string                 `protobuf:"bytes,6,opt,name=kind,proto3" json:"kind,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace     string                 `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,4,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,5,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,6,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	Kind          string                 `protobuf:"bytes,7,opt,name=kind,proto3" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -281,6 +330,13 @@ func (x *DeleteChartReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeleteChartReq.ProtoReflect.Descriptor instead.
 func (*DeleteChartReq) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DeleteChartReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *DeleteChartReq) GetName() string {
@@ -327,9 +383,11 @@ func (x *DeleteChartReq) GetKind() string {
 
 type GetChartsLabelsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Maintainer    string                 `protobuf:"bytes,2,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,3,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ApiVersion    string                 `protobuf:"bytes,1,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,2,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	Namespace     string                 `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,4,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -362,6 +420,20 @@ func (x *GetChartsLabelsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetChartsLabelsReq.ProtoReflect.Descriptor instead.
 func (*GetChartsLabelsReq) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetChartsLabelsReq) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetChartsLabelsReq) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
 }
 
 func (x *GetChartsLabelsReq) GetNamespace() string {
@@ -434,6 +506,8 @@ type GetChartFromMetadataReq struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Maintainer    string                 `protobuf:"bytes,3,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,5,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -489,10 +563,26 @@ func (x *GetChartFromMetadataReq) GetMaintainer() string {
 	return ""
 }
 
+func (x *GetChartFromMetadataReq) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetChartFromMetadataReq) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
+}
+
 type GetChartResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metadata      *MetadataChart         `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Chart         *Chart                 `protobuf:"bytes,2,opt,name=chart,proto3" json:"chart,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,1,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,2,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	Metadata      *MetadataChart         `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Chart         *Chart                 `protobuf:"bytes,4,opt,name=chart,proto3" json:"chart,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -527,6 +617,20 @@ func (*GetChartResp) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{7}
 }
 
+func (x *GetChartResp) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *GetChartResp) GetSchemaVersion() string {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return ""
+}
+
 func (x *GetChartResp) GetMetadata() *MetadataChart {
 	if x != nil {
 		return x.Metadata
@@ -543,12 +647,13 @@ func (x *GetChartResp) GetChart() *Chart {
 
 type PutChartResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ApiVersion    string                 `protobuf:"bytes,1,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
-	SchemaVersion string                 `protobuf:"bytes,2,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
-	Kind          string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
-	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	Namespace     string                 `protobuf:"bytes,5,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Maintainer    string                 `protobuf:"bytes,6,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ApiVersion    string                 `protobuf:"bytes,2,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	SchemaVersion string                 `protobuf:"bytes,3,opt,name=schemaVersion,proto3" json:"schemaVersion,omitempty"`
+	Kind          string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"`
+	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace     string                 `protobuf:"bytes,6,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Maintainer    string                 `protobuf:"bytes,7,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -581,6 +686,13 @@ func (x *PutChartResp) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PutChartResp.ProtoReflect.Descriptor instead.
 func (*PutChartResp) Descriptor() ([]byte, []int) {
 	return file_starmap_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PutChartResp) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *PutChartResp) GetApiVersion() string {
@@ -629,24 +741,32 @@ var File_starmap_proto protoreflect.FileDescriptor
 
 const file_starmap_proto_rawDesc = "" +
 	"\n" +
-	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"\x85\x01\n" +
-	"\x13GetMissingLayersReq\x12\x18\n" +
-	"\achartId\x18\x01 \x01(\tR\achartId\x12\x1c\n" +
-	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"\xcb\x01\n" +
+	"\x13GetMissingLayersReq\x12\x1e\n" +
 	"\n" +
-	"maintainer\x18\x03 \x01(\tR\n" +
+	"apiVersion\x18\x01 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x02 \x01(\tR\rschemaVersion\x12\x18\n" +
+	"\achartId\x18\x03 \x01(\tR\achartId\x12\x1c\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\x05 \x01(\tR\n" +
 	"maintainer\x12\x16\n" +
-	"\x06layers\x18\x04 \x03(\tR\x06layers\"\x84\x06\n" +
+	"\x06layers\x18\x06 \x03(\tR\x06layers\"\xca\x06\n" +
 	"\x14GetMissingLayersResp\x12\x18\n" +
 	"\achartId\x18\x01 \x01(\tR\achartId\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
 	"maintainer\x18\x03 \x01(\tR\n" +
-	"maintainer\x12N\n" +
-	"\vdataSources\x18\x04 \x03(\v2,.proto.GetMissingLayersResp.DataSourcesEntryR\vdataSources\x12]\n" +
-	"\x10storedProcedures\x18\x05 \x03(\v21.proto.GetMissingLayersResp.StoredProceduresEntryR\x10storedProcedures\x12T\n" +
-	"\reventTriggers\x18\x06 \x03(\v2..proto.GetMissingLayersResp.EventTriggersEntryR\reventTriggers\x12?\n" +
-	"\x06events\x18\a \x03(\v2'.proto.GetMissingLayersResp.EventsEntryR\x06events\x1aQ\n" +
+	"maintainer\x12\x1e\n" +
+	"\n" +
+	"apiVersion\x18\x04 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x05 \x01(\tR\rschemaVersion\x12N\n" +
+	"\vdataSources\x18\x06 \x03(\v2,.proto.GetMissingLayersResp.DataSourcesEntryR\vdataSources\x12]\n" +
+	"\x10storedProcedures\x18\a \x03(\v21.proto.GetMissingLayersResp.StoredProceduresEntryR\x10storedProcedures\x12T\n" +
+	"\reventTriggers\x18\b \x03(\v2..proto.GetMissingLayersResp.EventTriggersEntryR\reventTriggers\x12?\n" +
+	"\x06events\x18\t \x03(\v2'.proto.GetMissingLayersResp.EventsEntryR\x06events\x1aQ\n" +
 	"\x10DataSourcesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12'\n" +
 	"\x05value\x18\x02 \x01(\v2\x11.proto.DataSourceR\x05value:\x028\x01\x1a[\n" +
@@ -658,14 +778,45 @@ const file_starmap_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x13.proto.EventTriggerR\x05value:\x028\x01\x1aG\n" +
 	"\vEventsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\"\n" +
-	"\x05value\x18\x02 \x01(\v2\f.proto.EventR\x05value:\x028\x01\"g\n" +
-	"\rGetChartIdReq\x12\x18\n" +
-	"\achartId\x18\x01 \x01(\tR\achartId\x12\x1c\n" +
-	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\x05value\x18\x02 \x01(\v2\f.proto.EventR\x05value:\x028\x01\"\xad\x01\n" +
+	"\rGetChartIdReq\x12\x1e\n" +
 	"\n" +
-	"maintainer\x18\x03 \x01(\tR\n" +
-	"maintainer\"\xbc\x01\n" +
-	"\x0eDeleteChartReq\x12\x12\n" +
+	"apiVersion\x18\x01 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x02 \x01(\tR\rschemaVersion\x12\x18\n" +
+	"\achartId\x18\x03 \x01(\tR\achartId\x12\x1c\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\x05 \x01(\tR\n" +
+	"maintainer\"\xcc\x01\n" +
+	"\x0eDeleteChartReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
+	"\tnamespace\x18\x03 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\x04 \x01(\tR\n" +
+	"maintainer\x12\x1e\n" +
+	"\n" +
+	"apiVersion\x18\x05 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x06 \x01(\tR\rschemaVersion\x12\x12\n" +
+	"\x04kind\x18\a \x01(\tR\x04kind\"\x92\x02\n" +
+	"\x12GetChartsLabelsReq\x12\x1e\n" +
+	"\n" +
+	"apiVersion\x18\x01 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x02 \x01(\tR\rschemaVersion\x12\x1c\n" +
+	"\tnamespace\x18\x03 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\x04 \x01(\tR\n" +
+	"maintainer\x12=\n" +
+	"\x06labels\x18\x05 \x03(\v2%.proto.GetChartsLabelsReq.LabelsEntryR\x06labels\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
+	"\x13GetChartsLabelsResp\x12+\n" +
+	"\x06charts\x18\x01 \x03(\v2\x13.proto.GetChartRespR\x06charts\"\xb1\x01\n" +
+	"\x17GetChartFromMetadataReq\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
@@ -674,39 +825,26 @@ const file_starmap_proto_rawDesc = "" +
 	"\n" +
 	"apiVersion\x18\x04 \x01(\tR\n" +
 	"apiVersion\x12$\n" +
-	"\rschemaVersion\x18\x05 \x01(\tR\rschemaVersion\x12\x12\n" +
-	"\x04kind\x18\x06 \x01(\tR\x04kind\"\xcc\x01\n" +
-	"\x12GetChartsLabelsReq\x12\x1c\n" +
-	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1e\n" +
-	"\n" +
-	"maintainer\x18\x02 \x01(\tR\n" +
-	"maintainer\x12=\n" +
-	"\x06labels\x18\x03 \x03(\v2%.proto.GetChartsLabelsReq.LabelsEntryR\x06labels\x1a9\n" +
-	"\vLabelsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
-	"\x13GetChartsLabelsResp\x12+\n" +
-	"\x06charts\x18\x01 \x03(\v2\x13.proto.GetChartRespR\x06charts\"k\n" +
-	"\x17GetChartFromMetadataReq\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
-	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1e\n" +
-	"\n" +
-	"maintainer\x18\x03 \x01(\tR\n" +
-	"maintainer\"d\n" +
-	"\fGetChartResp\x120\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x14.proto.MetadataChartR\bmetadata\x12\"\n" +
-	"\x05chart\x18\x02 \x01(\v2\f.proto.ChartR\x05chart\"\xba\x01\n" +
-	"\fPutChartResp\x12\x1e\n" +
+	"\rschemaVersion\x18\x05 \x01(\tR\rschemaVersion\"\xaa\x01\n" +
+	"\fGetChartResp\x12\x1e\n" +
 	"\n" +
 	"apiVersion\x18\x01 \x01(\tR\n" +
 	"apiVersion\x12$\n" +
-	"\rschemaVersion\x18\x02 \x01(\tR\rschemaVersion\x12\x12\n" +
-	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04name\x12\x1c\n" +
-	"\tnamespace\x18\x05 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\rschemaVersion\x18\x02 \x01(\tR\rschemaVersion\x120\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x14.proto.MetadataChartR\bmetadata\x12\"\n" +
+	"\x05chart\x18\x04 \x01(\v2\f.proto.ChartR\x05chart\"\xca\x01\n" +
+	"\fPutChartResp\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
 	"\n" +
-	"maintainer\x18\x06 \x01(\tR\n" +
-	"maintainer2\xa4\x03\n" +
+	"apiVersion\x18\x02 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rschemaVersion\x18\x03 \x01(\tR\rschemaVersion\x12\x12\n" +
+	"\x04kind\x18\x04 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x1c\n" +
+	"\tnamespace\x18\x06 \x01(\tR\tnamespace\x12\x1e\n" +
+	"\n" +
+	"maintainer\x18\a \x01(\tR\n" +
+	"maintainer2\xdc\x03\n" +
 	"\x0fRegistryService\x123\n" +
 	"\bPutChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12I\n" +
 	"\x10GetChartMetadata\x12\x1e.proto.GetChartFromMetadataReq\x1a\x13.proto.GetChartResp\"\x00\x12J\n" +
@@ -714,7 +852,8 @@ const file_starmap_proto_rawDesc = "" +
 	"\n" +
 	"GetChartId\x12\x14.proto.GetChartIdReq\x1a\x13.proto.GetChartResp\"\x00\x12M\n" +
 	"\x10GetMissingLayers\x12\x1a.proto.GetMissingLayersReq\x1a\x1b.proto.GetMissingLayersResp\"\x00\x12;\n" +
-	"\vDeleteChart\x12\x15.proto.DeleteChartReq\x1a\x13.proto.EmptyMessage\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
+	"\vDeleteChart\x12\x15.proto.DeleteChartReq\x1a\x13.proto.EmptyMessage\"\x00\x126\n" +
+	"\vUpdateChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
 
 var (
 	file_starmap_proto_rawDescOnce sync.Once
@@ -772,14 +911,16 @@ var file_starmap_proto_depIdxs = []int32{
 	2,  // 15: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
 	0,  // 16: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
 	3,  // 17: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
-	8,  // 18: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
-	7,  // 19: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
-	5,  // 20: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
-	7,  // 21: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
-	1,  // 22: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
-	21, // 23: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
+	20, // 18: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
+	8,  // 19: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
+	7,  // 20: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
+	5,  // 21: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
+	7,  // 22: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
+	1,  // 23: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
+	21, // 24: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
+	8,  // 25: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name

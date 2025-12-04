@@ -44,6 +44,7 @@ message DataSource {
   string path = 4;
   string resourceName = 5;
   string description = 6;
+  map<string, string> labels = 7;
 }
 
 message Metadata {
@@ -52,6 +53,7 @@ message Metadata {
   string image = 3;
   string prefix = 4;
   string topic = 5;
+  map<string, string> labels = 6;
 }
 
 message Control {
@@ -112,7 +114,7 @@ message MetadataChart {
     string visibility = 6;
     string engine = 7;
     map<string, string> labels = 8;
-}
+  }
 
 message StarChart {
   string apiVersion = 1;
@@ -146,17 +148,19 @@ starmap/yamlStarChart.json
 #### Response - 0 OK
 ```proto
 message PutChartResp {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string kind = 3;
-  string name = 4;
-  string namespace = 5;
-  string maintainer = 6;
+  string id = 1;
+  string apiVersion = 2;
+  string schemaVersion = 3;
+  string kind = 4;
+  string name = 5;
+  string namespace = 6;
+  string maintainer = 7;
 }
 ```
 
 #### /GetChartMetadata
-The endpoint for retrieving complete chart by metadata: name, namespace, and maintainer.
+The endpoint for retrieving complete chart by metadata: 
+name, namespace, maintainer and versions.
 
 #### Request body
 ```proto
@@ -164,26 +168,32 @@ message GetChartFromMetadataReq {
   string name = 1;
   string namespace = 2;
   string maintainer = 3;
+  string apiVersion = 4;
+  string schemaVersion = 5;
 }
 ```
 
 #### Response - 0 OK
 ```proto
 message GetChartResp {
-  MetadataChart metadata = 1;
-  Chart chart = 2;
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  MetadataChart metadata = 3;
+  Chart chart = 4;
 }
 ```
 
 #### /GetChartsLabels
-The endpoint for querying charts by namespace, maintainer, and labels.
+The endpoint for querying charts by namespace, maintainer, labels and versions.
 
 #### Request body
 ```proto
 message GetChartsLabelsReq {
-  string namespace = 1;
-  string maintainer = 2;
-  map<string, string> labels = 3;
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string namespace = 3;
+  string maintainer = 4;
+  map<string, string> labels = 5;
 }
 ```
 
@@ -195,22 +205,26 @@ message GetChartsLabelsResp {
 ```
 
 #### /GetChartId
-The endpoint for querying charts by chartId, namespace, and maintainer.
+The endpoint for querying charts by chartId, namespace, maintainer and versions.
 
 #### Request body
 ```proto
 message GetChartIdReq {
-  string chartId = 1;
-  string namespace = 2;
-  string maintainer = 3;
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string chartId = 3;
+  string namespace = 4;
+  string maintainer = 5;
 }
 ```
 
 #### Response - 0 OK
 ```proto
 message GetChartResp {
-  MetadataChart metadata = 1;
-  Chart chart = 2;
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  MetadataChart metadata = 3;
+  Chart chart = 4;
 }
 ```
 
@@ -220,10 +234,12 @@ Endpoint returns chart layers present in the registry but missing from the provi
 #### Request body
 ```proto
 message GetMissingLayersReq {
-  string chartId = 1;
-  string namespace = 2;
-  string maintainer = 3;
-  repeated string layers = 4;
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string chartId = 3;
+  string namespace = 4;
+  string maintainer = 5;
+  repeated string layers = 6;
 }
 ```
 
@@ -233,10 +249,12 @@ message GetMissingLayersResp {
   string chartId = 1;
   string namespace = 2;
   string maintainer = 3;
-  map<string, DataSource> dataSources = 4;
-  map<string, StoredProcedure> storedProcedures = 5;
-  map<string, EventTrigger> eventTriggers = 6;
-  map<string, Event> events = 7;
+  string apiVersion = 4;
+  string schemaVersion = 5;
+  map<string, DataSource> dataSources = 6;
+  map<string, StoredProcedure> storedProcedures = 7;
+  map<string, EventTrigger> eventTriggers = 8;
+  map<string, Event> events = 9;
 }
 ```
 
@@ -246,13 +264,42 @@ The endpoint for deleting charts and cleaning up orphaned nodes from the graph d
 #### Request body
 ```proto
 message DeleteChartReq {
-  string name = 1;
-  string namespace = 2;
-  string maintainer = 3;
-  string apiVersion = 4;
-  string schemaVersion = 5;
-  string kind = 6;
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  string maintainer = 4;
+  string apiVersion = 5;
+  string schemaVersion = 6;
+  string kind = 7;
 }
 ```
 
 #### Response - 0 OK
+
+#### /UpdateChart
+The endpoint for updating a chart’s metadata, version, and associated resources.
+
+#### Request body
+```proto
+message StarChart {
+  string apiVersion = 1;
+  string schemaVersion = 2;
+  string kind = 3;
+
+  MetadataChart metadata = 4;
+  Chart chart = 5;
+}
+```
+
+#### Response - 0 OK
+```proto
+message PutChartResp {
+  string id = 1;
+  string apiVersion = 2;
+  string schemaVersion = 3;
+  string kind = 4;
+  string name = 5;
+  string namespace = 6;
+  string maintainer = 7;
+}
+```
