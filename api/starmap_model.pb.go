@@ -65,6 +65,7 @@ type DataSource struct {
 	Path          string                 `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
 	ResourceName  string                 `protobuf:"bytes,5,opt,name=resourceName,proto3" json:"resourceName,omitempty"`
 	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,6 +142,13 @@ func (x *DataSource) GetDescription() string {
 	return ""
 }
 
+func (x *DataSource) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
 type Metadata struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -148,6 +156,7 @@ type Metadata struct {
 	Image         string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
 	Prefix        string                 `protobuf:"bytes,4,opt,name=prefix,proto3" json:"prefix,omitempty"`
 	Topic         string                 `protobuf:"bytes,5,opt,name=topic,proto3" json:"topic,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -215,6 +224,13 @@ func (x *Metadata) GetTopic() string {
 		return x.Topic
 	}
 	return ""
+}
+
+func (x *Metadata) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
 }
 
 type Control struct {
@@ -874,7 +890,7 @@ var File_starmap_model_proto protoreflect.FileDescriptor
 const file_starmap_model_proto_rawDesc = "" +
 	"\n" +
 	"\x13starmap_model.proto\x12\x05proto\"\x0e\n" +
-	"\fEmptyMessage\"\x9e\x01\n" +
+	"\fEmptyMessage\"\x90\x02\n" +
 	"\n" +
 	"DataSource\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -882,13 +898,21 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x12\n" +
 	"\x04path\x18\x04 \x01(\tR\x04path\x12\"\n" +
 	"\fresourceName\x18\x05 \x01(\tR\fresourceName\x12 \n" +
-	"\vdescription\x18\x06 \x01(\tR\vdescription\"r\n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x125\n" +
+	"\x06labels\x18\a \x03(\v2\x1d.proto.DataSource.LabelsEntryR\x06labels\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe2\x01\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05image\x18\x03 \x01(\tR\x05image\x12\x16\n" +
 	"\x06prefix\x18\x04 \x01(\tR\x06prefix\x12\x14\n" +
-	"\x05topic\x18\x05 \x01(\tR\x05topic\"\xbd\x01\n" +
+	"\x05topic\x18\x05 \x01(\tR\x05topic\x123\n" +
+	"\x06labels\x18\x06 \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbd\x01\n" +
 	"\aControl\x124\n" +
 	"\x15disableVirtualization\x18\x01 \x01(\bR\x15disableVirtualization\x12 \n" +
 	"\vrunDetached\x18\x02 \x01(\bR\vrunDetached\x12\"\n" +
@@ -977,7 +1001,7 @@ func file_starmap_model_proto_rawDescGZIP() []byte {
 	return file_starmap_model_proto_rawDescData
 }
 
-var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_starmap_model_proto_goTypes = []any{
 	(*EmptyMessage)(nil),    // 0: proto.EmptyMessage
 	(*DataSource)(nil),      // 1: proto.DataSource
@@ -991,40 +1015,44 @@ var file_starmap_model_proto_goTypes = []any{
 	(*Chart)(nil),           // 9: proto.Chart
 	(*MetadataChart)(nil),   // 10: proto.MetadataChart
 	(*StarChart)(nil),       // 11: proto.StarChart
-	nil,                     // 12: proto.Chart.DataSourcesEntry
-	nil,                     // 13: proto.Chart.StoredProceduresEntry
-	nil,                     // 14: proto.Chart.EventTriggersEntry
-	nil,                     // 15: proto.Chart.EventsEntry
-	nil,                     // 16: proto.MetadataChart.LabelsEntry
+	nil,                     // 12: proto.DataSource.LabelsEntry
+	nil,                     // 13: proto.Metadata.LabelsEntry
+	nil,                     // 14: proto.Chart.DataSourcesEntry
+	nil,                     // 15: proto.Chart.StoredProceduresEntry
+	nil,                     // 16: proto.Chart.EventTriggersEntry
+	nil,                     // 17: proto.Chart.EventsEntry
+	nil,                     // 18: proto.MetadataChart.LabelsEntry
 }
 var file_starmap_model_proto_depIdxs = []int32{
-	2,  // 0: proto.StoredProcedure.metadata:type_name -> proto.Metadata
-	3,  // 1: proto.StoredProcedure.control:type_name -> proto.Control
-	4,  // 2: proto.StoredProcedure.features:type_name -> proto.Features
-	5,  // 3: proto.StoredProcedure.links:type_name -> proto.Links
-	2,  // 4: proto.Event.metadata:type_name -> proto.Metadata
-	3,  // 5: proto.Event.control:type_name -> proto.Control
-	4,  // 6: proto.Event.features:type_name -> proto.Features
-	2,  // 7: proto.EventTrigger.metadata:type_name -> proto.Metadata
-	3,  // 8: proto.EventTrigger.control:type_name -> proto.Control
-	4,  // 9: proto.EventTrigger.features:type_name -> proto.Features
-	5,  // 10: proto.EventTrigger.links:type_name -> proto.Links
-	12, // 11: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
-	13, // 12: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
-	14, // 13: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
-	15, // 14: proto.Chart.events:type_name -> proto.Chart.EventsEntry
-	16, // 15: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
-	10, // 16: proto.StarChart.metadata:type_name -> proto.MetadataChart
-	9,  // 17: proto.StarChart.chart:type_name -> proto.Chart
-	1,  // 18: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
-	6,  // 19: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	8,  // 20: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	7,  // 21: proto.Chart.EventsEntry.value:type_name -> proto.Event
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	12, // 0: proto.DataSource.labels:type_name -> proto.DataSource.LabelsEntry
+	13, // 1: proto.Metadata.labels:type_name -> proto.Metadata.LabelsEntry
+	2,  // 2: proto.StoredProcedure.metadata:type_name -> proto.Metadata
+	3,  // 3: proto.StoredProcedure.control:type_name -> proto.Control
+	4,  // 4: proto.StoredProcedure.features:type_name -> proto.Features
+	5,  // 5: proto.StoredProcedure.links:type_name -> proto.Links
+	2,  // 6: proto.Event.metadata:type_name -> proto.Metadata
+	3,  // 7: proto.Event.control:type_name -> proto.Control
+	4,  // 8: proto.Event.features:type_name -> proto.Features
+	2,  // 9: proto.EventTrigger.metadata:type_name -> proto.Metadata
+	3,  // 10: proto.EventTrigger.control:type_name -> proto.Control
+	4,  // 11: proto.EventTrigger.features:type_name -> proto.Features
+	5,  // 12: proto.EventTrigger.links:type_name -> proto.Links
+	14, // 13: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
+	15, // 14: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
+	16, // 15: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
+	17, // 16: proto.Chart.events:type_name -> proto.Chart.EventsEntry
+	18, // 17: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
+	10, // 18: proto.StarChart.metadata:type_name -> proto.MetadataChart
+	9,  // 19: proto.StarChart.chart:type_name -> proto.Chart
+	1,  // 20: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
+	6,  // 21: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	8,  // 22: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	7,  // 23: proto.Chart.EventsEntry.value:type_name -> proto.Event
+	24, // [24:24] is the sub-list for method output_type
+	24, // [24:24] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_starmap_model_proto_init() }
@@ -1038,7 +1066,7 @@ func file_starmap_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starmap_model_proto_rawDesc), len(file_starmap_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
