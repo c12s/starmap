@@ -12,12 +12,6 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 		return nil, errors.New("chart is nil")
 	}
 
-	if chart.ApiVersion == "" {
-		return nil, errors.New("invalid or missing apiVersion")
-	}
-	if chart.SchemaVersion == "" {
-		return nil, errors.New("invalid or missing schemaVersion")
-	}
 	if chart.Kind == "" {
 		return nil, errors.New("invalid or missing kind")
 	}
@@ -60,6 +54,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Path:         ds.Path,
 			ResourceName: ds.ResourceName,
 			Description:  ds.Description,
+			Labels:       ds.Labels,
 		}
 	}
 
@@ -71,6 +66,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 				Image:  sp.Metadata.Image,
 				Prefix: sp.Metadata.Prefix,
 				Topic:  sp.Metadata.Topic,
+				Labels: sp.Metadata.Labels,
 			},
 			Control: domain.Control{
 				DisableVirtualization: sp.Control.DisableVirtualization,
@@ -102,6 +98,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 				Image:  et.Metadata.Image,
 				Prefix: et.Metadata.Prefix,
 				Topic:  et.Metadata.Topic,
+				Labels: et.Metadata.Labels,
 			},
 			Control: domain.Control{
 				DisableVirtualization: et.Control.DisableVirtualization,
@@ -133,6 +130,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 				Image:  ev.Metadata.Image,
 				Prefix: ev.Metadata.Prefix,
 				Topic:  ev.Metadata.Topic,
+				Labels: ev.Metadata.Labels,
 			},
 			Control: domain.Control{
 				DisableVirtualization: ev.Control.DisableVirtualization,
@@ -156,6 +154,8 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 
 func ChartMetadataToProto(chart domain.GetChartMetadataResp) *proto.GetChartResp {
 	return &proto.GetChartResp{
+		ApiVersion:    chart.ApiVersion,
+		SchemaVersion: chart.SchemaVersion,
 		Metadata: &proto.MetadataChart{
 			Id:          chart.Metadata.Id,
 			Name:        chart.Metadata.Name,
@@ -180,6 +180,8 @@ func GetMissingLayersToProto(layers domain.GetMissingLayers) *proto.GetMissingLa
 		ChartId:          layers.Metadata.Id,
 		Namespace:        layers.Metadata.Namespace,
 		Maintainer:       layers.Metadata.Name,
+		ApiVersion:       layers.Metadata.ApiVersion,
+		SchemaVersion:    layers.Metadata.SchemaVersion,
 		DataSources:      mapDataSourcesToProto(layers.DataSources),
 		StoredProcedures: mapStoredProceduresToProto(layers.StoredProcedures),
 		EventTriggers:    mapEventTriggersToProto(layers.EventTriggers),

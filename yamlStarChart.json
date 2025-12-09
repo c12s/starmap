@@ -22,7 +22,10 @@
         "type": "file",
         "path": "./data_1.csv",
         "resourceName": "Data 1",
-        "description": "This data source contains some data."
+        "description": "This data source contains some data.",
+        "labels": {
+          "key": "value"
+        }
       },
       "datasource_2": {
         "id": "e7fd471c-3e43-4c9f-b4b3-0a6a5bf1e128",
@@ -30,7 +33,10 @@
         "type": "file",
         "path": "./data_2.csv",
         "resourceName": "Data 2",
-        "description": "This data source also contains some data."
+        "description": "This data source also contains some data.",
+        "labels": {
+          "key1": "value"
+        }
       }
     },
     "storedProcedures": {

@@ -25,6 +25,7 @@ const (
 	RegistryService_GetChartId_FullMethodName       = "/proto.RegistryService/GetChartId"
 	RegistryService_GetMissingLayers_FullMethodName = "/proto.RegistryService/GetMissingLayers"
 	RegistryService_DeleteChart_FullMethodName      = "/proto.RegistryService/DeleteChart"
+	RegistryService_UpdateChart_FullMethodName      = "/proto.RegistryService/UpdateChart"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -37,6 +38,7 @@ type RegistryServiceClient interface {
 	GetChartId(ctx context.Context, in *GetChartIdReq, opts ...grpc.CallOption) (*GetChartResp, error)
 	GetMissingLayers(ctx context.Context, in *GetMissingLayersReq, opts ...grpc.CallOption) (*GetMissingLayersResp, error)
 	DeleteChart(ctx context.Context, in *DeleteChartReq, opts ...grpc.CallOption) (*EmptyMessage, error)
+	UpdateChart(ctx context.Context, in *StarChart, opts ...grpc.CallOption) (*PutChartResp, error)
 }
 
 type registryServiceClient struct {
@@ -107,6 +109,16 @@ func (c *registryServiceClient) DeleteChart(ctx context.Context, in *DeleteChart
 	return out, nil
 }
 
+func (c *registryServiceClient) UpdateChart(ctx context.Context, in *StarChart, opts ...grpc.CallOption) (*PutChartResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutChartResp)
+	err := c.cc.Invoke(ctx, RegistryService_UpdateChart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -117,6 +129,7 @@ type RegistryServiceServer interface {
 	GetChartId(context.Context, *GetChartIdReq) (*GetChartResp, error)
 	GetMissingLayers(context.Context, *GetMissingLayersReq) (*GetMissingLayersResp, error)
 	DeleteChart(context.Context, *DeleteChartReq) (*EmptyMessage, error)
+	UpdateChart(context.Context, *StarChart) (*PutChartResp, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -144,6 +157,9 @@ func (UnimplementedRegistryServiceServer) GetMissingLayers(context.Context, *Get
 }
 func (UnimplementedRegistryServiceServer) DeleteChart(context.Context, *DeleteChartReq) (*EmptyMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteChart not implemented")
+}
+func (UnimplementedRegistryServiceServer) UpdateChart(context.Context, *StarChart) (*PutChartResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateChart not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -274,6 +290,24 @@ func _RegistryService_DeleteChart_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_UpdateChart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StarChart)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).UpdateChart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_UpdateChart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).UpdateChart(ctx, req.(*StarChart))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +338,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteChart",
 			Handler:    _RegistryService_DeleteChart_Handler,
+		},
+		{
+			MethodName: "UpdateChart",
+			Handler:    _RegistryService_UpdateChart_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
