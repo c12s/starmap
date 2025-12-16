@@ -46,7 +46,7 @@ func (s *RegistryService) PutChart(ctx context.Context, req *proto.StarChart) (*
 }
 
 func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartResp, error) {
-	chart, err := s.repo.GetChartMetadata(ctx, req.ApiVersion, req.SchemaVersion, req.Name, req.Namespace, req.Maintainer)
+	chart, err := s.repo.GetChartMetadata(ctx, req.SchemaVersion, req.Name, req.Namespace, req.Maintainer)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart metadata: %v", err)
 	}
@@ -55,7 +55,7 @@ func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetCh
 }
 
 func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetChartsLabelsReq) (*proto.GetChartsLabelsResp, error) {
-	charts, err := s.repo.GetChartsLabels(ctx, req.ApiVersion, req.SchemaVersion, req.Namespace, req.Maintainer, req.Labels)
+	charts, err := s.repo.GetChartsLabels(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.Labels)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get charts by labels: %v", err)
 	}
@@ -71,7 +71,7 @@ func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetCha
 }
 
 func (s *RegistryService) GetChartId(ctx context.Context, req *proto.GetChartIdReq) (*proto.GetChartResp, error) {
-	chart, err := s.repo.GetChartId(ctx, req.ApiVersion, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId)
+	chart, err := s.repo.GetChartId(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart by id: %v", err)
 	}
@@ -81,7 +81,7 @@ func (s *RegistryService) GetChartId(ctx context.Context, req *proto.GetChartIdR
 }
 
 func (s *RegistryService) GetMissingLayers(ctx context.Context, req *proto.GetMissingLayersReq) (*proto.GetMissingLayersResp, error) {
-	result, err := s.repo.GetMissingLayers(ctx, req.ApiVersion, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId, req.Layers)
+	result, err := s.repo.GetMissingLayers(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId, req.Layers)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get missing layers: %v", err)
 	}
@@ -95,7 +95,7 @@ func (s *RegistryService) GetMissingLayers(ctx context.Context, req *proto.GetMi
 }
 
 func (s *RegistryService) DeleteChart(ctx context.Context, req *proto.DeleteChartReq) (*proto.EmptyMessage, error) {
-	err := s.repo.DeleteChart(ctx, req.Id, req.Name, req.Namespace, req.Maintainer, req.ApiVersion, req.SchemaVersion, req.Kind)
+	err := s.repo.DeleteChart(ctx, req.Id, req.Name, req.Namespace, req.Maintainer, req.SchemaVersion, req.Kind)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete chart: %v", err)
 	}
@@ -124,4 +124,32 @@ func (s *RegistryService) UpdateChart(ctx context.Context, req *proto.StarChart)
 		Maintainer:    starChart.Metadata.Maintainer,
 	}, nil
 
+}
+
+func (s *RegistryService) SwitchCheckpoint(ctx context.Context, req *proto.SwitchCheckpointReq) (*proto.SwitchCheckpointResp, error) {
+	if req.NewVersion == "" || req.OldVersion == "" {
+		return nil, status.Errorf(codes.Aborted, "missing version")
+	}
+	resp, err := s.repo.SwitchCheckpoint(ctx, req.Namespace, req.Maintainer, req.ChartId, req.OldVersion, req.NewVersion, req.Layers)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to switch checkpoint: %v", err)
+	}
+
+	return protomappers.SwitchCheckpointMapperToProto(*resp), nil
+}
+
+func (s *RegistryService) Timeline(ctx context.Context, req *proto.TimelineReq) (*proto.TimelineResp, error) {
+	result, err := s.repo.Timeline(ctx, req.Namespace, req.Maintainer, req.ChartId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to timeline: %v", err)
+	}
+
+	resp := &proto.TimelineResp{}
+
+	for _, chart := range result.Charts {
+		chartProto := protomappers.ChartMetadataToProto(chart)
+		resp.Charts = append(resp.Charts, chartProto)
+	}
+
+	return resp, nil
 }

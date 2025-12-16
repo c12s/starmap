@@ -13,15 +13,48 @@ service RegistryService{
     rpc GetMissingLayers(GetMissingLayersReq) returns(GetMissingLayersResp){}
     rpc DeleteChart(DeleteChartReq) returns(EmptyMessage){}
     rpc UpdateChart(StarChart) returns(PutChartResp){}
+    rpc SwitchCheckpoint(SwitchCheckpointReq) returns(SwitchCheckpointResp){}
+    rpc Timeline(TimelineReq) returns(TimelineResp){} 
+}
+
+message TimelineReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+}
+
+message TimelineResp {
+  repeated GetChartResp charts = 1;
+}
+
+message SwitchCheckpointResp {
+  LayersResp start = 1;
+  LayersResp stop = 2;
+  LayersResp download = 3;
+}
+
+message SwitchCheckpointReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  string oldVersion = 4;
+  string newVersion = 5;
+  repeated string layers = 6;
+} 
+
+message LayersResp {
+  map<string, DataSource> dataSources = 1;
+  map<string, StoredProcedure> storedProcedures = 2;
+  map<string, EventTrigger> eventTriggers = 3;
+  map<string, Event> events = 4;
 }
 
 message GetMissingLayersReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string chartId = 3;
-  string namespace = 4;
-  string maintainer = 5;
-  repeated string layers = 6;
+  string schemaVersion = 1;
+  string chartId = 2;
+  string namespace = 3;
+  string maintainer = 4;
+  repeated string layers = 5;
 }
 
 message GetMissingLayersResp {
@@ -37,11 +70,10 @@ message GetMissingLayersResp {
 }
 
 message GetChartIdReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string chartId = 3;
-  string namespace = 4;
-  string maintainer = 5;
+  string schemaVersion = 1;
+  string chartId = 2;
+  string namespace = 3;
+  string maintainer = 4;
 }
 
 message DeleteChartReq {
@@ -49,17 +81,15 @@ message DeleteChartReq {
   string name = 2;
   string namespace = 3;
   string maintainer = 4;
-  string apiVersion = 5;
-  string schemaVersion = 6;
-  string kind = 7;
+  string schemaVersion = 5;
+  string kind = 6;
 }
 
 message GetChartsLabelsReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string namespace = 3;
-  string maintainer = 4;
-  map<string, string> labels = 5;
+  string schemaVersion = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  map<string, string> labels = 4;
 }
 
 message GetChartsLabelsResp {
@@ -70,8 +100,7 @@ message GetChartFromMetadataReq {
   string name = 1;
   string namespace = 2;
   string maintainer = 3;
-  string apiVersion = 4;
-  string schemaVersion = 5;
+  string schemaVersion = 4;
 }
 
 message GetChartResp {

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -399,4 +400,47 @@ func incrementVersion(ver string) string {
 	patch += 1
 
 	return fmt.Sprintf("v%d.%d.%d", major, minor, patch)
+}
+
+func computeVersionHash(chart domain.StarChart) string {
+	b, _ := json.Marshal(chart.Chart)
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+func computeTriggerEventHash(etev domain.TriggerHashStruct) (string, error) {
+	for i := range etev.Events {
+		sortEvent(&etev.Events[i])
+	}
+	b, err := json.Marshal(etev)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:]), nil
+}
+
+func sortEvent(e *domain.Event) {
+	sort.Strings(e.Features.Networks)
+	sort.Strings(e.Features.Ports)
+	sort.Strings(e.Features.Volumes)
+	sort.Strings(e.Features.Targets)
+	sort.Strings(e.Features.EnvVars)
+	e.Metadata.Labels = sortStringMap(e.Metadata.Labels)
+}
+
+func sortStringMap(m map[string]string) map[string]string {
+	if m == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	sorted := make(map[string]string, len(m))
+	for _, k := range keys {
+		sorted[k] = m[k]
+	}
+	return sorted
 }

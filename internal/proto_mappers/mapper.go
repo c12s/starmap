@@ -188,3 +188,26 @@ func GetMissingLayersToProto(layers domain.GetMissingLayers) *proto.GetMissingLa
 		Events:           mapEventsToProto(layers.Events),
 	}
 }
+
+func SwitchCheckpointMapperToProto(sc domain.SwitchCheckpointResp) *proto.SwitchCheckpointResp {
+	return &proto.SwitchCheckpointResp{
+		Start: &proto.LayersResp{
+			DataSources:      mapDataSourcesToProto(sc.Start.DataSources),
+			StoredProcedures: mapStoredProceduresToProto(sc.Start.StoredProcedures),
+			EventTriggers:    mapEventTriggersToProto(sc.Start.EventTriggers),
+			Events:           mapEventsToProto(sc.Start.Events),
+		},
+		Stop: &proto.LayersResp{
+			DataSources:      mapDataSourcesToProto(sc.Stop.DataSources),
+			StoredProcedures: mapStoredProceduresToProto(sc.Stop.StoredProcedures),
+			EventTriggers:    mapEventTriggersToProto(sc.Stop.EventTriggers),
+			Events:           mapEventsToProto(sc.Stop.Events),
+		},
+		Download: &proto.LayersResp{
+			DataSources:      mapDataSourcesToProto(sc.Download.DataSources),
+			StoredProcedures: mapStoredProceduresToProto(sc.Download.StoredProcedures),
+			EventTriggers:    mapEventTriggersToProto(sc.Download.EventTriggers),
+			Events:           mapEventsToProto(sc.Download.Events),
+		},
+	}
+}
