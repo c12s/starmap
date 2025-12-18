@@ -135,3 +135,29 @@ type MetadataResp struct {
 		Maintainer string
 	}
 }
+
+type TriggerHashStruct struct {
+	Trigger EventTrigger
+	Events  []Event
+}
+
+type SwitchCheckpointResp struct {
+	Start struct {
+		DataSources      map[string]*DataSource
+		StoredProcedures map[string]*StoredProcedure
+		EventTriggers    map[string]*EventTrigger
+		Events           map[string]*Event
+	}
+	Stop struct {
+		DataSources      map[string]*DataSource
+		StoredProcedures map[string]*StoredProcedure
+		EventTriggers    map[string]*EventTrigger
+		Events           map[string]*Event
+	}
+	Download struct {
+		DataSources      map[string]*DataSource
+		StoredProcedures map[string]*StoredProcedure
+		EventTriggers    map[string]*EventTrigger
+		Events           map[string]*Event
+	}
+}

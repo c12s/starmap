@@ -168,8 +168,7 @@ message GetChartFromMetadataReq {
   string name = 1;
   string namespace = 2;
   string maintainer = 3;
-  string apiVersion = 4;
-  string schemaVersion = 5;
+  string schemaVersion = 4;
 }
 ```
 
@@ -189,11 +188,10 @@ The endpoint for querying charts by namespace, maintainer, labels and versions.
 #### Request body
 ```proto
 message GetChartsLabelsReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string namespace = 3;
-  string maintainer = 4;
-  map<string, string> labels = 5;
+  string schemaVersion = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  map<string, string> labels = 4;
 }
 ```
 
@@ -210,11 +208,10 @@ The endpoint for querying charts by chartId, namespace, maintainer and versions.
 #### Request body
 ```proto
 message GetChartIdReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string chartId = 3;
-  string namespace = 4;
-  string maintainer = 5;
+  string schemaVersion = 1;
+  string chartId = 2;
+  string namespace = 3;
+  string maintainer = 4;
 }
 ```
 
@@ -234,12 +231,11 @@ Endpoint returns chart layers present in the registry but missing from the provi
 #### Request body
 ```proto
 message GetMissingLayersReq {
-  string apiVersion = 1;
-  string schemaVersion = 2;
-  string chartId = 3;
-  string namespace = 4;
-  string maintainer = 5;
-  repeated string layers = 6;
+  string schemaVersion = 1;
+  string chartId = 2;
+  string namespace = 3;
+  string maintainer = 4;
+  repeated string layers = 5;
 }
 ```
 
@@ -268,9 +264,8 @@ message DeleteChartReq {
   string name = 2;
   string namespace = 3;
   string maintainer = 4;
-  string apiVersion = 5;
-  string schemaVersion = 6;
-  string kind = 7;
+  string schemaVersion = 5;
+  string kind = 6;
 }
 ```
 
@@ -301,5 +296,54 @@ message PutChartResp {
   string name = 5;
   string namespace = 6;
   string maintainer = 7;
+}
+```
+
+#### /SwitchCheckpoint
+Compares two versions of the same chart and determines which components must be started, stopped, or downloaded when switching from one version to another.
+
+#### Request body
+```proto
+message SwitchCheckpointReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+  string oldVersion = 4;
+  string newVersion = 5;
+  repeated string layers = 6;
+} 
+```
+
+#### Response - 0 OK
+```proto
+message LayersResp {
+  map<string, DataSource> dataSources = 1;
+  map<string, StoredProcedure> storedProcedures = 2;
+  map<string, EventTrigger> eventTriggers = 3;
+  map<string, Event> events = 4;
+}
+message SwitchCheckpointResp {
+  LayersResp start = 1;
+  LayersResp stop = 2;
+  LayersResp download = 3;
+}
+```
+
+#### /Timeline
+Timeline returns a chronological view of all versions of a chart.
+
+#### Request body
+```proto
+message TimelineReq {
+  string chartId = 1;
+  string namespace = 2;
+  string maintainer = 3;
+}
+```
+
+#### Response - 0 OK
+```proto
+message TimelineResp {
+  repeated GetChartResp charts = 1;
 }
 ```
