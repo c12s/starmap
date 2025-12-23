@@ -1,13 +1,14 @@
 package domain
 
 type Metadata struct {
-	Id     string
-	Name   string
-	Image  string
-	Hash   string
-	Prefix string
-	Topic  string
-	Labels map[string]string
+	Id          string
+	Name        string
+	Image       string
+	Hash        string
+	Prefix      string
+	Topic       string
+	Labels      map[string]string
+	TriggerHash string
 }
 
 type Control struct {
@@ -139,6 +140,11 @@ type MetadataResp struct {
 type TriggerHashStruct struct {
 	Trigger EventTrigger
 	Events  []Event
+}
+
+type TriggerEventExtendHash struct {
+	Trigger EventTrigger
+	Events  []string
 }
 
 type SwitchCheckpointResp struct {

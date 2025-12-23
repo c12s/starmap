@@ -168,6 +168,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 		if trLabels != nil {
 			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
 		}
+		tr.Metadata.Hash = getStringFromMap(relProps, "hash")
 
 		result[metadata.Name] = tr
 	}
@@ -264,7 +265,7 @@ func getLinksForNode(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel
 		MATCH (n:%s {id: $id})
 		OPTIONAL MATCH (n)-[:HARD_LINK]->(ds1:DataSource)
 		OPTIONAL MATCH (n)-[:SOFT_LINK]->(ds2:DataSource)
-		OPTIONAL MATCH (n)-[:EVENT_LINK]->(e:Event)
+		OPTIONAL MATCH (n)-[e:EVENT_LINK]->(:Event)
 		RETURN 
 			collect(DISTINCT ds1.name) as hard,
 			collect(DISTINCT ds2.name) as soft,
@@ -443,4 +444,15 @@ func sortStringMap(m map[string]string) map[string]string {
 		sorted[k] = m[k]
 	}
 	return sorted
+}
+
+func hashObject(obj interface{}) string {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		fmt.Println("failed to marshal object for hashing: %w", err)
+		return ""
+	}
+
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:])
 }

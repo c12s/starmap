@@ -347,3 +347,27 @@ message TimelineResp {
   repeated GetChartResp charts = 1;
 }
 ```
+
+#### /Extend
+Extends an existing chart version by creating a new version node and adding only nodes that don’t already exist in the base version.
+
+#### Request body
+```proto
+message ExtendReq {
+  string oldVersion = 1;
+  StarChart chart = 2;
+}
+```
+
+#### Response - 0 OK
+```proto
+message PutChartResp {
+  string id = 1;
+  string apiVersion = 2;
+  string schemaVersion = 3;
+  string kind = 4;
+  string name = 5;
+  string namespace = 6;
+  string maintainer = 7;
+}
+```

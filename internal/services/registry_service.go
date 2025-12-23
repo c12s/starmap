@@ -153,3 +153,25 @@ func (s *RegistryService) Timeline(ctx context.Context, req *proto.TimelineReq) 
 
 	return resp, nil
 }
+
+func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*proto.PutChartResp, error) {
+	chart, err := protomappers.ProtoToStarChart(req.Chart)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid chart: %v", err)
+	}
+
+	result, err := s.repo.Extend(ctx, req.OldVersion, *chart)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to extend: %v", err)
+	}
+
+	return &proto.PutChartResp{
+		Id:            result.Metadata.Id,
+		ApiVersion:    result.ApiVersion,
+		SchemaVersion: result.SchemaVersion,
+		Kind:          result.Kind,
+		Name:          result.Metadata.Name,
+		Namespace:     result.Metadata.Namespace,
+		Maintainer:    result.Metadata.Maintainer,
+	}, nil
+}

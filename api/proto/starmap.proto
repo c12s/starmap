@@ -15,6 +15,12 @@ service RegistryService{
     rpc UpdateChart(StarChart) returns(PutChartResp){}
     rpc SwitchCheckpoint(SwitchCheckpointReq) returns(SwitchCheckpointResp){}
     rpc Timeline(TimelineReq) returns(TimelineResp){} 
+    rpc Extend(ExtendReq) returns(PutChartResp){}
+}
+
+message ExtendReq {
+  string oldVersion = 1;
+  StarChart chart = 2;
 }
 
 message TimelineReq {
