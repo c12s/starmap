@@ -3,7 +3,6 @@ module github.com/c12s/starmap
 go 1.25.1
 
 require (
-	github.com/gibson042/canonicaljson-go v1.0.3
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.10
 )

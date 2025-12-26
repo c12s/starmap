@@ -28,6 +28,7 @@ const (
 	RegistryService_UpdateChart_FullMethodName      = "/proto.RegistryService/UpdateChart"
 	RegistryService_SwitchCheckpoint_FullMethodName = "/proto.RegistryService/SwitchCheckpoint"
 	RegistryService_Timeline_FullMethodName         = "/proto.RegistryService/Timeline"
+	RegistryService_Extend_FullMethodName           = "/proto.RegistryService/Extend"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -43,6 +44,7 @@ type RegistryServiceClient interface {
 	UpdateChart(ctx context.Context, in *StarChart, opts ...grpc.CallOption) (*PutChartResp, error)
 	SwitchCheckpoint(ctx context.Context, in *SwitchCheckpointReq, opts ...grpc.CallOption) (*SwitchCheckpointResp, error)
 	Timeline(ctx context.Context, in *TimelineReq, opts ...grpc.CallOption) (*TimelineResp, error)
+	Extend(ctx context.Context, in *ExtendReq, opts ...grpc.CallOption) (*PutChartResp, error)
 }
 
 type registryServiceClient struct {
@@ -143,6 +145,16 @@ func (c *registryServiceClient) Timeline(ctx context.Context, in *TimelineReq, o
 	return out, nil
 }
 
+func (c *registryServiceClient) Extend(ctx context.Context, in *ExtendReq, opts ...grpc.CallOption) (*PutChartResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutChartResp)
+	err := c.cc.Invoke(ctx, RegistryService_Extend_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -156,6 +168,7 @@ type RegistryServiceServer interface {
 	UpdateChart(context.Context, *StarChart) (*PutChartResp, error)
 	SwitchCheckpoint(context.Context, *SwitchCheckpointReq) (*SwitchCheckpointResp, error)
 	Timeline(context.Context, *TimelineReq) (*TimelineResp, error)
+	Extend(context.Context, *ExtendReq) (*PutChartResp, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -192,6 +205,9 @@ func (UnimplementedRegistryServiceServer) SwitchCheckpoint(context.Context, *Swi
 }
 func (UnimplementedRegistryServiceServer) Timeline(context.Context, *TimelineReq) (*TimelineResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Timeline not implemented")
+}
+func (UnimplementedRegistryServiceServer) Extend(context.Context, *ExtendReq) (*PutChartResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Extend not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -376,6 +392,24 @@ func _RegistryService_Timeline_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_Extend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExtendReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).Extend(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_Extend_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).Extend(ctx, req.(*ExtendReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +452,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Timeline",
 			Handler:    _RegistryService_Timeline_Handler,
+		},
+		{
+			MethodName: "Extend",
+			Handler:    _RegistryService_Extend_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
