@@ -25,12 +25,13 @@ func metadataToProto(metadata *domain.Metadata) *proto.Metadata {
 		return &proto.Metadata{}
 	}
 	return &proto.Metadata{
-		Id:     metadata.Id,
-		Name:   metadata.Name,
-		Image:  metadata.Image,
-		Prefix: metadata.Prefix,
-		Topic:  metadata.Topic,
-		Labels: metadata.Labels,
+		Id:          metadata.Id,
+		Name:        metadata.Name,
+		Image:       metadata.Image,
+		Prefix:      metadata.Prefix,
+		Topic:       metadata.Topic,
+		Description: metadata.Description,
+		Labels:      metadata.Labels,
 	}
 }
 

@@ -58,12 +58,13 @@ func parseDataSources(v any, dsLabels map[string]map[string]string) map[string]*
 
 func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, control domain.Control, features domain.Features) {
 	metadata = domain.Metadata{
-		Id:     getStringFromMap(nodeProps, "id"),
-		Name:   getStringFromMap(relProps, "name"),
-		Image:  getStringFromMap(relProps, "image"),
-		Hash:   getStringFromMap(nodeProps, "hash"),
-		Prefix: getStringFromMap(relProps, "prefix"),
-		Topic:  getStringFromMap(relProps, "topic"),
+		Id:          getStringFromMap(nodeProps, "id"),
+		Name:        getStringFromMap(relProps, "name"),
+		Image:       getStringFromMap(relProps, "image"),
+		Hash:        getStringFromMap(nodeProps, "hash"),
+		Prefix:      getStringFromMap(relProps, "prefix"),
+		Topic:       getStringFromMap(relProps, "topic"),
+		Description: getStringFromMap(relProps, "description"),
 	}
 
 	control = domain.Control{
@@ -444,15 +445,4 @@ func sortStringMap(m map[string]string) map[string]string {
 		sorted[k] = m[k]
 	}
 	return sorted
-}
-
-func hashObject(obj interface{}) string {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		fmt.Println("failed to marshal object for hashing: %w", err)
-		return ""
-	}
-
-	hash := sha256.Sum256(data)
-	return hex.EncodeToString(hash[:])
 }

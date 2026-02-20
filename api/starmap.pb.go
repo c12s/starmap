@@ -1205,13 +1205,14 @@ const file_starmap_proto_rawDesc = "" +
 	"\tnamespace\x18\x06 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
 	"maintainer\x18\a \x01(\tR\n" +
-	"maintainer2\x95\x05\n" +
+	"maintainer2\xd5\x05\n" +
 	"\x0fRegistryService\x123\n" +
 	"\bPutChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12I\n" +
 	"\x10GetChartMetadata\x12\x1e.proto.GetChartFromMetadataReq\x1a\x13.proto.GetChartResp\"\x00\x12J\n" +
 	"\x0fGetChartsLabels\x12\x19.proto.GetChartsLabelsReq\x1a\x1a.proto.GetChartsLabelsResp\"\x00\x129\n" +
 	"\n" +
-	"GetChartId\x12\x14.proto.GetChartIdReq\x1a\x13.proto.GetChartResp\"\x00\x12M\n" +
+	"GetChartId\x12\x14.proto.GetChartIdReq\x1a\x13.proto.GetChartResp\"\x00\x12>\n" +
+	"\tGetCharts\x12\x13.proto.EmptyMessage\x1a\x1a.proto.GetChartsLabelsResp\"\x00\x12M\n" +
 	"\x10GetMissingLayers\x12\x1a.proto.GetMissingLayersReq\x1a\x1b.proto.GetMissingLayersResp\"\x00\x12;\n" +
 	"\vDeleteChart\x12\x15.proto.DeleteChartReq\x1a\x13.proto.EmptyMessage\"\x00\x126\n" +
 	"\vUpdateChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12M\n" +
@@ -1296,24 +1297,26 @@ var file_starmap_proto_depIdxs = []int32{
 	12, // 26: proto.RegistryService.GetChartMetadata:input_type -> proto.GetChartFromMetadataReq
 	10, // 27: proto.RegistryService.GetChartsLabels:input_type -> proto.GetChartsLabelsReq
 	8,  // 28: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
-	6,  // 29: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
-	9,  // 30: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
-	24, // 31: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
-	4,  // 32: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
-	1,  // 33: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
-	0,  // 34: proto.RegistryService.Extend:input_type -> proto.ExtendReq
-	14, // 35: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
-	13, // 36: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
-	11, // 37: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
-	13, // 38: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
-	7,  // 39: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
-	31, // 40: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
-	14, // 41: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
-	3,  // 42: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
-	2,  // 43: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
-	14, // 44: proto.RegistryService.Extend:output_type -> proto.PutChartResp
-	35, // [35:45] is the sub-list for method output_type
-	25, // [25:35] is the sub-list for method input_type
+	31, // 29: proto.RegistryService.GetCharts:input_type -> proto.EmptyMessage
+	6,  // 30: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
+	9,  // 31: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
+	24, // 32: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
+	4,  // 33: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
+	1,  // 34: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
+	0,  // 35: proto.RegistryService.Extend:input_type -> proto.ExtendReq
+	14, // 36: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
+	13, // 37: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
+	11, // 38: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
+	13, // 39: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
+	11, // 40: proto.RegistryService.GetCharts:output_type -> proto.GetChartsLabelsResp
+	7,  // 41: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
+	31, // 42: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
+	14, // 43: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
+	3,  // 44: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
+	2,  // 45: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
+	14, // 46: proto.RegistryService.Extend:output_type -> proto.PutChartResp
+	36, // [36:47] is the sub-list for method output_type
+	25, // [25:36] is the sub-list for method input_type
 	25, // [25:25] is the sub-list for extension type_name
 	25, // [25:25] is the sub-list for extension extendee
 	0,  // [0:25] is the sub-list for field type_name

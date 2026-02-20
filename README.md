@@ -254,6 +254,21 @@ message GetMissingLayersResp {
 }
 ```
 
+#### /GetCharts
+Returns all non-private charts in the registry.
+
+#### Request body
+```proto
+message EmptyMessage {}
+```
+
+#### Response - 0 OK
+```proto
+message GetChartsLabelsResp {
+  repeated GetChartResp charts = 1;
+}
+```
+
 #### /DeleteChart
 The endpoint for deleting charts and cleaning up orphaned nodes from the graph database.
 

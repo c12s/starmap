@@ -21,7 +21,8 @@ message Metadata {
   string image = 3;
   string prefix = 4;
   string topic = 5;
-  map<string, string> labels = 6;
+  string description = 6;
+  map<string, string> labels = 7;
 }
 
 message Control {

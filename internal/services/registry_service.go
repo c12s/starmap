@@ -94,6 +94,22 @@ func (s *RegistryService) GetMissingLayers(ctx context.Context, req *proto.GetMi
 	return protoResp, nil
 }
 
+func (s *RegistryService) GetCharts(ctx context.Context, req *proto.EmptyMessage) (*proto.GetChartsLabelsResp, error) {
+	result, err := s.repo.GetAllCharts(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get all charts: %v", err)
+	}
+
+	resp := &proto.GetChartsLabelsResp{}
+
+	for _, chart := range result.Charts {
+		chartProto := protomappers.ChartMetadataToProto(chart)
+		resp.Charts = append(resp.Charts, chartProto)
+	}
+
+	return resp, nil
+}
+
 func (s *RegistryService) DeleteChart(ctx context.Context, req *proto.DeleteChartReq) (*proto.EmptyMessage, error) {
 	err := s.repo.DeleteChart(ctx, req.Id, req.Name, req.Namespace, req.Maintainer, req.SchemaVersion, req.Kind)
 	if err != nil {

@@ -1,13 +1,13 @@
 services:
   
-  registry-server:
-    image: registry-server
+  starmap:
+    image: starmap
     build:
       context: ./
       dockerfile: Dockerfile
     restart: always
-    container_name: "registry-server"
-    hostname: "registry-server"
+    container_name: "starmap"
+    hostname: "starmap"
     ports:
       - "${REGISTRY_SERVICE_PORT}:${REGISTRY_SERVICE_PORT}"
     env_file:
@@ -16,11 +16,12 @@ services:
       neo4j:
         condition: service_healthy
     networks: 
-      - registry 
+      - registry
+      - starmap-net 
 
   neo4j:
     image: neo4j:latest
-    container_name: neo4j
+    container_name: neo4j-starmap
     environment:
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASS}
       - NEO4JLABS_PLUGINS=["apoc"]
@@ -42,3 +43,5 @@ services:
 networks:
   registry:
     driver: bridge
+  starmap-net:
+    external: true

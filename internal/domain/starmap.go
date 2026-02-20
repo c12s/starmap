@@ -7,6 +7,7 @@ type Metadata struct {
 	Hash        string
 	Prefix      string
 	Topic       string
+	Description string
 	Labels      map[string]string
 	TriggerHash string
 }
