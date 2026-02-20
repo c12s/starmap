@@ -10,6 +10,7 @@ service RegistryService{
     rpc GetChartMetadata(GetChartFromMetadataReq) returns(GetChartResp){}
     rpc GetChartsLabels(GetChartsLabelsReq) returns(GetChartsLabelsResp){}
     rpc GetChartId(GetChartIdReq) returns(GetChartResp){}
+    rpc GetCharts(EmptyMessage) returns(GetChartsLabelsResp){}
     rpc GetMissingLayers(GetMissingLayersReq) returns(GetMissingLayersResp){}
     rpc DeleteChart(DeleteChartReq) returns(EmptyMessage){}
     rpc UpdateChart(StarChart) returns(PutChartResp){}

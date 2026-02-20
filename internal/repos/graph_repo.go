@@ -61,30 +61,17 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 
-		// Namespace Node
+		// Namespace and User Node
 		queryNamespace := `
-			MERGE (n:Namespace {name: $namespace})
+			MERGE (u:User {name: $maintainer})
+			MERGE (u)-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
 		`
 		_, err := tx.Run(ctx, queryNamespace, map[string]any{
-			"namespace": chart.Metadata.Namespace,
+			"namespace":  chart.Metadata.Namespace,
+			"maintainer": chart.Metadata.Maintainer,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Namespace node: %w", err)
-		}
-
-		// User Node
-		queryUser := `
-			MERGE (u:User {name: $maintainer})
-			WITH u
-			MATCH (n:Namespace {name: $namespace})
-			MERGE (u)-[:HAS_NAMESPACE]->(n)
-		`
-		_, err = tx.Run(ctx, queryUser, map[string]any{
-			"maintainer": chart.Metadata.Maintainer,
-			"namespace":  chart.Metadata.Namespace,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create User node: %w", err)
 		}
 
 		// Chart Node
@@ -98,18 +85,21 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				c.engine = $engine
 			WITH c
 			MATCH (n:Namespace {name: $namespace})
-			MERGE (n)-[:HAS_CHART]->(c)
+			MERGE (n)-[r:HAS_CHART]->(c)
+			SET r.versions = coalesce(r.versions, []) + $schemaVersion
+			SET r.versions = apoc.coll.toSet(r.versions)
 		`
 		_, err = tx.Run(ctx, queryChart, map[string]any{
-			"id":          chart.Metadata.Id,
-			"name":        chart.Metadata.Name,
-			"kind":        chart.Kind,
-			"description": chart.Metadata.Description,
-			"visibility":  chart.Metadata.Visibility,
-			"engine":      chart.Metadata.Engine,
-			"namespace":   chart.Metadata.Namespace,
-			"maintainer":  chart.Metadata.Maintainer,
-			"apiVersion":  chart.ApiVersion,
+			"id":            chart.Metadata.Id,
+			"name":          chart.Metadata.Name,
+			"kind":          chart.Kind,
+			"description":   chart.Metadata.Description,
+			"visibility":    chart.Metadata.Visibility,
+			"engine":        chart.Metadata.Engine,
+			"namespace":     chart.Metadata.Namespace,
+			"maintainer":    chart.Metadata.Maintainer,
+			"apiVersion":    chart.ApiVersion,
+			"schemaVersion": chart.SchemaVersion,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Chart node: %w", err)
@@ -1424,6 +1414,206 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 	return result.(*domain.GetMissingLayers), nil
 }
 
+func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabelsResp, error) {
+	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
+		AccessMode: neo4j.AccessModeRead,
+	})
+	defer session.Close(ctx)
+
+	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `
+			MATCH (u:User)-[:HAS_NAMESPACE]->(n:Namespace)-[r:HAS_CHART]->(c:Chart {visibility: "public"})
+			WITH u.name AS maintainer, n.name AS namespace, c, r.versions AS userVersions
+
+			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
+			WITH maintainer, namespace, c, userVersions,
+				collect({key: l.key, value: l.value}) AS labels
+
+			UNWIND userVersions AS sv
+
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v:Version)
+			WHERE v.schemaVersion = sv
+			WITH maintainer, namespace, c, sv, labels, v
+
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(root:Version)
+			OPTIONAL MATCH (root)<-[:EXTEND*1..]-(v2:Version)
+			WHERE v2.schemaVersion = sv
+			WITH maintainer, namespace, c, sv, labels, v, collect(v2) AS extendedVersions
+
+			WITH maintainer, namespace, c, labels, sv,
+				CASE WHEN v IS NOT NULL THEN v ELSE head(extendedVersions) END AS ver
+
+			OPTIONAL MATCH (ver)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WITH maintainer, namespace, c, labels, ver,
+				collect(DISTINCT {
+				nodeProps: properties(sp),
+				relProps: properties(spRels)
+				}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			WITH maintainer, namespace, c, labels, storedProcedures, ver, sp,
+				collect(DISTINCT ds1) + collect(DISTINCT ds2) AS spDataSources
+
+			WITH maintainer, namespace, c, labels, storedProcedures, ver,
+				collect({ trigger: sp, dataSources: spDataSources }) AS spWithDataSources
+
+			WITH maintainer, namespace, c, labels, storedProcedures, ver,
+				[sp IN spWithDataSources | sp.dataSources] AS spDataSourcesList
+
+			OPTIONAL MATCH (ver)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			WITH maintainer, namespace, c, labels, ver, storedProcedures, spDataSourcesList,
+				collect(DISTINCT {
+				nodeProps: properties(t),
+				relProps: properties(tRels)
+				}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			WITH maintainer, namespace, c, labels, storedProcedures, spDataSourcesList, ver, tr,
+				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
+
+			WITH maintainer, namespace, c, labels, storedProcedures, ver, spDataSourcesList,
+				collect({ trigger: tr, dataSources: triggerDataSources, events: triggerEvents }) AS triggersWithData
+
+			WITH maintainer, namespace, c, labels, storedProcedures, ver,
+				[tr IN triggersWithData | tr.trigger] AS triggers,
+				apoc.coll.flatten([tr IN triggersWithData | tr.events]) AS allEvents,
+				apoc.coll.flatten([tr IN triggersWithData | tr.dataSources] + spDataSourcesList) AS allDataSources
+
+			OPTIONAL MATCH (ent)-[:HAS_LABEL]->(lab)
+			WHERE ent.id IN (
+			[sp IN storedProcedures | sp.nodeProps.id] +
+			[tr IN triggers | tr.nodeProps.id] +
+			[ev IN allEvents | ev.nodeProps.id] +
+			[ds IN allDataSources | ds.id]
+			)
+
+			WITH maintainer, namespace, c, labels, storedProcedures, triggers, allEvents, allDataSources, ver,
+				collect(CASE WHEN ent.id IN [sp IN storedProcedures | sp.nodeProps.id]
+				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS spLabels,
+				collect(CASE WHEN ent.id IN [tr IN triggers | tr.nodeProps.id]
+				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS triggerLabels,
+				collect(CASE WHEN ent.id IN [ev IN allEvents | ev.nodeProps.id]
+				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS eventLabels,
+				collect(CASE WHEN ent.id IN [ds IN allDataSources | ds.id]
+				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS dataSourceLabels
+
+			RETURN maintainer, namespace, c, labels, ver,
+				storedProcedures, triggers,
+				allEvents AS events,
+				allDataSources AS dataSources,
+				spLabels, triggerLabels, eventLabels, dataSourceLabels
+		`
+
+		rec, err := tx.Run(ctx, query, nil)
+		if err != nil {
+			return nil, fmt.Errorf("query failed: %w", err)
+		}
+
+		charts := &domain.GetChartsLabelsResp{}
+
+		for rec.Next(ctx) {
+			record := rec.Record()
+
+			chart := domain.GetChartMetadataResp{
+				DataSources:      make(map[string]*domain.DataSource),
+				StoredProcedures: make(map[string]*domain.StoredProcedure),
+				EventTriggers:    make(map[string]*domain.EventTrigger),
+				Events:           make(map[string]*domain.Event),
+			}
+
+			// Chart node (metadata)
+			if v, ok := record.Get("c"); ok {
+				if node, ok := v.(neo4j.Node); ok {
+					chart.Metadata.Name = getStringProp(node, "name")
+					chart.Metadata.Id = getStringProp(node, "id")
+					chart.ApiVersion = getStringProp(node, "apiVersion")
+					chart.Metadata.Description = getStringProp(node, "description")
+					chart.Metadata.Visibility = getStringProp(node, "visibility")
+					chart.Metadata.Engine = getStringProp(node, "engine")
+					chart.Metadata.Labels = parseLabels(getStringProp(node, "labels"))
+					if chart.Metadata.Labels == nil {
+						chart.Metadata.Labels = map[string]string{}
+					}
+				}
+			}
+
+			// Maintainer
+			if v, ok := record.Get("maintainer"); ok {
+				if maintainer, ok := v.(string); ok {
+					chart.Metadata.Maintainer = maintainer
+				}
+			}
+
+			// Namespace
+			if v, ok := record.Get("namespace"); ok {
+				if namespace, ok := v.(string); ok {
+					chart.Metadata.Namespace = namespace
+				}
+			}
+
+			// Version
+			if v, ok := record.Get("ver"); ok {
+				if node, ok := v.(neo4j.Node); ok {
+					chart.SchemaVersion = getStringProp(node, "schemaVersion")
+				}
+			}
+
+			// Labels
+			if v, ok := record.Get("labels"); ok {
+				chart.Metadata.Labels = parseLabelList(v)
+			}
+			if chart.Metadata.Labels == nil {
+				chart.Metadata.Labels = map[string]string{}
+			}
+
+			// DataSources
+			if v, ok := record.Get("dataSources"); ok {
+				labels, _ := record.Get("dataSourceLabels")
+				chart.DataSources = parseDataSources(v, parseLabelsIntoMap(labels))
+			}
+
+			// StoredProcedures
+			if v, ok := record.Get("storedProcedures"); ok {
+				labels, _ := record.Get("spLabels")
+				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
+			}
+
+			// Events
+			if v, ok := record.Get("events"); ok {
+				labels, _ := record.Get("eventLabels")
+				chart.Events = parseEvents(v, parseLabelsIntoMap(labels))
+			}
+
+			// Triggers
+			if v, ok := record.Get("triggers"); ok {
+				labels, _ := record.Get("triggerLabels")
+				chart.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
+			}
+
+			charts.Charts = append(charts.Charts, chart)
+		}
+
+		if err := rec.Err(); err != nil {
+			return nil, fmt.Errorf("error iterating records: %w", err)
+		}
+
+		return charts, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*domain.GetChartsLabelsResp), nil
+}
+
 // GET Missing Layers with Data Source Nodes
 
 // func (r *RegistryRepo) GetMissingLayers(ctx context.Context, namespace, maintainer, chartId string, layers []string) (*domain.GetMissingLayers, error) {
@@ -1634,7 +1824,12 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		// Delete Version relationship
 		queryDeleteVersion := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
-			MATCH (n)-[:HAS_CHART]->(c:Chart {id: $chartId})
+			MATCH (n)-[hc:HAS_CHART]->(c:Chart {id: $chartId})
+			
+			SET hc.versions = [v IN hc.versions WHERE v <> $schemaVersion]
+			
+			WITH c, hc
+
 			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 			DELETE r
 			WITH c
@@ -1861,12 +2056,22 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			MATCH (c:Chart {id: $id})
 			MERGE (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 			SET r.createdAt = $createdAt
+
+			WITH c, v
+
+			MATCH (n:Namespace {name: $namespace})-[hc:HAS_CHART]->(c)
+			SET hc.versions = CASE 
+				WHEN $schemaVersion IN coalesce(hc.versions, []) THEN hc.versions
+				ELSE coalesce(hc.versions, []) + $schemaVersion
+			END
+
 			RETURN v
 		`
 		result, err := tx.Run(ctx, queryMergeVersion, map[string]any{
 			"id":            chart.Metadata.Id,
 			"schemaVersion": schemaVersion,
 			"createdAt":     time.Now().Unix(),
+			"namespace":     chart.Metadata.Namespace,
 		})
 		if err != nil {
 			return nil, err
@@ -1876,7 +2081,6 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		if err != nil {
 			return nil, err
 		}
-
 		queryDeleteVersion := `
 			MATCH (v:Version {schemaVersion: $schemaVersion})
 			WHERE NOT (:Chart)-[:HAS_VERSION]->(v)
@@ -2689,6 +2893,24 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			"id":              chart.Metadata.Id,
 		}); err != nil {
 			return nil, fmt.Errorf("failed to create Version node: %w", err)
+		}
+
+		queryUpdateHasChart := `
+			MATCH (c:Chart {id: $id})
+			MATCH (n:Namespace {name: $namespace})-[hc:HAS_CHART]->(c)
+			SET hc.versions = CASE 
+				WHEN $newSchemaVersion IN coalesce(hc.versions, []) THEN hc.versions
+				ELSE coalesce(hc.versions, []) + $newSchemaVersion
+			END
+			SET hc.versions = [v IN hc.versions WHERE v <> $oldSchemaVersion]
+		`
+		if _, err := tx.Run(ctx, queryUpdateHasChart, map[string]any{
+			"id":               chart.Metadata.Id,
+			"newSchemaVersion": chart.SchemaVersion,
+			"oldSchemaVersion": forExtend.SchemaVersion,
+			"namespace":        chart.Metadata.Namespace,
+		}); err != nil {
+			return nil, fmt.Errorf("failed to update HAS_CHART versions: %w", err)
 		}
 
 		// DataSources

@@ -1,7 +1,7 @@
 services:
   
-  registry-server:
-    image: registry-server
+  starmap:
+    image: starmap
     build:
       context: ./
       dockerfile: Dockerfile

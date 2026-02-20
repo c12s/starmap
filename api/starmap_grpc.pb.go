@@ -23,6 +23,7 @@ const (
 	RegistryService_GetChartMetadata_FullMethodName = "/proto.RegistryService/GetChartMetadata"
 	RegistryService_GetChartsLabels_FullMethodName  = "/proto.RegistryService/GetChartsLabels"
 	RegistryService_GetChartId_FullMethodName       = "/proto.RegistryService/GetChartId"
+	RegistryService_GetCharts_FullMethodName        = "/proto.RegistryService/GetCharts"
 	RegistryService_GetMissingLayers_FullMethodName = "/proto.RegistryService/GetMissingLayers"
 	RegistryService_DeleteChart_FullMethodName      = "/proto.RegistryService/DeleteChart"
 	RegistryService_UpdateChart_FullMethodName      = "/proto.RegistryService/UpdateChart"
@@ -39,6 +40,7 @@ type RegistryServiceClient interface {
 	GetChartMetadata(ctx context.Context, in *GetChartFromMetadataReq, opts ...grpc.CallOption) (*GetChartResp, error)
 	GetChartsLabels(ctx context.Context, in *GetChartsLabelsReq, opts ...grpc.CallOption) (*GetChartsLabelsResp, error)
 	GetChartId(ctx context.Context, in *GetChartIdReq, opts ...grpc.CallOption) (*GetChartResp, error)
+	GetCharts(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*GetChartsLabelsResp, error)
 	GetMissingLayers(ctx context.Context, in *GetMissingLayersReq, opts ...grpc.CallOption) (*GetMissingLayersResp, error)
 	DeleteChart(ctx context.Context, in *DeleteChartReq, opts ...grpc.CallOption) (*EmptyMessage, error)
 	UpdateChart(ctx context.Context, in *StarChart, opts ...grpc.CallOption) (*PutChartResp, error)
@@ -89,6 +91,16 @@ func (c *registryServiceClient) GetChartId(ctx context.Context, in *GetChartIdRe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetChartResp)
 	err := c.cc.Invoke(ctx, RegistryService_GetChartId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryServiceClient) GetCharts(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*GetChartsLabelsResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChartsLabelsResp)
+	err := c.cc.Invoke(ctx, RegistryService_GetCharts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +175,7 @@ type RegistryServiceServer interface {
 	GetChartMetadata(context.Context, *GetChartFromMetadataReq) (*GetChartResp, error)
 	GetChartsLabels(context.Context, *GetChartsLabelsReq) (*GetChartsLabelsResp, error)
 	GetChartId(context.Context, *GetChartIdReq) (*GetChartResp, error)
+	GetCharts(context.Context, *EmptyMessage) (*GetChartsLabelsResp, error)
 	GetMissingLayers(context.Context, *GetMissingLayersReq) (*GetMissingLayersResp, error)
 	DeleteChart(context.Context, *DeleteChartReq) (*EmptyMessage, error)
 	UpdateChart(context.Context, *StarChart) (*PutChartResp, error)
@@ -190,6 +203,9 @@ func (UnimplementedRegistryServiceServer) GetChartsLabels(context.Context, *GetC
 }
 func (UnimplementedRegistryServiceServer) GetChartId(context.Context, *GetChartIdReq) (*GetChartResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChartId not implemented")
+}
+func (UnimplementedRegistryServiceServer) GetCharts(context.Context, *EmptyMessage) (*GetChartsLabelsResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCharts not implemented")
 }
 func (UnimplementedRegistryServiceServer) GetMissingLayers(context.Context, *GetMissingLayersReq) (*GetMissingLayersResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMissingLayers not implemented")
@@ -298,6 +314,24 @@ func _RegistryService_GetChartId_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetChartId(ctx, req.(*GetChartIdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RegistryService_GetCharts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).GetCharts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_GetCharts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).GetCharts(ctx, req.(*EmptyMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -432,6 +466,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetChartId",
 			Handler:    _RegistryService_GetChartId_Handler,
+		},
+		{
+			MethodName: "GetCharts",
+			Handler:    _RegistryService_GetCharts_Handler,
 		},
 		{
 			MethodName: "GetMissingLayers",
