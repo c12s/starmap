@@ -20,32 +20,42 @@ func computeHash(value string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func processNodes(v any) []neo4j.Node {
-	nodes := []neo4j.Node{}
-	if v == nil {
-		return nodes
-	}
-	if ifaceSlice, ok := v.([]interface{}); ok {
-		for _, n := range ifaceSlice {
-			if node, ok := n.(neo4j.Node); ok {
-				nodes = append(nodes, node)
-			}
-		}
-	}
-	return nodes
-}
-
 func parseDataSources(v any, dsLabels map[string]map[string]string) map[string]*domain.DataSource {
 	result := make(map[string]*domain.DataSource)
-	for _, node := range processNodes(v) {
+	if v == nil {
+		return result
+	}
+
+	items, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		nodeRaw, ok := m["node"]
+		if !ok || nodeRaw == nil {
+			continue
+		}
+		node, ok := nodeRaw.(neo4j.Node)
+		if !ok {
+			continue
+		}
+
+		relProps, _ := m["relProps"].(map[string]any)
+
 		ds := &domain.DataSource{
 			Id:           getStringProp(node, "id"),
 			Name:         getStringProp(node, "name"),
 			Type:         getStringProp(node, "type"),
 			Path:         getStringProp(node, "path"),
 			Hash:         getStringProp(node, "hash"),
-			ResourceName: getStringProp(node, "resourceName"),
-			Description:  getStringProp(node, "description"),
+			ResourceName: getStringFromMap(relProps, "resourceName"),
+			Description:  getStringFromMap(relProps, "description"),
 		}
 
 		ds.Labels = dsLabels[ds.Id]
@@ -60,11 +70,21 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 	metadata = domain.Metadata{
 		Id:          getStringFromMap(nodeProps, "id"),
 		Name:        getStringFromMap(relProps, "name"),
-		Image:       getStringFromMap(relProps, "image"),
 		Hash:        getStringFromMap(nodeProps, "hash"),
 		Prefix:      getStringFromMap(relProps, "prefix"),
 		Topic:       getStringFromMap(relProps, "topic"),
 		Description: getStringFromMap(relProps, "description"),
+	}
+
+	image := getStringFromMap(relProps, "image")
+	if image != "" {
+		metadata.Image = image
+	} else {
+		metadata.Build = domain.Build{
+			Pull:    getStringFromMap(nodeProps, "pull"),
+			Workdir: getStringFromMap(relProps, "workdir"),
+			Command: getStringFromMap(nodeProps, "command"),
+		}
 	}
 
 	control = domain.Control{

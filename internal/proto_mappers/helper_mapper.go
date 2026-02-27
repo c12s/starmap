@@ -24,15 +24,27 @@ func metadataToProto(metadata *domain.Metadata) *proto.Metadata {
 	if metadata == nil {
 		return &proto.Metadata{}
 	}
-	return &proto.Metadata{
+
+	m := &proto.Metadata{
 		Id:          metadata.Id,
 		Name:        metadata.Name,
-		Image:       metadata.Image,
 		Prefix:      metadata.Prefix,
 		Topic:       metadata.Topic,
 		Description: metadata.Description,
 		Labels:      metadata.Labels,
 	}
+
+	if metadata.Image != "" {
+		m.Image = metadata.Image
+	} else {
+		m.Build = &proto.Build{
+			Pull:    metadata.Build.Pull,
+			Workdir: metadata.Build.Workdir,
+			Command: metadata.Build.Command,
+		}
+	}
+
+	return m
 }
 
 func controlToProto(control *domain.Control) *proto.Control {

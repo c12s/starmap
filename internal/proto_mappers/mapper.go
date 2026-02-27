@@ -21,7 +21,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 		return nil, errors.New("missing metadata block")
 	}
 	if meta.Name == "" || meta.Maintainer == "" || meta.Description == "" ||
-		meta.Visibility == "" || meta.Engine == "" || meta.Namespace == "" {
+		meta.Visibility == "" || meta.Engine == "" {
 		return nil, errors.New("metadata fields are incomplete")
 	}
 
@@ -59,16 +59,27 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, sp := range chart.Chart.StoredProcedures {
+		metadata := domain.Metadata{
+			Id:          sp.Metadata.Id,
+			Name:        sp.Metadata.Name,
+			Prefix:      sp.Metadata.Prefix,
+			Topic:       sp.Metadata.Topic,
+			Description: sp.Metadata.Description,
+			Labels:      sp.Metadata.Labels,
+		}
+
+		if sp.Metadata.Image != "" {
+			metadata.Image = sp.Metadata.Image
+		} else {
+			metadata.Build = domain.Build{
+				Pull:    sp.Metadata.Build.Pull,
+				Workdir: sp.Metadata.Build.Workdir,
+				Command: sp.Metadata.Build.Command,
+			}
+		}
+
 		domainChart.Chart.StoredProcedures[key] = &domain.StoredProcedure{
-			Metadata: domain.Metadata{
-				Id:          sp.Metadata.Id,
-				Name:        sp.Metadata.Name,
-				Image:       sp.Metadata.Image,
-				Prefix:      sp.Metadata.Prefix,
-				Topic:       sp.Metadata.Topic,
-				Description: sp.Metadata.Description,
-				Labels:      sp.Metadata.Labels,
-			},
+			Metadata: metadata,
 			Control: domain.Control{
 				DisableVirtualization: sp.Control.DisableVirtualization,
 				RunDetached:           sp.Control.RunDetached,
@@ -92,16 +103,27 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, et := range chart.Chart.EventTriggers {
+		metadata := domain.Metadata{
+			Id:          et.Metadata.Id,
+			Name:        et.Metadata.Name,
+			Prefix:      et.Metadata.Prefix,
+			Topic:       et.Metadata.Topic,
+			Description: et.Metadata.Description,
+			Labels:      et.Metadata.Labels,
+		}
+
+		if et.Metadata.Image != "" {
+			metadata.Image = et.Metadata.Image
+		} else {
+			metadata.Build = domain.Build{
+				Pull:    et.Metadata.Build.Pull,
+				Workdir: et.Metadata.Build.Workdir,
+				Command: et.Metadata.Build.Command,
+			}
+		}
+
 		domainChart.Chart.EventTriggers[key] = &domain.EventTrigger{
-			Metadata: domain.Metadata{
-				Id:          et.Metadata.Id,
-				Name:        et.Metadata.Name,
-				Image:       et.Metadata.Image,
-				Prefix:      et.Metadata.Prefix,
-				Topic:       et.Metadata.Topic,
-				Description: et.Metadata.Description,
-				Labels:      et.Metadata.Labels,
-			},
+			Metadata: metadata,
 			Control: domain.Control{
 				DisableVirtualization: et.Control.DisableVirtualization,
 				RunDetached:           et.Control.RunDetached,
@@ -125,16 +147,27 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, ev := range chart.Chart.Events {
+		metadata := domain.Metadata{
+			Id:          ev.Metadata.Id,
+			Name:        ev.Metadata.Name,
+			Prefix:      ev.Metadata.Prefix,
+			Topic:       ev.Metadata.Topic,
+			Description: ev.Metadata.Description,
+			Labels:      ev.Metadata.Labels,
+		}
+
+		if ev.Metadata.Image != "" {
+			metadata.Image = ev.Metadata.Image
+		} else {
+			metadata.Build = domain.Build{
+				Pull:    ev.Metadata.Build.Pull,
+				Workdir: ev.Metadata.Build.Workdir,
+				Command: ev.Metadata.Build.Command,
+			}
+		}
+
 		domainChart.Chart.Events[key] = &domain.Event{
-			Metadata: domain.Metadata{
-				Id:          ev.Metadata.Id,
-				Name:        ev.Metadata.Name,
-				Image:       ev.Metadata.Image,
-				Prefix:      ev.Metadata.Prefix,
-				Topic:       ev.Metadata.Topic,
-				Description: ev.Metadata.Description,
-				Labels:      ev.Metadata.Labels,
-			},
+			Metadata: metadata,
 			Control: domain.Control{
 				DisableVirtualization: ev.Control.DisableVirtualization,
 				RunDetached:           ev.Control.RunDetached,

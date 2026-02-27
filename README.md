@@ -5,7 +5,7 @@ Registry for Overlay data mesh definitions.
 
 | Parameter | Description | Default value |
 |--|--|--|
-REGISTRY_SERVICE_PORT | The port number at which the registry gRPC server is listening. | 8001 |
+REGISTRY_SERVICE_PORT | The port number at which the registry gRPC server is listening. | 9002 |
 REGISTRY_SERVICE_ADDRESS | The hostname of the registry service. | registry-server |
 NEO4J_URI | The connection URI for the Neo4j database instance. | bolt://neo4j:7687 |
 NEO4J_PORT | The port number for Neo4j bolt protocol connection. | 7687 |
@@ -16,7 +16,7 @@ NEO4J_PASS | The password for Neo4j database authentication. | password123 |
 .env example:
 
     #Registry Service
-    REGISTRY_SERVICE_PORT=8001
+    REGISTRY_SERVICE_PORT=9002
     REGISTRY_SERVICE_ADDRESS=registry-server
 
     #Neo4J
@@ -32,7 +32,7 @@ NEO4J_PASS | The password for Neo4j database authentication. | password123 |
 StarMap services can be started using Docker Compose.
 This will automatically run:
 
-    - Registry service
+    - Starmap (registry service)
     - Neo4j database
 
 ### Protobuf Model
@@ -51,9 +51,17 @@ message Metadata {
   string id = 1;
   string name = 2;
   string image = 3;
-  string prefix = 4;
-  string topic = 5;
-  map<string, string> labels = 6;
+  Build build = 4;
+  string prefix = 5;
+  string topic = 6;
+  string description = 7;
+  map<string, string> labels = 8;
+}
+
+message Build {
+  string pull = 1;
+  string workdir = 2;
+  string command = 3;
 }
 
 message Control {
@@ -143,7 +151,7 @@ message StarChart {
 ```
 
 Full example json request:
-starmap/yamlStarChart.json
+starmap/putStarChart.json
 
 #### Response - 0 OK
 ```proto

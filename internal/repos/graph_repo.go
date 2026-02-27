@@ -56,6 +56,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 	if chart.SchemaVersion == "" {
 		chart.SchemaVersion = "v1.0.0"
 	}
+	if chart.Metadata.Namespace == "" {
+		chart.Metadata.Namespace = "default"
+	}
 
 	versionHash := computeVersionHash(chart)
 
@@ -84,7 +87,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				c.visibility = $visibility,
 				c.engine = $engine
 			WITH c
-			MATCH (n:Namespace {name: $namespace})
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
 			MERGE (n)-[r:HAS_CHART]->(c)
 			SET r.versions = coalesce(r.versions, []) + $schemaVersion
 			SET r.versions = apoc.coll.toSet(r.versions)
@@ -193,7 +196,11 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 		// StoredProcedures
 		for key, sp := range chart.Chart.StoredProcedures {
 
-			sp.Metadata.Hash = computeHash(sp.Metadata.Image)
+			if sp.Metadata.Image != "" {
+				sp.Metadata.Hash = computeHash(sp.Metadata.Image)
+			} else {
+				sp.Metadata.Hash = computeHash(sp.Metadata.Build.Pull + sp.Metadata.Build.Command)
+			}
 
 			querySP := `
 				MERGE (s:StoredProcedure {hash: $hash})
@@ -205,7 +212,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				MERGE (v)-[r:HAS_PROCEDURE]->(s)
 				SET 
 					r.name = $name,
-					r.image = $image,
 					r.prefix = $prefix,
 					r.topic = $topic,
 					r.description = $description,
@@ -218,7 +224,11 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars
+					r.envVars = $envVars,
+					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
@@ -240,6 +250,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"envVars":               sp.Features.EnvVars,
 				"schemaVersion":         chart.SchemaVersion,
 				"chartId":               chart.Metadata.Id,
+				"pull":                  sp.Metadata.Build.Pull,
+				"command":               sp.Metadata.Build.Command,
+				"workdir":               sp.Metadata.Build.Workdir,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create StoredProcedure relation for %s: %w", key, err)
@@ -249,7 +262,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				queryLink := `
 					MATCH (sp:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (sp)-[:HARD_LINK]->(ds)
+					MERGE (sp)-[hl:HARD_LINK]->(ds)
+					SET hl.resourceName = ds.resourceName,
+						hl.description = ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"spId":   sp.Metadata.Id,
@@ -264,7 +279,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				queryLink := `
 					MATCH (sp:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (sp)-[:SOFT_LINK]->(ds)
+					MERGE (sp)-[sl:SOFT_LINK]->(ds)
+					SET sl.resourceName = ds.resourceName,
+						sl.description = ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"spId":   sp.Metadata.Id,
@@ -296,14 +313,22 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 
 		eventMap := map[string]*domain.Event{}
 		for _, ev := range chart.Chart.Events {
-			ev.Metadata.Hash = computeHash(ev.Metadata.Image)
+			if ev.Metadata.Image != "" {
+				ev.Metadata.Hash = computeHash(ev.Metadata.Image)
+			} else {
+				ev.Metadata.Hash = computeHash(ev.Metadata.Build.Pull + ev.Metadata.Build.Command)
+			}
 			eventMap[ev.Metadata.Name] = ev
 		}
 
 		// EventTriggers
 		for key, et := range chart.Chart.EventTriggers {
 
-			et.Metadata.Hash = computeHash(et.Metadata.Image)
+			if et.Metadata.Image != "" {
+				et.Metadata.Hash = computeHash(et.Metadata.Image)
+			} else {
+				et.Metadata.Hash = computeHash(et.Metadata.Build.Pull + et.Metadata.Build.Command)
+			}
 
 			sort.Strings(et.Links.EventLinks)
 			var events []domain.Event
@@ -334,7 +359,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				MERGE (v)-[r:HAS_TRIGGER]->(t)
 				SET
 					r.name = $name,
-					r.image = $image,
 					r.hash = $hash,
 					r.prefix = $prefix,
 					r.topic = $topic,
@@ -348,7 +372,11 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars
+					r.envVars = $envVars,
+					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    				t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    				t.command = CASE WHEN $command <> '' THEN $command ELSE null END
 			`
 			_, err = tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
@@ -371,6 +399,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"schemaVersion":         chart.SchemaVersion,
 				"chartId":               chart.Metadata.Id,
 				"triggerEventHash":      triggerEventHash,
+				"pull":                  et.Metadata.Build.Pull,
+				"command":               et.Metadata.Build.Command,
+				"workdir":               et.Metadata.Build.Workdir,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
@@ -380,7 +411,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				queryLink := `
 					MATCH (t:Trigger {id: $triggerId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (t)-[:HARD_LINK]->(ds)
+					MERGE (t)-[hl:HARD_LINK]->(ds)
+					SET hl.resourceName = ds.resourceName,
+						hl.description = ds.description
+					REMOVE ds.resourceName, ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"triggerId": et.Metadata.Id,
@@ -395,7 +429,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				queryLink := `
 					MATCH (t:Trigger {id: $triggerId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (t)-[:SOFT_LINK]->(ds)
+					MERGE (t)-[sl:SOFT_LINK]->(ds)
+					SET sl.resourceName = ds.resourceName,
+						sl.description = ds.description
+					REMOVE ds.resourceName, ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"triggerId": et.Metadata.Id,
@@ -441,7 +478,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					MERGE (t)-[r:EVENT_LINK]->(e)
 					SET
 						r.name = $name,
-						r.image = $image,
 						r.prefix = $prefix,
 						r.topic = $topic,
 						r.description = $description,
@@ -454,7 +490,11 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 						r.ports = $ports,
 						r.volumes = $volumes,
 						r.targets = $targets,
-						r.envVars = $envVars
+						r.envVars = $envVars,
+						r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    					e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    					r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    					e.command = CASE WHEN $command <> '' THEN $command ELSE null END
 				`
 
 				_, err := tx.Run(ctx, queryLink, map[string]any{
@@ -478,6 +518,9 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					"volumes":               ev.Features.Volumes,
 					"targets":               ev.Features.Targets,
 					"envVars":               ev.Features.EnvVars,
+					"pull":                  ev.Metadata.Build.Pull,
+					"command":               ev.Metadata.Build.Command,
+					"workdir":               ev.Metadata.Build.Workdir,
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", eventName, err)
@@ -501,7 +544,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					}
 				}
 			}
-
 		}
 
 		return nil, nil
@@ -536,14 +578,23 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 	})
 	defer session.Close(ctx)
 
+	if namespace == "" {
+		namespace = "default"
+	}
 	useLatest := schemaVersion == ""
 
 	var versionMatch string
 
 	if useLatest {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WITH c, labels, nsRel.versions AS allowedVersions
+			WHERE size(allowedVersions) > 0
+
 			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(root:Version)
+			WHERE root.schemaVersion IN allowedVersions
 			OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
+			WHERE v.schemaVersion IN allowedVersions
 
 			WITH c, labels, v,
 				CASE
@@ -556,9 +607,12 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 
 			OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
 			WITH c, labels, v, collect(DISTINCT base) AS versions
-			`
+		`
 	} else {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WHERE $schemaVersion IN nsRel.versions
+
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v_direct:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v_extend:Version {schemaVersion: $schemaVersion})
 
@@ -588,10 +642,11 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 				}) AS storedProcedures
 
 			UNWIND storedProcedures AS sp
-			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
-			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
-			WITH c, v, labels, storedProcedures, sp, versions, 
-				collect(DISTINCT ds1) + collect(DISTINCT ds2) AS spDataSources
+			OPTIONAL MATCH (ds1:DataSource)<-[hlRel1:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[slRel2:SOFT_LINK]-(spNode)
+			WITH c, v, labels, storedProcedures, sp, versions,
+				collect(DISTINCT {node: ds1, relProps: properties(hlRel1)}) +
+				collect(DISTINCT {node: ds2, relProps: properties(slRel2)}) AS spDataSources
 
 			WITH c, v, labels, storedProcedures, versions, 
 				collect({
@@ -612,11 +667,12 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 
 			UNWIND triggers AS tr
 			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
-			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
-			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (ds3:DataSource)<-[hlRel3:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[slRel4:SOFT_LINK]-(trNode)
 			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
 			WITH c, v, labels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
-				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+				collect(DISTINCT {node: ds3, relProps: properties(hlRel3)}) +
+				collect(DISTINCT {node: ds4, relProps: properties(slRel4)}) AS triggerDataSources,
 				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
 
 			WITH c, v, labels, storedProcedures, spDataSourcesList,
@@ -636,7 +692,7 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 				[sp IN storedProcedures | sp.nodeProps.id] +
 				[tr IN triggers | tr.nodeProps.id] +
 				[ev IN allEvents | ev.nodeProps.id] +
-				[ds IN allDataSources | ds.id]
+				[ds IN allDataSources | ds.node.id]
 			)
 			WITH c, v, labels, storedProcedures, triggers, allEvents, allDataSources,
 				collect(CASE 
@@ -655,7 +711,7 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 					END) AS eventLabels,
 
 				collect(CASE 
-					WHEN ent.id IN [ds IN allDataSources | ds.id] 
+					WHEN ent.id IN [ds IN allDataSources | ds.node.id] 
 					THEN { id: ent.id, key: lab.key, value: lab.value }
 					END) AS dataSourceLabels
 
@@ -674,7 +730,7 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 		}
 
 		if !rec.Next(ctx) {
-			return nil, fmt.Errorf("chart not found")
+			return nil, fmt.Errorf("chart not found or no allowed versions for this user")
 		}
 
 		record := rec.Record()
@@ -760,28 +816,35 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, schemaVersion, names
 	})
 	defer session.Close(ctx)
 
+	if namespace == "" {
+		namespace = "default"
+	}
 	useLatest := schemaVersion == ""
 
 	var versionMatch string
 
 	if useLatest {
 		versionMatch = `
-			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(root:Version)
-			OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
+        MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+        WITH c, labels, nsRel.versions AS allowedVersions
+        WHERE size(allowedVersions) > 0
 
-			WITH c, labels, v,
-				CASE
-					WHEN re IS NULL OR size(re) = 0 THEN r.createdAt
-					ELSE last(re).createdAt
-				END AS versionCreatedAt
+        WITH c, labels, last(apoc.coll.sort(allowedVersions)) AS latestAllowed
 
-			ORDER BY versionCreatedAt DESC
+        OPTIONAL MATCH (c)-[:HAS_VERSION]->(root:Version {schemaVersion: latestAllowed})
+        OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(extended:Version {schemaVersion: latestAllowed})
 
-			OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
-			WITH c, labels, v, collect(DISTINCT base) AS versions
-			`
+        WITH c, labels, latestAllowed,
+            CASE WHEN root IS NOT NULL THEN root ELSE extended END AS v
+
+        OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
+        WITH c, labels, v, collect(DISTINCT base) AS versions
+    `
 	} else {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WHERE $schemaVersion IN nsRel.versions
+
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v_direct:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v_extend:Version {schemaVersion: $schemaVersion})
 
@@ -856,11 +919,12 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, schemaVersion, names
 
 			UNWIND triggers AS tr
 			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
-			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
-			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (ds3:DataSource)<-[hlRel3:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[slRel4:SOFT_LINK]-(trNode)
 			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
 			WITH c, v, labels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
-				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+				collect(DISTINCT {node: ds3, relProps: properties(hlRel3)}) +
+				collect(DISTINCT {node: ds4, relProps: properties(slRel4)}) AS triggerDataSources,
 				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
 
 			WITH c, v, labels, storedProcedures, spDataSourcesList,
@@ -880,7 +944,7 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, schemaVersion, names
 				[sp IN storedProcedures | sp.nodeProps.id] +
 				[tr IN triggers | tr.nodeProps.id] +
 				[ev IN allEvents | ev.nodeProps.id] +
-				[ds IN allDataSources | ds.id]
+				[ds IN allDataSources | ds.node.id]
 			)
 			WITH c, v, labels, storedProcedures, triggers, allEvents, allDataSources,
 				collect(CASE 
@@ -899,7 +963,7 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, schemaVersion, names
 					END) AS eventLabels,
 
 				collect(CASE 
-					WHEN ent.id IN [ds IN allDataSources | ds.id] 
+					WHEN ent.id IN [ds IN allDataSources | ds.node.id] 
 					THEN { id: ent.id, key: lab.key, value: lab.value }
 					END) AS dataSourceLabels
 
@@ -1004,14 +1068,23 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 	})
 	defer session.Close(ctx)
 
+	if namespace == "" {
+		namespace = "default"
+	}
 	useLatest := schemaVersion == ""
 
 	var versionMatch string
 
 	if useLatest {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WITH c, labels, nsRel.versions AS allowedVersions
+			WHERE size(allowedVersions) > 0
+
 			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(root:Version)
+			WHERE root.schemaVersion IN allowedVersions
 			OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
+			WHERE v.schemaVersion IN allowedVersions
 
 			WITH c, labels, v,
 				CASE
@@ -1024,9 +1097,12 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 
 			OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
 			WITH c, labels, v, collect(DISTINCT base) AS versions
-			`
+		`
 	} else {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WHERE $schemaVersion IN nsRel.versions
+
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v_direct:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v_extend:Version {schemaVersion: $schemaVersion})
 
@@ -1056,10 +1132,11 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 				}) AS storedProcedures
 
 			UNWIND storedProcedures AS sp
-			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
-			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
+			OPTIONAL MATCH (ds1:DataSource)<-[hlRel1:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[slRel2:SOFT_LINK]-(spNode)
 			WITH c, v, labels, storedProcedures, sp, versions,
-				collect(DISTINCT ds1) + collect(DISTINCT ds2) AS spDataSources
+				collect(DISTINCT {node: ds1, relProps: properties(hlRel1)}) +
+				collect(DISTINCT {node: ds2, relProps: properties(slRel2)}) AS spDataSources
 
 			WITH c, v, labels, storedProcedures, versions,
 				collect({
@@ -1080,11 +1157,12 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 
 			UNWIND triggers AS tr
 			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
-			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
-			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (ds3:DataSource)<-[hlRel3:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[slRel4:SOFT_LINK]-(trNode)
 			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
 			WITH c, v, labels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
-				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+				collect(DISTINCT {node: ds3, relProps: properties(hlRel3)}) +
+				collect(DISTINCT {node: ds4, relProps: properties(slRel4)}) AS triggerDataSources,
 				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
 
 			WITH c, v, labels, storedProcedures, spDataSourcesList,
@@ -1104,7 +1182,7 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 				[sp IN storedProcedures | sp.nodeProps.id] +
 				[tr IN triggers | tr.nodeProps.id] +
 				[ev IN allEvents | ev.nodeProps.id] +
-				[ds IN allDataSources | ds.id]
+				[ds IN allDataSources | ds.node.id]
 			)
 			WITH c, v, labels, storedProcedures, triggers, allEvents, allDataSources,
 				collect(CASE 
@@ -1123,7 +1201,7 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 					END) AS eventLabels,
 
 				collect(CASE 
-					WHEN ent.id IN [ds IN allDataSources | ds.id] 
+					WHEN ent.id IN [ds IN allDataSources | ds.node.id] 
 					THEN { id: ent.id, key: lab.key, value: lab.value }
 					END) AS dataSourceLabels
 
@@ -1228,14 +1306,23 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 	})
 	defer session.Close(ctx)
 
+	if namespace == "" {
+		namespace = "default"
+	}
 	useLatest := schemaVersion == ""
 
 	var versionMatch string
 
 	if useLatest {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WITH c, nsRel.versions AS allowedVersions
+			WHERE size(allowedVersions) > 0
+
 			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(root:Version)
+			WHERE root.schemaVersion IN allowedVersions
 			OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
+			WHERE v.schemaVersion IN allowedVersions
 
 			WITH c, v,
 				CASE
@@ -1248,9 +1335,12 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 
 			OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
 			WITH c, v, collect(DISTINCT base) AS versions
-			`
+		`
 	} else {
 		versionMatch = `
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[nsRel:HAS_CHART]->(c)
+			WHERE $schemaVersion IN nsRel.versions
+
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v_direct:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v_extend:Version {schemaVersion: $schemaVersion})
 
@@ -1451,10 +1541,11 @@ func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabel
 				}) AS storedProcedures
 
 			UNWIND storedProcedures AS sp
-			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
-			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
-			WITH maintainer, namespace, c, labels, storedProcedures, ver, sp,
-				collect(DISTINCT ds1) + collect(DISTINCT ds2) AS spDataSources
+			OPTIONAL MATCH (ds1:DataSource)<-[hlRel1:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[slRel2:SOFT_LINK]-(spNode)
+			WITH c, ver, labels, storedProcedures, sp, maintainer, namespace,
+				collect(DISTINCT {node: ds1, relProps: properties(hlRel1)}) +
+				collect(DISTINCT {node: ds2, relProps: properties(slRel2)}) AS spDataSources
 
 			WITH maintainer, namespace, c, labels, storedProcedures, ver,
 				collect({ trigger: sp, dataSources: spDataSources }) AS spWithDataSources
@@ -1471,11 +1562,12 @@ func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabel
 
 			UNWIND triggers AS tr
 			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
-			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
-			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (ds3:DataSource)<-[hlRel3:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[slRel4:SOFT_LINK]-(trNode)
 			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
-			WITH maintainer, namespace, c, labels, storedProcedures, spDataSourcesList, ver, tr,
-				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+			WITH maintainer, namespace, c, ver, labels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
+				collect(DISTINCT {node: ds3, relProps: properties(hlRel3)}) +
+				collect(DISTINCT {node: ds4, relProps: properties(slRel4)}) AS triggerDataSources,
 				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
 
 			WITH maintainer, namespace, c, labels, storedProcedures, ver, spDataSourcesList,
@@ -1491,7 +1583,7 @@ func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabel
 			[sp IN storedProcedures | sp.nodeProps.id] +
 			[tr IN triggers | tr.nodeProps.id] +
 			[ev IN allEvents | ev.nodeProps.id] +
-			[ds IN allDataSources | ds.id]
+			[ds IN allDataSources | ds.node.id]
 			)
 
 			WITH maintainer, namespace, c, labels, storedProcedures, triggers, allEvents, allDataSources, ver,
@@ -1501,7 +1593,7 @@ func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabel
 				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS triggerLabels,
 				collect(CASE WHEN ent.id IN [ev IN allEvents | ev.nodeProps.id]
 				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS eventLabels,
-				collect(CASE WHEN ent.id IN [ds IN allDataSources | ds.id]
+				collect(CASE WHEN ent.id IN [ds IN allDataSources | ds.node.id]
 				THEN { id: ent.id, key: lab.key, value: lab.value } END) AS dataSourceLabels
 
 			RETURN maintainer, namespace, c, labels, ver,
@@ -1742,14 +1834,29 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
 		AccessMode: neo4j.AccessModeWrite,
 	})
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
 	defer session.Close(ctx)
 
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+
 		checkExists := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
 			MATCH (n)-[:HAS_CHART]->(c:Chart {id: $chartId})
-			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
-			RETURN c IS NOT NULL AS chartExists, v IS NOT NULL AS versionExists
+
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(direct:Version {schemaVersion: $schemaVersion})
+
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(extended:Version {schemaVersion: $schemaVersion})
+			WHERE NOT (:Version)-[:EXTEND]->(extended)
+
+			WITH c, direct, extended
+			RETURN
+				c IS NOT NULL AS chartExists,
+				(direct IS NOT NULL OR extended IS NOT NULL) AS versionExists,
+				direct IS NOT NULL AS isDirect
 		`
 
 		res, err := tx.Run(ctx, checkExists, map[string]any{
@@ -1767,13 +1874,17 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		}
 
 		record := res.Record()
+
 		versionExists, _ := record.Get("versionExists")
 		if versionExists == nil || !versionExists.(bool) {
 			return nil, fmt.Errorf("version %s not found for chart %s", schemaVersion, id)
 		}
 
+		isDirect, _ := record.Get("isDirect")
+		isDirectBool := isDirect != nil && isDirect.(bool)
+
 		checkExtend := `
-			MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(root:Version {schemaVersion: $schemaVersion}) 
+			MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(root:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (root)<-[:EXTEND*1..]-(v:Version)
 			RETURN count(v) AS cnt
 		`
@@ -1797,7 +1908,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		}
 
 		checkExtend2 := `
-			MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(root:Version) 
+			MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(root:Version)
 			OPTIONAL MATCH (root)<-[:EXTEND*0..]-(v:Version {schemaVersion: $schemaVersion})
 			OPTIONAL MATCH (v)<-[:EXTEND*1..]-(child:Version)
 			RETURN count(child) AS cnt
@@ -1821,50 +1932,83 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			}
 		}
 
-		// Delete Version relationship
-		queryDeleteVersion := `
-			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
-			MATCH (n)-[hc:HAS_CHART]->(c:Chart {id: $chartId})
-			
-			SET hc.versions = [v IN hc.versions WHERE v <> $schemaVersion]
-			
-			WITH c, hc
+		if isDirectBool {
+			queryDeleteVersion := `
+				MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})
+				MATCH (n)-[hc:HAS_CHART]->(c:Chart {id: $chartId})
 
-			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
-			DELETE r
-			WITH c
+				SET hc.versions = [v IN hc.versions WHERE v <> $schemaVersion]
 
-			OPTIONAL MATCH (c)-[:HAS_VERSION]->(otherV)
-			WITH c, collect(otherV) AS versions
-			WHERE size(versions) = 0
-			DETACH DELETE c
-		`
+				WITH c, hc
 
-		_, err = tx.Run(ctx, queryDeleteVersion, map[string]any{
-			"chartId":       id,
-			"name":          name,
-			"namespace":     namespace,
-			"schemaVersion": schemaVersion,
-			"kind":          kind,
-			"maintainer":    maintainer,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to delete Version: %w", err)
+				OPTIONAL MATCH (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
+				DELETE r
+				WITH c, hc
+
+				WITH c, hc
+				WHERE size(hc.versions) = 0
+				DELETE hc
+				WITH c
+
+				OPTIONAL MATCH (c)-[:HAS_VERSION]->(otherV)
+				WITH c, collect(otherV) AS versions
+				WHERE size(versions) = 0
+				DETACH DELETE c
+			`
+
+			_, err = tx.Run(ctx, queryDeleteVersion, map[string]any{
+				"chartId":       id,
+				"name":          name,
+				"namespace":     namespace,
+				"schemaVersion": schemaVersion,
+				"kind":          kind,
+				"maintainer":    maintainer,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete Version: %w", err)
+			}
+		} else {
+			queryDeleteExtended := `
+				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v:Version {schemaVersion: $schemaVersion})
+				WHERE NOT (:Version)-[:EXTEND]->(v)
+
+				MATCH (v)-[:EXTEND]->(parent:Version)
+
+				MATCH (n:Namespace {name: $namespace})-[hc:HAS_CHART]->(c)
+				SET hc.versions = 
+					CASE 
+						WHEN NOT parent.schemaVersion IN hc.versions 
+						THEN [x IN hc.versions WHERE x <> $schemaVersion] + parent.schemaVersion 
+						ELSE [x IN hc.versions WHERE x <> $schemaVersion]
+					END
+
+				WITH v
+				DETACH DELETE v
+			`
+
+			_, err = tx.Run(ctx, queryDeleteExtended, map[string]any{
+				"chartId":       id,
+				"schemaVersion": schemaVersion,
+				"namespace":     namespace,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete extended Version: %w", err)
+			}
 		}
 
-		// Delete Version
+		// Version
 		queryVersion := `
 			MATCH (v:Version)
 			WHERE NOT (:Chart)-[:HAS_VERSION]->(v)
 			AND NOT (v)<-[:EXTEND]-(:Version)
+			AND NOT (v)-[:EXTEND]->(:Version)
 			DETACH DELETE v
 		`
 		_, err = tx.Run(ctx, queryVersion, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to delete orphan Version: %w", err)
 		}
-
-		// Delete Namespace
+		// Namespace
 		queryNamespace := `
 			MATCH (n:Namespace {name: $namespace})
 			WHERE NOT (n)-[:HAS_CHART]->(:Chart)
@@ -1877,7 +2021,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete Namespace: %w", err)
 		}
 
-		// Delete User
+		// User
 		queryUser := `
 			MATCH (u:User {name: $maintainer})
 			WHERE NOT (u)-[:HAS_NAMESPACE]->(:Namespace)
@@ -1890,7 +2034,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete User: %w", err)
 		}
 
-		// Delete StoredProcedures
+		// StoredProcedures
 		querySP := `
 			MATCH (s:StoredProcedure)
 			WHERE NOT (:Version)-[:HAS_PROCEDURE]->(s)
@@ -1901,7 +2045,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete orphan StoredProcedures: %w", err)
 		}
 
-		// Delete Triggers
+		// Triggers
 		queryTriggers := `
 			MATCH (t:Trigger)
 			WHERE NOT (:Version)-[:HAS_TRIGGER]->(t)
@@ -1912,11 +2056,11 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete orphan Triggers: %w", err)
 		}
 
-		// Delete DataSources
+		// DataSources
 		queryDS := `
 			MATCH (d:DataSource)
-			WHERE NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:StoredProcedure) 
-			   AND NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:Trigger)
+			WHERE NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:StoredProcedure)
+			AND NOT (d)<-[:HARD_LINK|:SOFT_LINK]-(:Trigger)
 			DETACH DELETE d
 		`
 		_, err = tx.Run(ctx, queryDS, nil)
@@ -1924,7 +2068,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete orphan DataSources: %w", err)
 		}
 
-		// Delete Events
+		// Events
 		queryEv := `
 			MATCH (e:Event)
 			WHERE NOT (:Trigger)-[:EVENT_LINK]->(e)
@@ -1935,7 +2079,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			return nil, fmt.Errorf("failed to delete orphan Events: %w", err)
 		}
 
-		// Delete Labels
+		// Labels
 		queryOtherLabels := `
 			MATCH (l:Label)
 			WHERE NOT (l)<-[:HAS_LABEL]-(:StoredProcedure)
@@ -1961,6 +2105,10 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		AccessMode: neo4j.AccessModeWrite,
 	})
 	defer session.Close(ctx)
+
+	if chart.Metadata.Namespace == "" {
+		chart.Metadata.Namespace = "default"
+	}
 
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		// Namespace
@@ -2018,19 +2166,18 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		schemaVersion := chart.SchemaVersion
 
 		if schemaVersion == "" {
-
 			queryLastVersion := `
-				MATCH (c:Chart {id: $id})-[r:HAS_VERSION]->(root:Version)
-				OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
-				WITH c, v, r, 
-					CASE
-						WHEN re IS NULL OR size(re) = 0 THEN r.createdAt
-						ELSE last(re).createdAt
-					END AS versionCreatedAt
-				ORDER BY versionCreatedAt DESC
-				LIMIT 1
-				RETURN v.schemaVersion AS schemaVersion
-			`
+        MATCH (c:Chart {id: $id})-[r:HAS_VERSION]->(root:Version)
+        OPTIONAL MATCH (root)<-[re:EXTEND*0..]-(v:Version)
+        WITH c, v, r, 
+            CASE
+                WHEN re IS NULL OR size(re) = 0 THEN r.createdAt
+                ELSE last(re).createdAt
+            END AS versionCreatedAt
+        ORDER BY versionCreatedAt DESC
+        LIMIT 1
+        RETURN v.schemaVersion AS schemaVersion
+    `
 			res, err := tx.Run(ctx, queryLastVersion, map[string]any{
 				"id": chart.Metadata.Id,
 			})
@@ -2038,46 +2185,77 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				return nil, err
 			}
 
-			hasVersion := res.Next(ctx)
-
-			if hasVersion {
+			if res.Next(ctx) {
 				lastSchema, _ := res.Record().Get("schemaVersion")
-
-				lastSchemaStr := lastSchema.(string)
-
-				schemaVersion = incrementVersion(lastSchemaStr)
-
+				schemaVersion = incrementVersion(lastSchema.(string))
 			} else {
 				schemaVersion = "v1.0.0"
 			}
+		} else {
+			queryFindLeaf := `
+			MATCH (c:Chart {id: $id})-[:HAS_VERSION]->(root:Version)
+			OPTIONAL MATCH (root)<-[:EXTEND*0..]-(target:Version {schemaVersion: $schemaVersion})
+			OPTIONAL MATCH (target)<-[:EXTEND*1..]-(leaf:Version)
+			WHERE NOT (:Version)-[:EXTEND]->(leaf)
+			RETURN 
+				target IS NOT NULL AS versionExists,
+				coalesce(leaf.schemaVersion, target.schemaVersion) AS resolvedVersion
+			`
+			res, err := tx.Run(ctx, queryFindLeaf, map[string]any{
+				"id":            chart.Metadata.Id,
+				"schemaVersion": schemaVersion,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if !res.Next(ctx) {
+				return nil, fmt.Errorf("version %s not found for chart %s", schemaVersion, chart.Metadata.Id)
+			}
+
+			record := res.Record()
+
+			versionExists, _ := record.Get("versionExists")
+			if versionExists == nil || !versionExists.(bool) {
+				return nil, fmt.Errorf("version %s not found for chart %s", schemaVersion, chart.Metadata.Id)
+			}
+
+			resolved, _ := record.Get("resolvedVersion")
+			if resolved != nil {
+				schemaVersion = resolved.(string)
+			}
 		}
 
+		versionHash := computeVersionHash(chart)
 		queryMergeVersion := `
-			MATCH (c:Chart {id: $id})
+			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {id: $id})
 			MERGE (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
-			SET r.createdAt = $createdAt
+			SET r.createdAt = $createdAt,
+				v.hash = $versionHash
 
-			WITH c, v
+			WITH c, v, n
 
-			MATCH (n:Namespace {name: $namespace})-[hc:HAS_CHART]->(c)
+			MATCH (n)-[hc:HAS_CHART]->(c)
 			SET hc.versions = CASE 
 				WHEN $schemaVersion IN coalesce(hc.versions, []) THEN hc.versions
 				ELSE coalesce(hc.versions, []) + $schemaVersion
 			END
 
-			RETURN v
+			RETURN DISTINCT v
 		`
 		result, err := tx.Run(ctx, queryMergeVersion, map[string]any{
 			"id":            chart.Metadata.Id,
 			"schemaVersion": schemaVersion,
 			"createdAt":     time.Now().Unix(),
 			"namespace":     chart.Metadata.Namespace,
+			"maintainer":    chart.Metadata.Maintainer,
+			"versionHash":   versionHash,
 		})
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = result.Single(ctx)
+		_, err = result.Consume(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -2100,18 +2278,14 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					d.name = $name,
 					d.type = $type,
 					d.path = $path,
-					d.hash = $hash,
-					d.resourceName = $resourceName,
-					d.description = $description
+					d.hash = $hash
 			`
 			tx.Run(ctx, queryDS, map[string]any{
-				"id":           ds.Id,
-				"name":         ds.Name,
-				"type":         ds.Type,
-				"path":         ds.Path,
-				"hash":         ds.Hash,
-				"resourceName": ds.ResourceName,
-				"description":  ds.Description,
+				"id":   ds.Id,
+				"name": ds.Name,
+				"type": ds.Type,
+				"path": ds.Path,
+				"hash": ds.Hash,
 			})
 
 			queryDeleteDSLabels := `
@@ -2134,7 +2308,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		// StoredProcedure
 		for _, sp := range chart.Chart.StoredProcedures {
 
-			sp.Metadata.Hash = computeHash(sp.Metadata.Image)
+			if sp.Metadata.Image != "" {
+				sp.Metadata.Hash = computeHash(sp.Metadata.Image)
+			} else {
+				sp.Metadata.Hash = computeHash(sp.Metadata.Build.Pull + sp.Metadata.Build.Command)
+			}
 
 			querySP := `
 				MERGE (s:StoredProcedure {hash: $hash})
@@ -2156,7 +2334,6 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				MATCH (s:StoredProcedure {id: $id})
 				MERGE (v)-[r:HAS_PROCEDURE]->(s)
 				SET r.name = $name,
-					r.image = $image,
 					r.prefix = $prefix,
 					r.topic = $topic,
 					r.description = $description,
@@ -2169,7 +2346,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars
+					r.envVars = $envVars,
+				    r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    sp.Metadata.Id,
@@ -2189,13 +2370,18 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				"targets":               sp.Features.Targets,
 				"envVars":               sp.Features.EnvVars,
 				"schemaVersion":         schemaVersion,
+				"pull":                  sp.Metadata.Build.Pull,
+				"command":               sp.Metadata.Build.Command,
+				"workdir":               sp.Metadata.Build.Workdir,
 			})
 
 			for _, hl := range sp.Links.HardLinks {
 				tx.Run(ctx, `
 					MATCH (s:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (d:DataSource {name: $dsName})
-					MERGE (s)-[:HARD_LINK]->(d)
+					MERGE (s)-[hl:HARD_LINK]->(d)
+					SET hl.resourceName = d.resourceName,
+						hl.description = d.description
 				`, map[string]any{"spId": sp.Metadata.Id, "dsName": hl})
 			}
 
@@ -2203,7 +2389,9 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				tx.Run(ctx, `
 					MATCH (s:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (d:DataSource {name: $dsName})
-					MERGE (s)-[:SOFT_LINK]->(d)
+					MERGE (s)-[sl:SOFT_LINK]->(d)
+					SET sl.resourceName = d.resourceName,
+						sl.description = d.description
 				`, map[string]any{"spId": sp.Metadata.Id, "dsName": sl})
 			}
 
@@ -2233,11 +2421,15 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		// Trigger
 		for _, tr := range chart.Chart.EventTriggers {
 
-			tr.Metadata.Hash = computeHash(tr.Metadata.Image)
+			if tr.Metadata.Image != "" {
+				tr.Metadata.Hash = computeHash(tr.Metadata.Image)
+			} else {
+				tr.Metadata.Hash = computeHash(tr.Metadata.Build.Pull + tr.Metadata.Build.Command)
+			}
 
 			querySP := `
-				MERGE (t:Trigger {hash: $hash})
-				SET t.id = $id
+				MERGE (t:Trigger {id: $id})
+				SET t.hash = $hash
 			`
 			tx.Run(ctx, querySP, map[string]any{
 				"id":   tr.Metadata.Id,
@@ -2255,7 +2447,6 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				MATCH (s:Trigger {id: $id})
 				MERGE (v)-[r:HAS_TRIGGER]->(s)
 				SET r.name = $name,
-					r.image = $image,
 					r.prefix = $prefix,
 					r.topic = $topic,
 					r.description = $description,
@@ -2268,7 +2459,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars
+					r.envVars = $envVars,
+					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    tr.Metadata.Id,
@@ -2288,13 +2483,19 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				"targets":               tr.Features.Targets,
 				"envVars":               tr.Features.EnvVars,
 				"schemaVersion":         schemaVersion,
+				"pull":                  tr.Metadata.Build.Pull,
+				"command":               tr.Metadata.Build.Command,
+				"workdir":               tr.Metadata.Build.Workdir,
 			})
 
 			for _, hl := range tr.Links.HardLinks {
 				tx.Run(ctx, `
 					MATCH (s:Trigger {id: $spId})
 					OPTIONAL MATCH (d:DataSource {name: $dsName})
-					MERGE (s)-[:HARD_LINK]->(d)
+					MERGE (s)-[hl:HARD_LINK]->(d)
+					SET hl.resourceName = d.resourceName,
+						hl.description = d.description
+					REMOVE d.resourceName, d.description
 				`, map[string]any{"spId": tr.Metadata.Id, "dsName": hl})
 			}
 
@@ -2302,7 +2503,10 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				tx.Run(ctx, `
 					MATCH (s:Trigger {id: $spId})
 					OPTIONAL MATCH (d:DataSource {name: $dsName})
-					MERGE (s)-[:SOFT_LINK]->(d)
+					MERGE (s)-[sl:SOFT_LINK]->(d)
+					SET sl.resourceName = d.resourceName,
+						sl.description = d.description
+					REMOVE d.resourceName, d.description
 				`, map[string]any{"spId": tr.Metadata.Id, "dsName": sl})
 			}
 
@@ -2329,7 +2533,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					continue
 				}
 
-				ev.Metadata.Hash = computeHash(ev.Metadata.Image)
+				if ev.Metadata.Image != "" {
+					ev.Metadata.Hash = computeHash(ev.Metadata.Image)
+				} else {
+					ev.Metadata.Hash = computeHash(ev.Metadata.Build.Pull + ev.Metadata.Build.Command)
+				}
 
 				_, err = tx.Run(ctx, `
 					MERGE (e:Event {hash: $hash})
@@ -2343,14 +2551,12 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					return nil, fmt.Errorf("failed event upsert: %w", err)
 				}
 
-				// LINK Trigger -> Event
 				_, err = tx.Run(ctx, `
 				MATCH (t:Trigger {id: $triggerId})
 				MATCH (e:Event {id: $eventId})
 				MERGE (t)-[r:EVENT_LINK]->(e)
 				SET
 					r.name = $name,
-					r.image = $image,
 					r.prefix = $prefix,
 					r.topic = $topic,
 					r.description = $description,
@@ -2363,7 +2569,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars
+					r.envVars = $envVars,
+					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+    				e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+    				e.command = CASE WHEN $command <> '' THEN $command ELSE null END
 				`, map[string]any{
 					"triggerId":             tr.Metadata.Id,
 					"eventId":               ev.Metadata.Id,
@@ -2382,6 +2592,9 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					"volumes":               ev.Features.Volumes,
 					"targets":               ev.Features.Targets,
 					"envVars":               ev.Features.EnvVars,
+					"pull":                  ev.Metadata.Build.Pull,
+					"command":               ev.Metadata.Build.Command,
+					"workdir":               ev.Metadata.Build.Workdir,
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed event link: %w", err)
@@ -2632,16 +2845,24 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 	})
 	defer session.Close(ctx)
 
+	if namespace == "" {
+		namespace = "default"
+	}
+
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		query := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {id: $chartId})
-			
-			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(v:Version)
-			WITH c, collect({version: v, createdAt: r.createdAt}) AS versions
-			ORDER BY versions[0].createdAt DESC
-			
-			UNWIND versions AS versionData
+
+			OPTIONAL MATCH (c)-[r:HAS_VERSION]->(root:Version)
+			OPTIONAL MATCH (root)<-[re:EXTEND*1..]-(ext:Version)
+
+			WITH c,
+				collect(DISTINCT {version: root, createdAt: r.createdAt}) +
+				collect(DISTINCT {version: ext, createdAt: last(re).createdAt}) AS allVersions
+
+			UNWIND allVersions AS versionData
 			WITH c, versionData.version AS v, versionData.createdAt AS createdAt
+			WHERE v IS NOT NULL
 			
 			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
 			WITH c, v, createdAt, collect({key: l.key, value: l.value}) AS chartLabels
@@ -2653,10 +2874,12 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 			}) AS storedProcedures
 			
 			UNWIND storedProcedures AS sp
-			OPTIONAL MATCH (ds1:DataSource)<-[:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
-			OPTIONAL MATCH (ds2:DataSource)<-[:SOFT_LINK]-(spNode)
-			WITH c, v, createdAt, chartLabels, storedProcedures, sp,
-				collect(DISTINCT ds1) + collect(DISTINCT ds2) AS spDataSources
+			OPTIONAL MATCH (ds1:DataSource)<-[hlRel1:HARD_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			OPTIONAL MATCH (ds2:DataSource)<-[slRel2:SOFT_LINK]-(spNode)
+			WITH c, v, storedProcedures, sp, createdAt, chartLabels,
+				collect(DISTINCT {node: ds1, relProps: properties(hlRel1)}) +
+				collect(DISTINCT {node: ds2, relProps: properties(slRel2)}) AS spDataSources
+
 			
 			WITH c, v, createdAt, chartLabels, storedProcedures,
 				collect({
@@ -2673,13 +2896,14 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 			
 			UNWIND triggers AS tr
 			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
-			OPTIONAL MATCH (ds3:DataSource)<-[:HARD_LINK]-(trNode)
-			OPTIONAL MATCH (ds4:DataSource)<-[:SOFT_LINK]-(trNode)
+			OPTIONAL MATCH (ds3:DataSource)<-[hlRel3:HARD_LINK]-(trNode)
+			OPTIONAL MATCH (ds4:DataSource)<-[slRel4:SOFT_LINK]-(trNode)
 			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
-			WITH c, v, createdAt, chartLabels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
-				collect(DISTINCT ds3) + collect(DISTINCT ds4) AS triggerDataSources,
+			WITH c, v, storedProcedures, spDataSourcesList, triggers, tr, trNode, createdAt, chartLabels,
+				collect(DISTINCT {node: ds3, relProps: properties(hlRel3)}) +
+				collect(DISTINCT {node: ds4, relProps: properties(slRel4)}) AS triggerDataSources,
 				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
-			
+
 			WITH c, v, createdAt, chartLabels, storedProcedures, spDataSourcesList,
 				collect({
 					trigger: tr,
@@ -2697,7 +2921,7 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 				[sp IN storedProcedures | sp.nodeProps.id] +
 				[tr IN triggers | tr.nodeProps.id] +
 				[ev IN allEvents | ev.nodeProps.id] +
-				[ds IN allDataSources | ds.id]
+				[ds IN allDataSources | ds.node.id]
 			)
 			WITH c, v, createdAt, chartLabels, storedProcedures, triggers, allEvents, allDataSources,
 				collect(CASE 
@@ -2716,7 +2940,7 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 					END) AS eventLabels,
 				
 				collect(CASE 
-					WHEN ent.id IN [ds IN allDataSources | ds.id] 
+					WHEN ent.id IN [ds IN allDataSources | ds.node.id] 
 					THEN { id: ent.id, key: lab.key, value: lab.value }
 					END) AS dataSourceLabels
 			
@@ -3016,7 +3240,9 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				queryLink := `
 					MATCH (sp:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (sp)-[:HARD_LINK]->(ds)
+					MERGE (sp)-[hl:HARD_LINK]->(ds)
+					SET hl.resourceName = ds.resourceName,
+						hl.description = ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"spId":   sp.Metadata.Id,
@@ -3031,7 +3257,9 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				queryLink := `
 					MATCH (sp:StoredProcedure {id: $spId})
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
-					MERGE (sp)-[:SOFT_LINK]->(ds)
+					MERGE (sp)-[sl:SOFT_LINK]->(ds)
+					SET sl.resourceName = ds.resourceName,
+						sl.description = ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"spId":   sp.Metadata.Id,
@@ -3146,7 +3374,10 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
 					WITH t, ds
 					WHERE ds IS NOT NULL
-					MERGE (t)-[:HARD_LINK]->(ds)
+					MERGE (t)-[hl:HARD_LINK]->(ds)
+					SET hl.resourceName = ds.resourceName,
+						hl.description = ds.description
+					REMOVE ds.resourceName, ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"triggerId": et.Metadata.Id,
@@ -3163,7 +3394,10 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 					OPTIONAL MATCH (ds:DataSource {name: $dsName})
 					WITH t, ds
 					WHERE ds IS NOT NULL
-					MERGE (t)-[:SOFT_LINK]->(ds)
+					MERGE (t)-[sl:SOFT_LINK]->(ds)
+					SET sl.resourceName = ds.resourceName,
+						sl.description = ds.description
+					REMOVE ds.resourceName, ds.description
 				`
 				_, err := tx.Run(ctx, queryLink, map[string]any{
 					"triggerId": et.Metadata.Id,

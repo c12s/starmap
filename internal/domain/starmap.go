@@ -4,12 +4,19 @@ type Metadata struct {
 	Id          string
 	Name        string
 	Image       string
+	Build       Build
 	Hash        string
 	Prefix      string
 	Topic       string
 	Description string
 	Labels      map[string]string
 	TriggerHash string
+}
+
+type Build struct {
+	Pull    string
+	Workdir string
+	Command string
 }
 
 type Control struct {

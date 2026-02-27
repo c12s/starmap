@@ -154,10 +154,11 @@ type Metadata struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Image         string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	Prefix        string                 `protobuf:"bytes,4,opt,name=prefix,proto3" json:"prefix,omitempty"`
-	Topic         string                 `protobuf:"bytes,5,opt,name=topic,proto3" json:"topic,omitempty"`
-	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Build         *Build                 `protobuf:"bytes,4,opt,name=build,proto3" json:"build,omitempty"`
+	Prefix        string                 `protobuf:"bytes,5,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	Topic         string                 `protobuf:"bytes,6,opt,name=topic,proto3" json:"topic,omitempty"`
+	Description   string                 `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -213,6 +214,13 @@ func (x *Metadata) GetImage() string {
 	return ""
 }
 
+func (x *Metadata) GetBuild() *Build {
+	if x != nil {
+		return x.Build
+	}
+	return nil
+}
+
 func (x *Metadata) GetPrefix() string {
 	if x != nil {
 		return x.Prefix
@@ -241,6 +249,66 @@ func (x *Metadata) GetLabels() map[string]string {
 	return nil
 }
 
+type Build struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pull          string                 `protobuf:"bytes,1,opt,name=pull,proto3" json:"pull,omitempty"`
+	Workdir       string                 `protobuf:"bytes,2,opt,name=workdir,proto3" json:"workdir,omitempty"`
+	Command       string                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Build) Reset() {
+	*x = Build{}
+	mi := &file_starmap_model_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Build) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Build) ProtoMessage() {}
+
+func (x *Build) ProtoReflect() protoreflect.Message {
+	mi := &file_starmap_model_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Build.ProtoReflect.Descriptor instead.
+func (*Build) Descriptor() ([]byte, []int) {
+	return file_starmap_model_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Build) GetPull() string {
+	if x != nil {
+		return x.Pull
+	}
+	return ""
+}
+
+func (x *Build) GetWorkdir() string {
+	if x != nil {
+		return x.Workdir
+	}
+	return ""
+}
+
+func (x *Build) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
 type Control struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	DisableVirtualization bool                   `protobuf:"varint,1,opt,name=disableVirtualization,proto3" json:"disableVirtualization,omitempty"`
@@ -254,7 +322,7 @@ type Control struct {
 
 func (x *Control) Reset() {
 	*x = Control{}
-	mi := &file_starmap_model_proto_msgTypes[3]
+	mi := &file_starmap_model_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +334,7 @@ func (x *Control) String() string {
 func (*Control) ProtoMessage() {}
 
 func (x *Control) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[3]
+	mi := &file_starmap_model_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +347,7 @@ func (x *Control) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Control.ProtoReflect.Descriptor instead.
 func (*Control) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{3}
+	return file_starmap_model_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Control) GetDisableVirtualization() bool {
@@ -330,7 +398,7 @@ type Features struct {
 
 func (x *Features) Reset() {
 	*x = Features{}
-	mi := &file_starmap_model_proto_msgTypes[4]
+	mi := &file_starmap_model_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -342,7 +410,7 @@ func (x *Features) String() string {
 func (*Features) ProtoMessage() {}
 
 func (x *Features) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[4]
+	mi := &file_starmap_model_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -355,7 +423,7 @@ func (x *Features) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Features.ProtoReflect.Descriptor instead.
 func (*Features) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{4}
+	return file_starmap_model_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Features) GetNetworks() []string {
@@ -404,7 +472,7 @@ type Links struct {
 
 func (x *Links) Reset() {
 	*x = Links{}
-	mi := &file_starmap_model_proto_msgTypes[5]
+	mi := &file_starmap_model_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +484,7 @@ func (x *Links) String() string {
 func (*Links) ProtoMessage() {}
 
 func (x *Links) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[5]
+	mi := &file_starmap_model_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +497,7 @@ func (x *Links) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Links.ProtoReflect.Descriptor instead.
 func (*Links) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{5}
+	return file_starmap_model_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Links) GetSoftLinks() []string {
@@ -465,7 +533,7 @@ type StoredProcedure struct {
 
 func (x *StoredProcedure) Reset() {
 	*x = StoredProcedure{}
-	mi := &file_starmap_model_proto_msgTypes[6]
+	mi := &file_starmap_model_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -477,7 +545,7 @@ func (x *StoredProcedure) String() string {
 func (*StoredProcedure) ProtoMessage() {}
 
 func (x *StoredProcedure) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[6]
+	mi := &file_starmap_model_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -490,7 +558,7 @@ func (x *StoredProcedure) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoredProcedure.ProtoReflect.Descriptor instead.
 func (*StoredProcedure) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{6}
+	return file_starmap_model_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StoredProcedure) GetMetadata() *Metadata {
@@ -532,7 +600,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_starmap_model_proto_msgTypes[7]
+	mi := &file_starmap_model_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +612,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[7]
+	mi := &file_starmap_model_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,7 +625,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{7}
+	return file_starmap_model_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Event) GetMetadata() *Metadata {
@@ -593,7 +661,7 @@ type EventTrigger struct {
 
 func (x *EventTrigger) Reset() {
 	*x = EventTrigger{}
-	mi := &file_starmap_model_proto_msgTypes[8]
+	mi := &file_starmap_model_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -605,7 +673,7 @@ func (x *EventTrigger) String() string {
 func (*EventTrigger) ProtoMessage() {}
 
 func (x *EventTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[8]
+	mi := &file_starmap_model_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -618,7 +686,7 @@ func (x *EventTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventTrigger.ProtoReflect.Descriptor instead.
 func (*EventTrigger) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{8}
+	return file_starmap_model_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *EventTrigger) GetMetadata() *Metadata {
@@ -661,7 +729,7 @@ type Chart struct {
 
 func (x *Chart) Reset() {
 	*x = Chart{}
-	mi := &file_starmap_model_proto_msgTypes[9]
+	mi := &file_starmap_model_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -673,7 +741,7 @@ func (x *Chart) String() string {
 func (*Chart) ProtoMessage() {}
 
 func (x *Chart) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[9]
+	mi := &file_starmap_model_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -686,7 +754,7 @@ func (x *Chart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Chart.ProtoReflect.Descriptor instead.
 func (*Chart) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{9}
+	return file_starmap_model_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Chart) GetDataSources() map[string]*DataSource {
@@ -733,7 +801,7 @@ type MetadataChart struct {
 
 func (x *MetadataChart) Reset() {
 	*x = MetadataChart{}
-	mi := &file_starmap_model_proto_msgTypes[10]
+	mi := &file_starmap_model_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +813,7 @@ func (x *MetadataChart) String() string {
 func (*MetadataChart) ProtoMessage() {}
 
 func (x *MetadataChart) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[10]
+	mi := &file_starmap_model_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +826,7 @@ func (x *MetadataChart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetadataChart.ProtoReflect.Descriptor instead.
 func (*MetadataChart) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{10}
+	return file_starmap_model_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MetadataChart) GetId() string {
@@ -830,7 +898,7 @@ type StarChart struct {
 
 func (x *StarChart) Reset() {
 	*x = StarChart{}
-	mi := &file_starmap_model_proto_msgTypes[11]
+	mi := &file_starmap_model_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +910,7 @@ func (x *StarChart) String() string {
 func (*StarChart) ProtoMessage() {}
 
 func (x *StarChart) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_model_proto_msgTypes[11]
+	mi := &file_starmap_model_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +923,7 @@ func (x *StarChart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StarChart.ProtoReflect.Descriptor instead.
 func (*StarChart) Descriptor() ([]byte, []int) {
-	return file_starmap_model_proto_rawDescGZIP(), []int{11}
+	return file_starmap_model_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *StarChart) GetApiVersion() string {
@@ -910,18 +978,23 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x06labels\x18\a \x03(\v2\x1d.proto.DataSource.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x84\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa8\x02\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\x12\x16\n" +
-	"\x06prefix\x18\x04 \x01(\tR\x06prefix\x12\x14\n" +
-	"\x05topic\x18\x05 \x01(\tR\x05topic\x12 \n" +
-	"\vdescription\x18\x06 \x01(\tR\vdescription\x123\n" +
-	"\x06labels\x18\a \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x1a9\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x12\"\n" +
+	"\x05build\x18\x04 \x01(\v2\f.proto.BuildR\x05build\x12\x16\n" +
+	"\x06prefix\x18\x05 \x01(\tR\x06prefix\x12\x14\n" +
+	"\x05topic\x18\x06 \x01(\tR\x05topic\x12 \n" +
+	"\vdescription\x18\a \x01(\tR\vdescription\x123\n" +
+	"\x06labels\x18\b \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbd\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
+	"\x05Build\x12\x12\n" +
+	"\x04pull\x18\x01 \x01(\tR\x04pull\x12\x18\n" +
+	"\aworkdir\x18\x02 \x01(\tR\aworkdir\x12\x18\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\"\xbd\x01\n" +
 	"\aControl\x124\n" +
 	"\x15disableVirtualization\x18\x01 \x01(\bR\x15disableVirtualization\x12 \n" +
 	"\vrunDetached\x18\x02 \x01(\bR\vrunDetached\x12\"\n" +
@@ -1010,58 +1083,60 @@ func file_starmap_model_proto_rawDescGZIP() []byte {
 	return file_starmap_model_proto_rawDescData
 }
 
-var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_starmap_model_proto_goTypes = []any{
 	(*EmptyMessage)(nil),    // 0: proto.EmptyMessage
 	(*DataSource)(nil),      // 1: proto.DataSource
 	(*Metadata)(nil),        // 2: proto.Metadata
-	(*Control)(nil),         // 3: proto.Control
-	(*Features)(nil),        // 4: proto.Features
-	(*Links)(nil),           // 5: proto.Links
-	(*StoredProcedure)(nil), // 6: proto.StoredProcedure
-	(*Event)(nil),           // 7: proto.Event
-	(*EventTrigger)(nil),    // 8: proto.EventTrigger
-	(*Chart)(nil),           // 9: proto.Chart
-	(*MetadataChart)(nil),   // 10: proto.MetadataChart
-	(*StarChart)(nil),       // 11: proto.StarChart
-	nil,                     // 12: proto.DataSource.LabelsEntry
-	nil,                     // 13: proto.Metadata.LabelsEntry
-	nil,                     // 14: proto.Chart.DataSourcesEntry
-	nil,                     // 15: proto.Chart.StoredProceduresEntry
-	nil,                     // 16: proto.Chart.EventTriggersEntry
-	nil,                     // 17: proto.Chart.EventsEntry
-	nil,                     // 18: proto.MetadataChart.LabelsEntry
+	(*Build)(nil),           // 3: proto.Build
+	(*Control)(nil),         // 4: proto.Control
+	(*Features)(nil),        // 5: proto.Features
+	(*Links)(nil),           // 6: proto.Links
+	(*StoredProcedure)(nil), // 7: proto.StoredProcedure
+	(*Event)(nil),           // 8: proto.Event
+	(*EventTrigger)(nil),    // 9: proto.EventTrigger
+	(*Chart)(nil),           // 10: proto.Chart
+	(*MetadataChart)(nil),   // 11: proto.MetadataChart
+	(*StarChart)(nil),       // 12: proto.StarChart
+	nil,                     // 13: proto.DataSource.LabelsEntry
+	nil,                     // 14: proto.Metadata.LabelsEntry
+	nil,                     // 15: proto.Chart.DataSourcesEntry
+	nil,                     // 16: proto.Chart.StoredProceduresEntry
+	nil,                     // 17: proto.Chart.EventTriggersEntry
+	nil,                     // 18: proto.Chart.EventsEntry
+	nil,                     // 19: proto.MetadataChart.LabelsEntry
 }
 var file_starmap_model_proto_depIdxs = []int32{
-	12, // 0: proto.DataSource.labels:type_name -> proto.DataSource.LabelsEntry
-	13, // 1: proto.Metadata.labels:type_name -> proto.Metadata.LabelsEntry
-	2,  // 2: proto.StoredProcedure.metadata:type_name -> proto.Metadata
-	3,  // 3: proto.StoredProcedure.control:type_name -> proto.Control
-	4,  // 4: proto.StoredProcedure.features:type_name -> proto.Features
-	5,  // 5: proto.StoredProcedure.links:type_name -> proto.Links
-	2,  // 6: proto.Event.metadata:type_name -> proto.Metadata
-	3,  // 7: proto.Event.control:type_name -> proto.Control
-	4,  // 8: proto.Event.features:type_name -> proto.Features
-	2,  // 9: proto.EventTrigger.metadata:type_name -> proto.Metadata
-	3,  // 10: proto.EventTrigger.control:type_name -> proto.Control
-	4,  // 11: proto.EventTrigger.features:type_name -> proto.Features
-	5,  // 12: proto.EventTrigger.links:type_name -> proto.Links
-	14, // 13: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
-	15, // 14: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
-	16, // 15: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
-	17, // 16: proto.Chart.events:type_name -> proto.Chart.EventsEntry
-	18, // 17: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
-	10, // 18: proto.StarChart.metadata:type_name -> proto.MetadataChart
-	9,  // 19: proto.StarChart.chart:type_name -> proto.Chart
-	1,  // 20: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
-	6,  // 21: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	8,  // 22: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	7,  // 23: proto.Chart.EventsEntry.value:type_name -> proto.Event
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	13, // 0: proto.DataSource.labels:type_name -> proto.DataSource.LabelsEntry
+	3,  // 1: proto.Metadata.build:type_name -> proto.Build
+	14, // 2: proto.Metadata.labels:type_name -> proto.Metadata.LabelsEntry
+	2,  // 3: proto.StoredProcedure.metadata:type_name -> proto.Metadata
+	4,  // 4: proto.StoredProcedure.control:type_name -> proto.Control
+	5,  // 5: proto.StoredProcedure.features:type_name -> proto.Features
+	6,  // 6: proto.StoredProcedure.links:type_name -> proto.Links
+	2,  // 7: proto.Event.metadata:type_name -> proto.Metadata
+	4,  // 8: proto.Event.control:type_name -> proto.Control
+	5,  // 9: proto.Event.features:type_name -> proto.Features
+	2,  // 10: proto.EventTrigger.metadata:type_name -> proto.Metadata
+	4,  // 11: proto.EventTrigger.control:type_name -> proto.Control
+	5,  // 12: proto.EventTrigger.features:type_name -> proto.Features
+	6,  // 13: proto.EventTrigger.links:type_name -> proto.Links
+	15, // 14: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
+	16, // 15: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
+	17, // 16: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
+	18, // 17: proto.Chart.events:type_name -> proto.Chart.EventsEntry
+	19, // 18: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
+	11, // 19: proto.StarChart.metadata:type_name -> proto.MetadataChart
+	10, // 20: proto.StarChart.chart:type_name -> proto.Chart
+	1,  // 21: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
+	7,  // 22: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	9,  // 23: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	8,  // 24: proto.Chart.EventsEntry.value:type_name -> proto.Event
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_starmap_model_proto_init() }
@@ -1075,7 +1150,7 @@ func file_starmap_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starmap_model_proto_rawDesc), len(file_starmap_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
