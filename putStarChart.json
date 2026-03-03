@@ -45,6 +45,11 @@
           "id": "017ba17b-cc52-4f10-b452-68483bc708bb",
           "name": "Stored Procedure 1",
           "image": "unikernel://image_sp1",
+        "build": {
+          "pull": "string",
+          "workdir": "string",
+          "command": "string"
+        },
           "prefix": "DEBUG",
           "topic": "",
           "description": "Stored Procedure 1"
@@ -131,6 +136,11 @@
           "id": "1f9f4dff-8f6a-44a2-98a6-256ab48b61db",
           "name": "Event Trigger",
           "image": "abc://abc",
+          "build": {
+            "pull": "string",
+            "workdir": "string",
+            "command": "string"
+        },
           "prefix": "DEBUG",
           "topic": "",
           "description": "Event Trigger"
@@ -172,6 +182,11 @@
           "id": "1eb31243-5f06-4e4b-ab69-0ff69e0f66bb",
           "name": "Event 1",
           "image": "unikernel://image_e1",
+          "build": {
+            "pull": "string",
+            "workdir": "string",
+            "command": "string"
+        },
           "prefix": "DEBUG",
           "topic": "Insert",
           "description": "Event 1"
