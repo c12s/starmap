@@ -45,6 +45,7 @@ message DataSource {
   string resourceName = 5;
   string description = 6;
   map<string, string> labels = 7;
+  map<string, string> tags = 8;
 }
 
 message Metadata {
@@ -56,6 +57,7 @@ message Metadata {
   string topic = 6;
   string description = 7;
   map<string, string> labels = 8;
+  map<string, string> tags = 9;
 }
 
 message Build {
@@ -392,5 +394,27 @@ message PutChartResp {
   string name = 5;
   string namespace = 6;
   string maintainer = 7;
+}
+```
+
+#### /Search
+Searches for components (DataSources, StoredProcedures, EventTriggers, Events) across all charts based on name, description, and tags.
+
+#### Request body
+```proto
+message SearchReq {
+  string name = 1;
+  string description = 2;
+  map<string, string> tags = 3;
+}
+```
+
+#### Response - 0 OK
+```proto
+message LayersResp {
+  map<string, DataSource> dataSources = 1;
+  map<string, StoredProcedure> storedProcedures = 2;
+  map<string, EventTrigger> eventTriggers = 3;
+  map<string, Event> events = 4;
 }
 ```

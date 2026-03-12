@@ -55,6 +55,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			ResourceName: ds.ResourceName,
 			Description:  ds.Description,
 			Labels:       ds.Labels,
+			Tags:         ds.Tags,
 		}
 	}
 
@@ -66,6 +67,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Topic:       sp.Metadata.Topic,
 			Description: sp.Metadata.Description,
 			Labels:      sp.Metadata.Labels,
+			Tags:        sp.Metadata.Tags,
 		}
 
 		if sp.Metadata.Image != "" {
@@ -110,6 +112,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Topic:       et.Metadata.Topic,
 			Description: et.Metadata.Description,
 			Labels:      et.Metadata.Labels,
+			Tags:        et.Metadata.Tags,
 		}
 
 		if et.Metadata.Image != "" {
@@ -154,6 +157,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Topic:       ev.Metadata.Topic,
 			Description: ev.Metadata.Description,
 			Labels:      ev.Metadata.Labels,
+			Tags:        ev.Metadata.Tags,
 		}
 
 		if ev.Metadata.Image != "" {
@@ -245,5 +249,14 @@ func SwitchCheckpointMapperToProto(sc domain.SwitchCheckpointResp) *proto.Switch
 			EventTriggers:    mapEventTriggersToProto(sc.Download.EventTriggers),
 			Events:           mapEventsToProto(sc.Download.Events),
 		},
+	}
+}
+
+func SearchToProto(sc domain.SearchResp) *proto.LayersResp {
+	return &proto.LayersResp{
+		DataSources:      mapDataSourcesToProto(sc.DataSources),
+		StoredProcedures: mapStoredProceduresToProto(sc.StoredProcedures),
+		EventTriggers:    mapEventTriggersToProto(sc.EventTriggers),
+		Events:           mapEventsToProto(sc.Events),
 	}
 }

@@ -191,3 +191,12 @@ func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*pr
 		Maintainer:    result.Metadata.Maintainer,
 	}, nil
 }
+
+func (s *RegistryService) Search(ctx context.Context, req *proto.SearchReq) (*proto.LayersResp, error) {
+	resp, err := s.repo.Search(ctx, req.Name, req.Description, req.Tags)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to search db: %v", err)
+	}
+
+	return protomappers.SearchToProto(*resp), nil
+}

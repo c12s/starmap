@@ -10,6 +10,7 @@ type Metadata struct {
 	Topic       string
 	Description string
 	Labels      map[string]string
+	Tags        map[string]string
 	TriggerHash string
 }
 
@@ -50,6 +51,7 @@ type DataSource struct {
 	ResourceName string
 	Description  string
 	Labels       map[string]string
+	Tags         map[string]string
 }
 
 type StoredProcedure struct {
@@ -174,4 +176,11 @@ type SwitchCheckpointResp struct {
 		EventTriggers    map[string]*EventTrigger
 		Events           map[string]*Event
 	}
+}
+
+type SearchResp struct {
+	DataSources      map[string]*DataSource
+	StoredProcedures map[string]*StoredProcedure
+	EventTriggers    map[string]*EventTrigger
+	Events           map[string]*Event
 }
