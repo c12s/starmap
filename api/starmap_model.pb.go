@@ -66,6 +66,7 @@ type DataSource struct {
 	ResourceName  string                 `protobuf:"bytes,5,opt,name=resourceName,proto3" json:"resourceName,omitempty"`
 	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Tags          map[string]string      `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -149,6 +150,13 @@ func (x *DataSource) GetLabels() map[string]string {
 	return nil
 }
 
+func (x *DataSource) GetTags() map[string]string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type Metadata struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -159,6 +167,7 @@ type Metadata struct {
 	Topic         string                 `protobuf:"bytes,6,opt,name=topic,proto3" json:"topic,omitempty"`
 	Description   string                 `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Tags          map[string]string      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,6 +254,13 @@ func (x *Metadata) GetDescription() string {
 func (x *Metadata) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
+	}
+	return nil
+}
+
+func (x *Metadata) GetTags() map[string]string {
+	if x != nil {
+		return x.Tags
 	}
 	return nil
 }
@@ -966,7 +982,7 @@ var File_starmap_model_proto protoreflect.FileDescriptor
 const file_starmap_model_proto_rawDesc = "" +
 	"\n" +
 	"\x13starmap_model.proto\x12\x05proto\"\x0e\n" +
-	"\fEmptyMessage\"\x90\x02\n" +
+	"\fEmptyMessage\"\xfa\x02\n" +
 	"\n" +
 	"DataSource\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -975,10 +991,14 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x04path\x18\x04 \x01(\tR\x04path\x12\"\n" +
 	"\fresourceName\x18\x05 \x01(\tR\fresourceName\x12 \n" +
 	"\vdescription\x18\x06 \x01(\tR\vdescription\x125\n" +
-	"\x06labels\x18\a \x03(\v2\x1d.proto.DataSource.LabelsEntryR\x06labels\x1a9\n" +
+	"\x06labels\x18\a \x03(\v2\x1d.proto.DataSource.LabelsEntryR\x06labels\x12/\n" +
+	"\x04tags\x18\b \x03(\v2\x1b.proto.DataSource.TagsEntryR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa8\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
+	"\tTagsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\x03\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -987,8 +1007,12 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x06prefix\x18\x05 \x01(\tR\x06prefix\x12\x14\n" +
 	"\x05topic\x18\x06 \x01(\tR\x05topic\x12 \n" +
 	"\vdescription\x18\a \x01(\tR\vdescription\x123\n" +
-	"\x06labels\x18\b \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x1a9\n" +
+	"\x06labels\x18\b \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x12-\n" +
+	"\x04tags\x18\t \x03(\v2\x19.proto.Metadata.TagsEntryR\x04tags\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
+	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
 	"\x05Build\x12\x12\n" +
@@ -1083,7 +1107,7 @@ func file_starmap_model_proto_rawDescGZIP() []byte {
 	return file_starmap_model_proto_rawDescData
 }
 
-var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_starmap_model_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_starmap_model_proto_goTypes = []any{
 	(*EmptyMessage)(nil),    // 0: proto.EmptyMessage
 	(*DataSource)(nil),      // 1: proto.DataSource
@@ -1099,44 +1123,48 @@ var file_starmap_model_proto_goTypes = []any{
 	(*MetadataChart)(nil),   // 11: proto.MetadataChart
 	(*StarChart)(nil),       // 12: proto.StarChart
 	nil,                     // 13: proto.DataSource.LabelsEntry
-	nil,                     // 14: proto.Metadata.LabelsEntry
-	nil,                     // 15: proto.Chart.DataSourcesEntry
-	nil,                     // 16: proto.Chart.StoredProceduresEntry
-	nil,                     // 17: proto.Chart.EventTriggersEntry
-	nil,                     // 18: proto.Chart.EventsEntry
-	nil,                     // 19: proto.MetadataChart.LabelsEntry
+	nil,                     // 14: proto.DataSource.TagsEntry
+	nil,                     // 15: proto.Metadata.LabelsEntry
+	nil,                     // 16: proto.Metadata.TagsEntry
+	nil,                     // 17: proto.Chart.DataSourcesEntry
+	nil,                     // 18: proto.Chart.StoredProceduresEntry
+	nil,                     // 19: proto.Chart.EventTriggersEntry
+	nil,                     // 20: proto.Chart.EventsEntry
+	nil,                     // 21: proto.MetadataChart.LabelsEntry
 }
 var file_starmap_model_proto_depIdxs = []int32{
 	13, // 0: proto.DataSource.labels:type_name -> proto.DataSource.LabelsEntry
-	3,  // 1: proto.Metadata.build:type_name -> proto.Build
-	14, // 2: proto.Metadata.labels:type_name -> proto.Metadata.LabelsEntry
-	2,  // 3: proto.StoredProcedure.metadata:type_name -> proto.Metadata
-	4,  // 4: proto.StoredProcedure.control:type_name -> proto.Control
-	5,  // 5: proto.StoredProcedure.features:type_name -> proto.Features
-	6,  // 6: proto.StoredProcedure.links:type_name -> proto.Links
-	2,  // 7: proto.Event.metadata:type_name -> proto.Metadata
-	4,  // 8: proto.Event.control:type_name -> proto.Control
-	5,  // 9: proto.Event.features:type_name -> proto.Features
-	2,  // 10: proto.EventTrigger.metadata:type_name -> proto.Metadata
-	4,  // 11: proto.EventTrigger.control:type_name -> proto.Control
-	5,  // 12: proto.EventTrigger.features:type_name -> proto.Features
-	6,  // 13: proto.EventTrigger.links:type_name -> proto.Links
-	15, // 14: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
-	16, // 15: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
-	17, // 16: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
-	18, // 17: proto.Chart.events:type_name -> proto.Chart.EventsEntry
-	19, // 18: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
-	11, // 19: proto.StarChart.metadata:type_name -> proto.MetadataChart
-	10, // 20: proto.StarChart.chart:type_name -> proto.Chart
-	1,  // 21: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
-	7,  // 22: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	9,  // 23: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	8,  // 24: proto.Chart.EventsEntry.value:type_name -> proto.Event
-	25, // [25:25] is the sub-list for method output_type
-	25, // [25:25] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	14, // 1: proto.DataSource.tags:type_name -> proto.DataSource.TagsEntry
+	3,  // 2: proto.Metadata.build:type_name -> proto.Build
+	15, // 3: proto.Metadata.labels:type_name -> proto.Metadata.LabelsEntry
+	16, // 4: proto.Metadata.tags:type_name -> proto.Metadata.TagsEntry
+	2,  // 5: proto.StoredProcedure.metadata:type_name -> proto.Metadata
+	4,  // 6: proto.StoredProcedure.control:type_name -> proto.Control
+	5,  // 7: proto.StoredProcedure.features:type_name -> proto.Features
+	6,  // 8: proto.StoredProcedure.links:type_name -> proto.Links
+	2,  // 9: proto.Event.metadata:type_name -> proto.Metadata
+	4,  // 10: proto.Event.control:type_name -> proto.Control
+	5,  // 11: proto.Event.features:type_name -> proto.Features
+	2,  // 12: proto.EventTrigger.metadata:type_name -> proto.Metadata
+	4,  // 13: proto.EventTrigger.control:type_name -> proto.Control
+	5,  // 14: proto.EventTrigger.features:type_name -> proto.Features
+	6,  // 15: proto.EventTrigger.links:type_name -> proto.Links
+	17, // 16: proto.Chart.dataSources:type_name -> proto.Chart.DataSourcesEntry
+	18, // 17: proto.Chart.storedProcedures:type_name -> proto.Chart.StoredProceduresEntry
+	19, // 18: proto.Chart.eventTriggers:type_name -> proto.Chart.EventTriggersEntry
+	20, // 19: proto.Chart.events:type_name -> proto.Chart.EventsEntry
+	21, // 20: proto.MetadataChart.labels:type_name -> proto.MetadataChart.LabelsEntry
+	11, // 21: proto.StarChart.metadata:type_name -> proto.MetadataChart
+	10, // 22: proto.StarChart.chart:type_name -> proto.Chart
+	1,  // 23: proto.Chart.DataSourcesEntry.value:type_name -> proto.DataSource
+	7,  // 24: proto.Chart.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	9,  // 25: proto.Chart.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	8,  // 26: proto.Chart.EventsEntry.value:type_name -> proto.Event
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_starmap_model_proto_init() }
@@ -1150,7 +1178,7 @@ func file_starmap_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starmap_model_proto_rawDesc), len(file_starmap_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -21,6 +21,66 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SearchReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Tags          map[string]string      `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchReq) Reset() {
+	*x = SearchReq{}
+	mi := &file_starmap_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchReq) ProtoMessage() {}
+
+func (x *SearchReq) ProtoReflect() protoreflect.Message {
+	mi := &file_starmap_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchReq.ProtoReflect.Descriptor instead.
+func (*SearchReq) Descriptor() ([]byte, []int) {
+	return file_starmap_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SearchReq) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SearchReq) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *SearchReq) GetTags() map[string]string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 type ExtendReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OldVersion    string                 `protobuf:"bytes,1,opt,name=oldVersion,proto3" json:"oldVersion,omitempty"`
@@ -31,7 +91,7 @@ type ExtendReq struct {
 
 func (x *ExtendReq) Reset() {
 	*x = ExtendReq{}
-	mi := &file_starmap_proto_msgTypes[0]
+	mi := &file_starmap_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +103,7 @@ func (x *ExtendReq) String() string {
 func (*ExtendReq) ProtoMessage() {}
 
 func (x *ExtendReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[0]
+	mi := &file_starmap_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +116,7 @@ func (x *ExtendReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExtendReq.ProtoReflect.Descriptor instead.
 func (*ExtendReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{0}
+	return file_starmap_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ExtendReq) GetOldVersion() string {
@@ -84,7 +144,7 @@ type TimelineReq struct {
 
 func (x *TimelineReq) Reset() {
 	*x = TimelineReq{}
-	mi := &file_starmap_proto_msgTypes[1]
+	mi := &file_starmap_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +156,7 @@ func (x *TimelineReq) String() string {
 func (*TimelineReq) ProtoMessage() {}
 
 func (x *TimelineReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[1]
+	mi := &file_starmap_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +169,7 @@ func (x *TimelineReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineReq.ProtoReflect.Descriptor instead.
 func (*TimelineReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{1}
+	return file_starmap_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TimelineReq) GetChartId() string {
@@ -142,7 +202,7 @@ type TimelineResp struct {
 
 func (x *TimelineResp) Reset() {
 	*x = TimelineResp{}
-	mi := &file_starmap_proto_msgTypes[2]
+	mi := &file_starmap_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +214,7 @@ func (x *TimelineResp) String() string {
 func (*TimelineResp) ProtoMessage() {}
 
 func (x *TimelineResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[2]
+	mi := &file_starmap_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +227,7 @@ func (x *TimelineResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimelineResp.ProtoReflect.Descriptor instead.
 func (*TimelineResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{2}
+	return file_starmap_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TimelineResp) GetCharts() []*GetChartResp {
@@ -188,7 +248,7 @@ type SwitchCheckpointResp struct {
 
 func (x *SwitchCheckpointResp) Reset() {
 	*x = SwitchCheckpointResp{}
-	mi := &file_starmap_proto_msgTypes[3]
+	mi := &file_starmap_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +260,7 @@ func (x *SwitchCheckpointResp) String() string {
 func (*SwitchCheckpointResp) ProtoMessage() {}
 
 func (x *SwitchCheckpointResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[3]
+	mi := &file_starmap_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +273,7 @@ func (x *SwitchCheckpointResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwitchCheckpointResp.ProtoReflect.Descriptor instead.
 func (*SwitchCheckpointResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{3}
+	return file_starmap_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SwitchCheckpointResp) GetStart() *LayersResp {
@@ -251,7 +311,7 @@ type SwitchCheckpointReq struct {
 
 func (x *SwitchCheckpointReq) Reset() {
 	*x = SwitchCheckpointReq{}
-	mi := &file_starmap_proto_msgTypes[4]
+	mi := &file_starmap_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -263,7 +323,7 @@ func (x *SwitchCheckpointReq) String() string {
 func (*SwitchCheckpointReq) ProtoMessage() {}
 
 func (x *SwitchCheckpointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[4]
+	mi := &file_starmap_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -276,7 +336,7 @@ func (x *SwitchCheckpointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwitchCheckpointReq.ProtoReflect.Descriptor instead.
 func (*SwitchCheckpointReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{4}
+	return file_starmap_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SwitchCheckpointReq) GetChartId() string {
@@ -333,7 +393,7 @@ type LayersResp struct {
 
 func (x *LayersResp) Reset() {
 	*x = LayersResp{}
-	mi := &file_starmap_proto_msgTypes[5]
+	mi := &file_starmap_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -345,7 +405,7 @@ func (x *LayersResp) String() string {
 func (*LayersResp) ProtoMessage() {}
 
 func (x *LayersResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[5]
+	mi := &file_starmap_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +418,7 @@ func (x *LayersResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LayersResp.ProtoReflect.Descriptor instead.
 func (*LayersResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{5}
+	return file_starmap_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LayersResp) GetDataSources() map[string]*DataSource {
@@ -402,7 +462,7 @@ type GetMissingLayersReq struct {
 
 func (x *GetMissingLayersReq) Reset() {
 	*x = GetMissingLayersReq{}
-	mi := &file_starmap_proto_msgTypes[6]
+	mi := &file_starmap_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -414,7 +474,7 @@ func (x *GetMissingLayersReq) String() string {
 func (*GetMissingLayersReq) ProtoMessage() {}
 
 func (x *GetMissingLayersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[6]
+	mi := &file_starmap_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -427,7 +487,7 @@ func (x *GetMissingLayersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMissingLayersReq.ProtoReflect.Descriptor instead.
 func (*GetMissingLayersReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{6}
+	return file_starmap_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetMissingLayersReq) GetSchemaVersion() string {
@@ -482,7 +542,7 @@ type GetMissingLayersResp struct {
 
 func (x *GetMissingLayersResp) Reset() {
 	*x = GetMissingLayersResp{}
-	mi := &file_starmap_proto_msgTypes[7]
+	mi := &file_starmap_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -494,7 +554,7 @@ func (x *GetMissingLayersResp) String() string {
 func (*GetMissingLayersResp) ProtoMessage() {}
 
 func (x *GetMissingLayersResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[7]
+	mi := &file_starmap_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -507,7 +567,7 @@ func (x *GetMissingLayersResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMissingLayersResp.ProtoReflect.Descriptor instead.
 func (*GetMissingLayersResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{7}
+	return file_starmap_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetMissingLayersResp) GetChartId() string {
@@ -585,7 +645,7 @@ type GetChartIdReq struct {
 
 func (x *GetChartIdReq) Reset() {
 	*x = GetChartIdReq{}
-	mi := &file_starmap_proto_msgTypes[8]
+	mi := &file_starmap_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +657,7 @@ func (x *GetChartIdReq) String() string {
 func (*GetChartIdReq) ProtoMessage() {}
 
 func (x *GetChartIdReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[8]
+	mi := &file_starmap_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,7 +670,7 @@ func (x *GetChartIdReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartIdReq.ProtoReflect.Descriptor instead.
 func (*GetChartIdReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{8}
+	return file_starmap_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetChartIdReq) GetSchemaVersion() string {
@@ -655,7 +715,7 @@ type DeleteChartReq struct {
 
 func (x *DeleteChartReq) Reset() {
 	*x = DeleteChartReq{}
-	mi := &file_starmap_proto_msgTypes[9]
+	mi := &file_starmap_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -667,7 +727,7 @@ func (x *DeleteChartReq) String() string {
 func (*DeleteChartReq) ProtoMessage() {}
 
 func (x *DeleteChartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[9]
+	mi := &file_starmap_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,7 +740,7 @@ func (x *DeleteChartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteChartReq.ProtoReflect.Descriptor instead.
 func (*DeleteChartReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{9}
+	return file_starmap_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteChartReq) GetId() string {
@@ -737,7 +797,7 @@ type GetChartsLabelsReq struct {
 
 func (x *GetChartsLabelsReq) Reset() {
 	*x = GetChartsLabelsReq{}
-	mi := &file_starmap_proto_msgTypes[10]
+	mi := &file_starmap_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +809,7 @@ func (x *GetChartsLabelsReq) String() string {
 func (*GetChartsLabelsReq) ProtoMessage() {}
 
 func (x *GetChartsLabelsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[10]
+	mi := &file_starmap_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +822,7 @@ func (x *GetChartsLabelsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartsLabelsReq.ProtoReflect.Descriptor instead.
 func (*GetChartsLabelsReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{10}
+	return file_starmap_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetChartsLabelsReq) GetSchemaVersion() string {
@@ -802,7 +862,7 @@ type GetChartsLabelsResp struct {
 
 func (x *GetChartsLabelsResp) Reset() {
 	*x = GetChartsLabelsResp{}
-	mi := &file_starmap_proto_msgTypes[11]
+	mi := &file_starmap_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +874,7 @@ func (x *GetChartsLabelsResp) String() string {
 func (*GetChartsLabelsResp) ProtoMessage() {}
 
 func (x *GetChartsLabelsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[11]
+	mi := &file_starmap_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,7 +887,7 @@ func (x *GetChartsLabelsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartsLabelsResp.ProtoReflect.Descriptor instead.
 func (*GetChartsLabelsResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{11}
+	return file_starmap_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetChartsLabelsResp) GetCharts() []*GetChartResp {
@@ -849,7 +909,7 @@ type GetChartFromMetadataReq struct {
 
 func (x *GetChartFromMetadataReq) Reset() {
 	*x = GetChartFromMetadataReq{}
-	mi := &file_starmap_proto_msgTypes[12]
+	mi := &file_starmap_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -861,7 +921,7 @@ func (x *GetChartFromMetadataReq) String() string {
 func (*GetChartFromMetadataReq) ProtoMessage() {}
 
 func (x *GetChartFromMetadataReq) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[12]
+	mi := &file_starmap_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -874,7 +934,7 @@ func (x *GetChartFromMetadataReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartFromMetadataReq.ProtoReflect.Descriptor instead.
 func (*GetChartFromMetadataReq) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{12}
+	return file_starmap_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetChartFromMetadataReq) GetName() string {
@@ -917,7 +977,7 @@ type GetChartResp struct {
 
 func (x *GetChartResp) Reset() {
 	*x = GetChartResp{}
-	mi := &file_starmap_proto_msgTypes[13]
+	mi := &file_starmap_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -929,7 +989,7 @@ func (x *GetChartResp) String() string {
 func (*GetChartResp) ProtoMessage() {}
 
 func (x *GetChartResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[13]
+	mi := &file_starmap_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -942,7 +1002,7 @@ func (x *GetChartResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChartResp.ProtoReflect.Descriptor instead.
 func (*GetChartResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{13}
+	return file_starmap_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetChartResp) GetApiVersion() string {
@@ -988,7 +1048,7 @@ type PutChartResp struct {
 
 func (x *PutChartResp) Reset() {
 	*x = PutChartResp{}
-	mi := &file_starmap_proto_msgTypes[14]
+	mi := &file_starmap_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +1060,7 @@ func (x *PutChartResp) String() string {
 func (*PutChartResp) ProtoMessage() {}
 
 func (x *PutChartResp) ProtoReflect() protoreflect.Message {
-	mi := &file_starmap_proto_msgTypes[14]
+	mi := &file_starmap_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +1073,7 @@ func (x *PutChartResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutChartResp.ProtoReflect.Descriptor instead.
 func (*PutChartResp) Descriptor() ([]byte, []int) {
-	return file_starmap_proto_rawDescGZIP(), []int{14}
+	return file_starmap_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PutChartResp) GetId() string {
@@ -1069,7 +1129,14 @@ var File_starmap_proto protoreflect.FileDescriptor
 
 const file_starmap_proto_rawDesc = "" +
 	"\n" +
-	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"S\n" +
+	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"\xaa\x01\n" +
+	"\tSearchReq\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12.\n" +
+	"\x04tags\x18\x03 \x03(\v2\x1a.proto.SearchReq.TagsEntryR\x04tags\x1a7\n" +
+	"\tTagsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"S\n" +
 	"\tExtendReq\x12\x1e\n" +
 	"\n" +
 	"oldVersion\x18\x01 \x01(\tR\n" +
@@ -1205,7 +1272,7 @@ const file_starmap_proto_rawDesc = "" +
 	"\tnamespace\x18\x06 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
 	"maintainer\x18\a \x01(\tR\n" +
-	"maintainer2\xd5\x05\n" +
+	"maintainer2\x86\x06\n" +
 	"\x0fRegistryService\x123\n" +
 	"\bPutChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12I\n" +
 	"\x10GetChartMetadata\x12\x1e.proto.GetChartFromMetadataReq\x1a\x13.proto.GetChartResp\"\x00\x12J\n" +
@@ -1218,7 +1285,8 @@ const file_starmap_proto_rawDesc = "" +
 	"\vUpdateChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12M\n" +
 	"\x10SwitchCheckpoint\x12\x1a.proto.SwitchCheckpointReq\x1a\x1b.proto.SwitchCheckpointResp\"\x00\x125\n" +
 	"\bTimeline\x12\x12.proto.TimelineReq\x1a\x13.proto.TimelineResp\"\x00\x121\n" +
-	"\x06Extend\x12\x10.proto.ExtendReq\x1a\x13.proto.PutChartResp\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
+	"\x06Extend\x12\x10.proto.ExtendReq\x1a\x13.proto.PutChartResp\"\x00\x12/\n" +
+	"\x06Search\x12\x10.proto.SearchReq\x1a\x11.proto.LayersResp\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
 
 var (
 	file_starmap_proto_rawDescOnce sync.Once
@@ -1232,94 +1300,99 @@ func file_starmap_proto_rawDescGZIP() []byte {
 	return file_starmap_proto_rawDescData
 }
 
-var file_starmap_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_starmap_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_starmap_proto_goTypes = []any{
-	(*ExtendReq)(nil),               // 0: proto.ExtendReq
-	(*TimelineReq)(nil),             // 1: proto.TimelineReq
-	(*TimelineResp)(nil),            // 2: proto.TimelineResp
-	(*SwitchCheckpointResp)(nil),    // 3: proto.SwitchCheckpointResp
-	(*SwitchCheckpointReq)(nil),     // 4: proto.SwitchCheckpointReq
-	(*LayersResp)(nil),              // 5: proto.LayersResp
-	(*GetMissingLayersReq)(nil),     // 6: proto.GetMissingLayersReq
-	(*GetMissingLayersResp)(nil),    // 7: proto.GetMissingLayersResp
-	(*GetChartIdReq)(nil),           // 8: proto.GetChartIdReq
-	(*DeleteChartReq)(nil),          // 9: proto.DeleteChartReq
-	(*GetChartsLabelsReq)(nil),      // 10: proto.GetChartsLabelsReq
-	(*GetChartsLabelsResp)(nil),     // 11: proto.GetChartsLabelsResp
-	(*GetChartFromMetadataReq)(nil), // 12: proto.GetChartFromMetadataReq
-	(*GetChartResp)(nil),            // 13: proto.GetChartResp
-	(*PutChartResp)(nil),            // 14: proto.PutChartResp
-	nil,                             // 15: proto.LayersResp.DataSourcesEntry
-	nil,                             // 16: proto.LayersResp.StoredProceduresEntry
-	nil,                             // 17: proto.LayersResp.EventTriggersEntry
-	nil,                             // 18: proto.LayersResp.EventsEntry
-	nil,                             // 19: proto.GetMissingLayersResp.DataSourcesEntry
-	nil,                             // 20: proto.GetMissingLayersResp.StoredProceduresEntry
-	nil,                             // 21: proto.GetMissingLayersResp.EventTriggersEntry
-	nil,                             // 22: proto.GetMissingLayersResp.EventsEntry
-	nil,                             // 23: proto.GetChartsLabelsReq.LabelsEntry
-	(*StarChart)(nil),               // 24: proto.StarChart
-	(*MetadataChart)(nil),           // 25: proto.MetadataChart
-	(*Chart)(nil),                   // 26: proto.Chart
-	(*DataSource)(nil),              // 27: proto.DataSource
-	(*StoredProcedure)(nil),         // 28: proto.StoredProcedure
-	(*EventTrigger)(nil),            // 29: proto.EventTrigger
-	(*Event)(nil),                   // 30: proto.Event
-	(*EmptyMessage)(nil),            // 31: proto.EmptyMessage
+	(*SearchReq)(nil),               // 0: proto.SearchReq
+	(*ExtendReq)(nil),               // 1: proto.ExtendReq
+	(*TimelineReq)(nil),             // 2: proto.TimelineReq
+	(*TimelineResp)(nil),            // 3: proto.TimelineResp
+	(*SwitchCheckpointResp)(nil),    // 4: proto.SwitchCheckpointResp
+	(*SwitchCheckpointReq)(nil),     // 5: proto.SwitchCheckpointReq
+	(*LayersResp)(nil),              // 6: proto.LayersResp
+	(*GetMissingLayersReq)(nil),     // 7: proto.GetMissingLayersReq
+	(*GetMissingLayersResp)(nil),    // 8: proto.GetMissingLayersResp
+	(*GetChartIdReq)(nil),           // 9: proto.GetChartIdReq
+	(*DeleteChartReq)(nil),          // 10: proto.DeleteChartReq
+	(*GetChartsLabelsReq)(nil),      // 11: proto.GetChartsLabelsReq
+	(*GetChartsLabelsResp)(nil),     // 12: proto.GetChartsLabelsResp
+	(*GetChartFromMetadataReq)(nil), // 13: proto.GetChartFromMetadataReq
+	(*GetChartResp)(nil),            // 14: proto.GetChartResp
+	(*PutChartResp)(nil),            // 15: proto.PutChartResp
+	nil,                             // 16: proto.SearchReq.TagsEntry
+	nil,                             // 17: proto.LayersResp.DataSourcesEntry
+	nil,                             // 18: proto.LayersResp.StoredProceduresEntry
+	nil,                             // 19: proto.LayersResp.EventTriggersEntry
+	nil,                             // 20: proto.LayersResp.EventsEntry
+	nil,                             // 21: proto.GetMissingLayersResp.DataSourcesEntry
+	nil,                             // 22: proto.GetMissingLayersResp.StoredProceduresEntry
+	nil,                             // 23: proto.GetMissingLayersResp.EventTriggersEntry
+	nil,                             // 24: proto.GetMissingLayersResp.EventsEntry
+	nil,                             // 25: proto.GetChartsLabelsReq.LabelsEntry
+	(*StarChart)(nil),               // 26: proto.StarChart
+	(*MetadataChart)(nil),           // 27: proto.MetadataChart
+	(*Chart)(nil),                   // 28: proto.Chart
+	(*DataSource)(nil),              // 29: proto.DataSource
+	(*StoredProcedure)(nil),         // 30: proto.StoredProcedure
+	(*EventTrigger)(nil),            // 31: proto.EventTrigger
+	(*Event)(nil),                   // 32: proto.Event
+	(*EmptyMessage)(nil),            // 33: proto.EmptyMessage
 }
 var file_starmap_proto_depIdxs = []int32{
-	24, // 0: proto.ExtendReq.chart:type_name -> proto.StarChart
-	13, // 1: proto.TimelineResp.charts:type_name -> proto.GetChartResp
-	5,  // 2: proto.SwitchCheckpointResp.start:type_name -> proto.LayersResp
-	5,  // 3: proto.SwitchCheckpointResp.stop:type_name -> proto.LayersResp
-	5,  // 4: proto.SwitchCheckpointResp.download:type_name -> proto.LayersResp
-	15, // 5: proto.LayersResp.dataSources:type_name -> proto.LayersResp.DataSourcesEntry
-	16, // 6: proto.LayersResp.storedProcedures:type_name -> proto.LayersResp.StoredProceduresEntry
-	17, // 7: proto.LayersResp.eventTriggers:type_name -> proto.LayersResp.EventTriggersEntry
-	18, // 8: proto.LayersResp.events:type_name -> proto.LayersResp.EventsEntry
-	19, // 9: proto.GetMissingLayersResp.dataSources:type_name -> proto.GetMissingLayersResp.DataSourcesEntry
-	20, // 10: proto.GetMissingLayersResp.storedProcedures:type_name -> proto.GetMissingLayersResp.StoredProceduresEntry
-	21, // 11: proto.GetMissingLayersResp.eventTriggers:type_name -> proto.GetMissingLayersResp.EventTriggersEntry
-	22, // 12: proto.GetMissingLayersResp.events:type_name -> proto.GetMissingLayersResp.EventsEntry
-	23, // 13: proto.GetChartsLabelsReq.labels:type_name -> proto.GetChartsLabelsReq.LabelsEntry
-	13, // 14: proto.GetChartsLabelsResp.charts:type_name -> proto.GetChartResp
-	25, // 15: proto.GetChartResp.metadata:type_name -> proto.MetadataChart
-	26, // 16: proto.GetChartResp.chart:type_name -> proto.Chart
-	27, // 17: proto.LayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
-	28, // 18: proto.LayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	29, // 19: proto.LayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	30, // 20: proto.LayersResp.EventsEntry.value:type_name -> proto.Event
-	27, // 21: proto.GetMissingLayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
-	28, // 22: proto.GetMissingLayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	29, // 23: proto.GetMissingLayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	30, // 24: proto.GetMissingLayersResp.EventsEntry.value:type_name -> proto.Event
-	24, // 25: proto.RegistryService.PutChart:input_type -> proto.StarChart
-	12, // 26: proto.RegistryService.GetChartMetadata:input_type -> proto.GetChartFromMetadataReq
-	10, // 27: proto.RegistryService.GetChartsLabels:input_type -> proto.GetChartsLabelsReq
-	8,  // 28: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
-	31, // 29: proto.RegistryService.GetCharts:input_type -> proto.EmptyMessage
-	6,  // 30: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
-	9,  // 31: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
-	24, // 32: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
-	4,  // 33: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
-	1,  // 34: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
-	0,  // 35: proto.RegistryService.Extend:input_type -> proto.ExtendReq
-	14, // 36: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
-	13, // 37: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
-	11, // 38: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
-	13, // 39: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
-	11, // 40: proto.RegistryService.GetCharts:output_type -> proto.GetChartsLabelsResp
-	7,  // 41: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
-	31, // 42: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
-	14, // 43: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
-	3,  // 44: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
-	2,  // 45: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
-	14, // 46: proto.RegistryService.Extend:output_type -> proto.PutChartResp
-	36, // [36:47] is the sub-list for method output_type
-	25, // [25:36] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	16, // 0: proto.SearchReq.tags:type_name -> proto.SearchReq.TagsEntry
+	26, // 1: proto.ExtendReq.chart:type_name -> proto.StarChart
+	14, // 2: proto.TimelineResp.charts:type_name -> proto.GetChartResp
+	6,  // 3: proto.SwitchCheckpointResp.start:type_name -> proto.LayersResp
+	6,  // 4: proto.SwitchCheckpointResp.stop:type_name -> proto.LayersResp
+	6,  // 5: proto.SwitchCheckpointResp.download:type_name -> proto.LayersResp
+	17, // 6: proto.LayersResp.dataSources:type_name -> proto.LayersResp.DataSourcesEntry
+	18, // 7: proto.LayersResp.storedProcedures:type_name -> proto.LayersResp.StoredProceduresEntry
+	19, // 8: proto.LayersResp.eventTriggers:type_name -> proto.LayersResp.EventTriggersEntry
+	20, // 9: proto.LayersResp.events:type_name -> proto.LayersResp.EventsEntry
+	21, // 10: proto.GetMissingLayersResp.dataSources:type_name -> proto.GetMissingLayersResp.DataSourcesEntry
+	22, // 11: proto.GetMissingLayersResp.storedProcedures:type_name -> proto.GetMissingLayersResp.StoredProceduresEntry
+	23, // 12: proto.GetMissingLayersResp.eventTriggers:type_name -> proto.GetMissingLayersResp.EventTriggersEntry
+	24, // 13: proto.GetMissingLayersResp.events:type_name -> proto.GetMissingLayersResp.EventsEntry
+	25, // 14: proto.GetChartsLabelsReq.labels:type_name -> proto.GetChartsLabelsReq.LabelsEntry
+	14, // 15: proto.GetChartsLabelsResp.charts:type_name -> proto.GetChartResp
+	27, // 16: proto.GetChartResp.metadata:type_name -> proto.MetadataChart
+	28, // 17: proto.GetChartResp.chart:type_name -> proto.Chart
+	29, // 18: proto.LayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
+	30, // 19: proto.LayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	31, // 20: proto.LayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	32, // 21: proto.LayersResp.EventsEntry.value:type_name -> proto.Event
+	29, // 22: proto.GetMissingLayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
+	30, // 23: proto.GetMissingLayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	31, // 24: proto.GetMissingLayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	32, // 25: proto.GetMissingLayersResp.EventsEntry.value:type_name -> proto.Event
+	26, // 26: proto.RegistryService.PutChart:input_type -> proto.StarChart
+	13, // 27: proto.RegistryService.GetChartMetadata:input_type -> proto.GetChartFromMetadataReq
+	11, // 28: proto.RegistryService.GetChartsLabels:input_type -> proto.GetChartsLabelsReq
+	9,  // 29: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
+	33, // 30: proto.RegistryService.GetCharts:input_type -> proto.EmptyMessage
+	7,  // 31: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
+	10, // 32: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
+	26, // 33: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
+	5,  // 34: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
+	2,  // 35: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
+	1,  // 36: proto.RegistryService.Extend:input_type -> proto.ExtendReq
+	0,  // 37: proto.RegistryService.Search:input_type -> proto.SearchReq
+	15, // 38: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
+	14, // 39: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
+	12, // 40: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
+	14, // 41: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
+	12, // 42: proto.RegistryService.GetCharts:output_type -> proto.GetChartsLabelsResp
+	8,  // 43: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
+	33, // 44: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
+	15, // 45: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
+	4,  // 46: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
+	3,  // 47: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
+	15, // 48: proto.RegistryService.Extend:output_type -> proto.PutChartResp
+	6,  // 49: proto.RegistryService.Search:output_type -> proto.LayersResp
+	38, // [38:50] is the sub-list for method output_type
+	26, // [26:38] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_starmap_proto_init() }
@@ -1334,7 +1407,7 @@ func file_starmap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starmap_proto_rawDesc), len(file_starmap_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -30,6 +30,7 @@ const (
 	RegistryService_SwitchCheckpoint_FullMethodName = "/proto.RegistryService/SwitchCheckpoint"
 	RegistryService_Timeline_FullMethodName         = "/proto.RegistryService/Timeline"
 	RegistryService_Extend_FullMethodName           = "/proto.RegistryService/Extend"
+	RegistryService_Search_FullMethodName           = "/proto.RegistryService/Search"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -47,6 +48,7 @@ type RegistryServiceClient interface {
 	SwitchCheckpoint(ctx context.Context, in *SwitchCheckpointReq, opts ...grpc.CallOption) (*SwitchCheckpointResp, error)
 	Timeline(ctx context.Context, in *TimelineReq, opts ...grpc.CallOption) (*TimelineResp, error)
 	Extend(ctx context.Context, in *ExtendReq, opts ...grpc.CallOption) (*PutChartResp, error)
+	Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*LayersResp, error)
 }
 
 type registryServiceClient struct {
@@ -167,6 +169,16 @@ func (c *registryServiceClient) Extend(ctx context.Context, in *ExtendReq, opts 
 	return out, nil
 }
 
+func (c *registryServiceClient) Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*LayersResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LayersResp)
+	err := c.cc.Invoke(ctx, RegistryService_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -182,6 +194,7 @@ type RegistryServiceServer interface {
 	SwitchCheckpoint(context.Context, *SwitchCheckpointReq) (*SwitchCheckpointResp, error)
 	Timeline(context.Context, *TimelineReq) (*TimelineResp, error)
 	Extend(context.Context, *ExtendReq) (*PutChartResp, error)
+	Search(context.Context, *SearchReq) (*LayersResp, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -224,6 +237,9 @@ func (UnimplementedRegistryServiceServer) Timeline(context.Context, *TimelineReq
 }
 func (UnimplementedRegistryServiceServer) Extend(context.Context, *ExtendReq) (*PutChartResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Extend not implemented")
+}
+func (UnimplementedRegistryServiceServer) Search(context.Context, *SearchReq) (*LayersResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -444,6 +460,24 @@ func _RegistryService_Extend_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_Search_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).Search(ctx, req.(*SearchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -494,6 +528,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Extend",
 			Handler:    _RegistryService_Extend_Handler,
+		},
+		{
+			MethodName: "Search",
+			Handler:    _RegistryService_Search_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

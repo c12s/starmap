@@ -17,6 +17,7 @@ func dataSourceToProto(ds *domain.DataSource) *proto.DataSource {
 		ResourceName: ds.ResourceName,
 		Description:  ds.Description,
 		Labels:       ds.Labels,
+		Tags:         ds.Tags,
 	}
 }
 
@@ -32,6 +33,7 @@ func metadataToProto(metadata *domain.Metadata) *proto.Metadata {
 		Topic:       metadata.Topic,
 		Description: metadata.Description,
 		Labels:      metadata.Labels,
+		Tags:        metadata.Tags,
 	}
 
 	if metadata.Image != "" {
