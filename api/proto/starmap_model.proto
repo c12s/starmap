@@ -13,6 +13,7 @@ message DataSource {
   string resourceName = 5;
   string description = 6;
   map<string, string> labels = 7;
+  map<string, string> tags = 8;
 }
 
 message Metadata {
@@ -24,6 +25,7 @@ message Metadata {
   string topic = 6;
   string description = 7;
   map<string, string> labels = 8;
+  map<string, string> tags = 9;
 }
 
 message Build {

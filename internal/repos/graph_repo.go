@@ -2,6 +2,7 @@ package repos
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -109,7 +110,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 		}
 
 		// ChartLabels
-		labelsList := convertLabelsToList(chart.Metadata.Labels)
+		labelsList := convertMapToList(chart.Metadata.Labels)
 		if len(labelsList) > 0 {
 			queryLabels := `
 				MATCH (c:Chart {id: $id})
@@ -149,6 +150,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 		for key, ds := range chart.Chart.DataSources {
 
 			ds.Hash = computeHash(ds.Type + ds.Path)
+			tagsJSON, _ := json.Marshal(ds.Tags)
 
 			queryDS := `
 				MERGE (d:DataSource {hash: $hash})
@@ -159,7 +161,8 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					d.path = $path,
 					d.hash = $hash,
 					d.resourceName = $resourceName,
-					d.description = $description
+					d.description = $description,
+					d.tags = $tags
 			`
 			_, err := tx.Run(ctx, queryDS, map[string]any{
 				"id":           ds.Id,
@@ -169,13 +172,14 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"hash":         ds.Hash,
 				"resourceName": ds.ResourceName,
 				"description":  ds.Description,
+				"tags":         string(tagsJSON),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create DataSource node for %s: %w", key, err)
 			}
 
 			// Data Source Labels
-			labelsList := convertLabelsToList(ds.Labels)
+			labelsList := convertMapToList(ds.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (ds:DataSource {id: $id})
@@ -202,6 +206,8 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				sp.Metadata.Hash = computeHash(sp.Metadata.Build.Pull + sp.Metadata.Build.Command)
 			}
 
+			tagsJSON, _ := json.Marshal(sp.Metadata.Tags)
+
 			querySP := `
 				MERGE (s:StoredProcedure {hash: $hash})
 				ON CREATE SET
@@ -225,6 +231,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
+					r.tags = $tags,
 					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
     				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
     				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
@@ -253,6 +260,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"pull":                  sp.Metadata.Build.Pull,
 				"command":               sp.Metadata.Build.Command,
 				"workdir":               sp.Metadata.Build.Workdir,
+				"tags":                  string(tagsJSON),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create StoredProcedure relation for %s: %w", key, err)
@@ -293,7 +301,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			}
 
 			// Stored Procedure Labels
-			labelsList := convertLabelsToList(sp.Metadata.Labels)
+			labelsList := convertMapToList(sp.Metadata.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (sp:StoredProcedure {id: $id})
@@ -329,6 +337,8 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			} else {
 				et.Metadata.Hash = computeHash(et.Metadata.Build.Pull + et.Metadata.Build.Command)
 			}
+
+			tagsJSON, _ := json.Marshal(et.Metadata.Tags)
 
 			sort.Strings(et.Links.EventLinks)
 			var events []domain.Event
@@ -373,6 +383,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
+					r.tags = $tags,
 					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
     				t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
     				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
@@ -402,6 +413,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"pull":                  et.Metadata.Build.Pull,
 				"command":               et.Metadata.Build.Command,
 				"workdir":               et.Metadata.Build.Workdir,
+				"tags":                  string(tagsJSON),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
@@ -444,7 +456,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			}
 
 			// Trigger Labels
-			labelsList := convertLabelsToList(et.Metadata.Labels)
+			labelsList := convertMapToList(et.Metadata.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (et:Trigger {id: $id})
@@ -467,6 +479,8 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				if !ok {
 					continue
 				}
+
+				evTagsJSON, _ := json.Marshal(ev.Metadata.Tags)
 
 				queryLink := `
 					MERGE (e:Event {hash: $eventHash})
@@ -491,6 +505,7 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 						r.volumes = $volumes,
 						r.targets = $targets,
 						r.envVars = $envVars,
+						r.tags = $tags,
 						r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
     					e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
     					r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
@@ -521,13 +536,14 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					"pull":                  ev.Metadata.Build.Pull,
 					"command":               ev.Metadata.Build.Command,
 					"workdir":               ev.Metadata.Build.Workdir,
+					"tags":                  string(evTagsJSON),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", eventName, err)
 				}
 
 				// Event Labels
-				labelsList := convertLabelsToList(ev.Metadata.Labels)
+				labelsList := convertMapToList(ev.Metadata.Labels)
 				if len(labelsList) > 0 {
 					queryLabels := `
 				MATCH (ev:Event {id: $id})
@@ -2152,7 +2168,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		`
 		tx.Run(ctx, queryDeleteChartLabels, map[string]any{"id": chart.Metadata.Id})
 
-		if lblList := convertLabelsToList(chart.Metadata.Labels); len(lblList) > 0 {
+		if lblList := convertMapToList(chart.Metadata.Labels); len(lblList) > 0 {
 			queryAddLabels := `
 			UNWIND $labels AS lbl
 			MATCH (c:Chart {id: $id})
@@ -2294,7 +2310,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			`
 			tx.Run(ctx, queryDeleteDSLabels, map[string]any{"id": ds.Id})
 
-			if lblList := convertLabelsToList(ds.Labels); len(lblList) > 0 {
+			if lblList := convertMapToList(ds.Labels); len(lblList) > 0 {
 				queryLabels := `
 					MATCH (d:DataSource {id: $id})
 					UNWIND $labels AS lbl
@@ -2401,7 +2417,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			`
 			tx.Run(ctx, queryDeleteSPLabels, map[string]any{"id": sp.Metadata.Id})
 
-			if lblList := convertLabelsToList(sp.Metadata.Labels); len(lblList) > 0 {
+			if lblList := convertMapToList(sp.Metadata.Labels); len(lblList) > 0 {
 				queryLabels := `
 					MATCH (d:StoredProcedure {id: $id})
 					UNWIND $labels AS lbl
@@ -2516,7 +2532,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			`
 			tx.Run(ctx, queryDeleteSPLabels, map[string]any{"id": tr.Metadata.Id})
 
-			if lblList := convertLabelsToList(tr.Metadata.Labels); len(lblList) > 0 {
+			if lblList := convertMapToList(tr.Metadata.Labels); len(lblList) > 0 {
 				queryLabels := `
 					MATCH (d:Trigger {id: $id})
 					UNWIND $labels AS lbl
@@ -2607,7 +2623,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				tx.Run(ctx, queryDeleteEvLabels, map[string]any{"id": ev.Metadata.Id})
 
 				// Event Labels
-				evLbl := convertLabelsToList(ev.Metadata.Labels)
+				evLbl := convertMapToList(ev.Metadata.Labels)
 				if len(evLbl) > 0 {
 					_, err = tx.Run(ctx, `
 				MATCH (e:Event {id: $id})
@@ -3165,7 +3181,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			}
 
 			// Data Source Labels
-			labelsList := convertLabelsToList(ds.Labels)
+			labelsList := convertMapToList(ds.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (ds:DataSource {id: $id})
@@ -3271,7 +3287,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			}
 
 			// Stored Procedure Labels
-			labelsList := convertLabelsToList(sp.Metadata.Labels)
+			labelsList := convertMapToList(sp.Metadata.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (sp:StoredProcedure {id: $id})
@@ -3409,7 +3425,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			}
 
 			// Trigger Labels
-			labelsList := convertLabelsToList(et.Metadata.Labels)
+			labelsList := convertMapToList(et.Metadata.Labels)
 			if len(labelsList) > 0 {
 				queryLabels := `
 				MATCH (et:Trigger {id: $id})
@@ -3487,7 +3503,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				}
 
 				// Event Labels
-				labelsList := convertLabelsToList(ev.Metadata.Labels)
+				labelsList := convertMapToList(ev.Metadata.Labels)
 				if len(labelsList) > 0 {
 					queryLabels := `
 				MATCH (ev:Event {id: $id})
@@ -3527,4 +3543,110 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			chart.Metadata.Id, chart.Metadata.Name, chart.Metadata.Namespace, chart.Metadata.Maintainer,
 		},
 	}, nil
+}
+
+func (r *RegistryRepo) Search(ctx context.Context, name, description string, tags map[string]string) (*domain.SearchResp, error) {
+	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
+		AccessMode: neo4j.AccessModeRead,
+	})
+	defer session.Close(ctx)
+
+	var tagsStr string
+	if len(tags) == 0 {
+		tagsStr = "{}"
+	} else {
+		tagsJSON, _ := json.Marshal(tags)
+		tagsStr = string(tagsJSON)
+	}
+
+	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `
+			OPTIONAL MATCH (ds:DataSource)
+			WHERE ($name = '' OR toLower(ds.name) CONTAINS toLower($name))
+			AND ($description = '' OR toLower(ds.description) CONTAINS toLower($description))
+			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(ds.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
+			WITH collect(DISTINCT {node: ds, relProps: {}}) AS dataSources
+
+			OPTIONAL MATCH ()-[spRel:HAS_PROCEDURE]->(sp:StoredProcedure)
+			WHERE ($name = '' OR toLower(spRel.name) CONTAINS toLower($name))
+			AND ($description = '' OR toLower(spRel.description) CONTAINS toLower($description))
+			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(spRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
+			WITH dataSources, collect(DISTINCT {nodeProps: properties(sp), relProps: properties(spRel)}) AS storedProcedures
+
+			OPTIONAL MATCH ()-[tRel:HAS_TRIGGER]->(t:Trigger)
+			WHERE ($name = '' OR toLower(tRel.name) CONTAINS toLower($name))
+			AND ($description = '' OR toLower(tRel.description) CONTAINS toLower($description))
+			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(tRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
+			WITH dataSources, storedProcedures, collect(DISTINCT {nodeProps: properties(t), relProps: properties(tRel)}) AS eventTriggers
+
+			OPTIONAL MATCH ()-[eRel:EVENT_LINK]->(e:Event)
+			WHERE ($name = '' OR toLower(eRel.name) CONTAINS toLower($name))
+			AND ($description = '' OR toLower(eRel.description) CONTAINS toLower($description))
+			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(eRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
+			WITH dataSources, storedProcedures, eventTriggers, collect(DISTINCT {nodeProps: properties(e), relProps: properties(eRel)}) AS events
+
+			// Labels
+			OPTIONAL MATCH (ent)
+			WHERE ent.id IN (
+				[ds IN dataSources | ds.node.id] +
+				[sp IN storedProcedures | sp.nodeProps.id] +
+				[et IN eventTriggers | et.nodeProps.id] +
+				[ev IN events | ev.nodeProps.id]
+			)
+			OPTIONAL MATCH (ent)-[:HAS_LABEL]->(lab:Label)
+			WITH dataSources, storedProcedures, eventTriggers, events,
+				collect(CASE WHEN ent.id IN [ds IN dataSources | ds.node.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS dataSourceLabels,
+				collect(CASE WHEN ent.id IN [sp IN storedProcedures | sp.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS spLabels,
+				collect(CASE WHEN ent.id IN [et IN eventTriggers | et.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS triggerLabels,
+				collect(CASE WHEN ent.id IN [ev IN events | ev.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS eventLabels
+
+			RETURN dataSources, storedProcedures, eventTriggers, events,
+				dataSourceLabels, spLabels, triggerLabels, eventLabels
+		`
+
+		rec, err := tx.Run(ctx, query, map[string]any{
+			"name":        name,
+			"description": description,
+			"tags":        tagsStr,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("search query failed: %w", err)
+		}
+
+		if !rec.Next(ctx) {
+			return &domain.SearchResp{}, nil
+		}
+
+		record := rec.Record()
+		resp := &domain.SearchResp{}
+
+		if v, ok := record.Get("dataSources"); ok {
+			labels, _ := record.Get("dataSourceLabels")
+			resp.DataSources = parseDataSources(v, parseLabelsIntoMap(labels))
+		}
+		if v, ok := record.Get("storedProcedures"); ok {
+			labels, _ := record.Get("spLabels")
+			resp.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
+		}
+		if v, ok := record.Get("eventTriggers"); ok {
+			labels, _ := record.Get("triggerLabels")
+			resp.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
+		}
+		if v, ok := record.Get("events"); ok {
+			labels, _ := record.Get("eventLabels")
+			resp.Events = parseEvents(v, parseLabelsIntoMap(labels))
+		}
+
+		return resp, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*domain.SearchResp), nil
 }

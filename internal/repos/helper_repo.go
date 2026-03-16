@@ -62,6 +62,10 @@ func parseDataSources(v any, dsLabels map[string]map[string]string) map[string]*
 		if ds.Name != "" {
 			result[ds.Name] = ds
 		}
+
+		if tagsStr := getStringProp(node, "tags"); tagsStr != "" {
+			json.Unmarshal([]byte(tagsStr), &ds.Tags)
+		}
 	}
 	return result
 }
@@ -101,6 +105,10 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 		Volumes:  getStringSliceFromMap(relProps, "volumes"),
 		Targets:  getStringSliceFromMap(relProps, "targets"),
 		EnvVars:  getStringSliceFromMap(relProps, "envVars"),
+	}
+
+	if tagsStr := getStringFromMap(relProps, "tags"); tagsStr != "" {
+		json.Unmarshal([]byte(tagsStr), &metadata.Tags)
 	}
 
 	return
@@ -348,7 +356,7 @@ func getStringProp(node neo4j.Node, key string) string {
 	return ""
 }
 
-func convertLabelsToList(labels map[string]string) []map[string]string {
+func convertMapToList(labels map[string]string) []map[string]string {
 	result := make([]map[string]string, 0, len(labels))
 	for k, v := range labels {
 		result = append(result, map[string]string{
@@ -381,29 +389,31 @@ func parseLabelList(v any) map[string]string {
 
 func parseLabelsIntoMap(v any) map[string]map[string]string {
 	result := make(map[string]map[string]string)
-
 	list, ok := v.([]interface{})
 	if !ok {
 		return result
 	}
-
 	for _, item := range list {
-		if m, ok := item.(map[string]any); ok {
-			Id := m["id"].(string)
-			key := m["key"].(string)
-			value := m["value"].(string)
-
-			if result[Id] == nil {
-				result[Id] = make(map[string]string)
-			}
-
-			result[Id][key] = value
+		if item == nil {
+			continue // preskoči null-ove iz CASE WHEN
 		}
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		id, ok := m["id"].(string)
+		if !ok || id == "" {
+			continue
+		}
+		key, _ := m["key"].(string)
+		value, _ := m["value"].(string)
+		if result[id] == nil {
+			result[id] = make(map[string]string)
+		}
+		result[id][key] = value
 	}
-
 	return result
 }
-
 func incrementVersion(ver string) string {
 	if !strings.HasPrefix(ver, "v") {
 		return "v1.0.0"
