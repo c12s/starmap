@@ -192,11 +192,18 @@ func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*pr
 	}, nil
 }
 
-func (s *RegistryService) Search(ctx context.Context, req *proto.SearchReq) (*proto.LayersResp, error) {
-	resp, err := s.repo.Search(ctx, req.Name, req.Description, req.Tags)
+func (s *RegistryService) Search(ctx context.Context, req *proto.SearchReq) (*proto.GetChartsLabelsResp, error) {
+	charts, err := s.repo.Search(ctx, req.Name, req.Description, req.Tags, req.DeepSearch, req.ComponentTags)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to search db: %v", err)
 	}
 
-	return protomappers.SearchToProto(*resp), nil
+	resp := &proto.GetChartsLabelsResp{}
+
+	for _, chart := range charts.Charts {
+		chartProto := protomappers.ChartMetadataToProto(chart)
+		resp.Charts = append(resp.Charts, chartProto)
+	}
+
+	return resp, nil
 }

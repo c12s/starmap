@@ -45,6 +45,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	domainChart.Metadata.Visibility = meta.Visibility
 	domainChart.Metadata.Engine = meta.Engine
 	domainChart.Metadata.Labels = meta.Labels
+	domainChart.Metadata.Tags = meta.Tags
 
 	for key, ds := range chart.Chart.DataSources {
 		domainChart.Chart.DataSources[key] = &domain.DataSource{
@@ -205,6 +206,7 @@ func ChartMetadataToProto(chart domain.GetChartMetadataResp) *proto.GetChartResp
 			Visibility:  chart.Metadata.Visibility,
 			Engine:      chart.Metadata.Engine,
 			Labels:      chart.Metadata.Labels,
+			Tags:        chart.Metadata.Tags,
 		},
 		Chart: &proto.Chart{
 			DataSources:      mapDataSourcesToProto(chart.DataSources),

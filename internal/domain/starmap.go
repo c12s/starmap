@@ -54,6 +54,30 @@ type DataSource struct {
 	Tags         map[string]string
 }
 
+type StarChart struct {
+	ApiVersion    string
+	SchemaVersion string
+	Kind          string
+	Metadata      struct {
+		Id          string
+		Name        string
+		Namespace   string
+		Maintainer  string
+		Description string
+		Visibility  string
+		Engine      string
+		Labels      map[string]string
+		Tags        map[string]string
+	}
+	Chart Chart
+}
+
+type Chart struct {
+	DataSources      map[string]*DataSource
+	StoredProcedures map[string]*StoredProcedure
+	EventTriggers    map[string]*EventTrigger
+	Events           map[string]*Event
+}
 type StoredProcedure struct {
 	Metadata Metadata
 	Control  Control
@@ -72,30 +96,6 @@ type Event struct {
 	Metadata Metadata
 	Control  Control
 	Features Features
-}
-
-type Chart struct {
-	DataSources      map[string]*DataSource
-	StoredProcedures map[string]*StoredProcedure
-	EventTriggers    map[string]*EventTrigger
-	Events           map[string]*Event
-}
-
-type StarChart struct {
-	ApiVersion    string
-	SchemaVersion string
-	Kind          string
-	Metadata      struct {
-		Id          string
-		Name        string
-		Namespace   string
-		Maintainer  string
-		Description string
-		Visibility  string
-		Engine      string
-		Labels      map[string]string
-	}
-	Chart Chart
 }
 
 type GetMissingLayers struct {
@@ -124,6 +124,7 @@ type GetChartMetadataResp struct {
 		Visibility  string
 		Engine      string
 		Labels      map[string]string
+		Tags        map[string]string
 	}
 	DataSources      map[string]*DataSource
 	StoredProcedures map[string]*StoredProcedure

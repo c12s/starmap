@@ -128,11 +128,13 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 		}
 
 		// Version
+		tagsChartJSON, _ := json.Marshal(chart.Metadata.Tags)
 		queryVersion := `
 			MATCH (c:Chart {id: $id})
 			MERGE (v:Version {hash: $versionHash})
 			ON CREATE SET
-				v.schemaVersion = $schemaVersion
+				v.schemaVersion = $schemaVersion,
+				v.tags = $tags
 			MERGE (c)-[r:HAS_VERSION]->(v)
 			ON CREATE SET r.createdAt = $now
 		`
@@ -141,9 +143,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			"schemaVersion": chart.SchemaVersion,
 			"now":           time.Now().Unix(),
 			"versionHash":   versionHash,
+			"tags":          string(tagsChartJSON),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to link labels to Chart: %w", err)
+			return nil, fmt.Errorf("failed to create Version node: %w", err)
 		}
 
 		// DataSources
@@ -786,6 +789,10 @@ func (r *RegistryRepo) GetChartMetadata(ctx context.Context, schemaVersion, name
 		if v, ok := record.Get("v"); ok {
 			if node, ok := v.(neo4j.Node); ok {
 				chart.SchemaVersion = getStringProp(node, "schemaVersion")
+				chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+				if chart.Metadata.Tags == nil {
+					chart.Metadata.Tags = map[string]string{}
+				}
 			}
 		}
 
@@ -1030,6 +1037,10 @@ func (r *RegistryRepo) GetChartsLabels(ctx context.Context, schemaVersion, names
 			if v, ok := record.Get("v"); ok {
 				if node, ok := v.(neo4j.Node); ok {
 					chart.SchemaVersion = getStringProp(node, "schemaVersion")
+					chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+					if chart.Metadata.Tags == nil {
+						chart.Metadata.Tags = map[string]string{}
+					}
 				}
 			}
 
@@ -1276,6 +1287,10 @@ func (r *RegistryRepo) GetChartId(ctx context.Context, schemaVersion, namespace,
 		if v, ok := record.Get("v"); ok {
 			if node, ok := v.(neo4j.Node); ok {
 				chart.SchemaVersion = getStringProp(node, "schemaVersion")
+				chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+				if chart.Metadata.Tags == nil {
+					chart.Metadata.Tags = map[string]string{}
+				}
 			}
 		}
 
@@ -1670,6 +1685,10 @@ func (r *RegistryRepo) GetAllCharts(ctx context.Context) (*domain.GetChartsLabel
 			if v, ok := record.Get("ver"); ok {
 				if node, ok := v.(neo4j.Node); ok {
 					chart.SchemaVersion = getStringProp(node, "schemaVersion")
+					chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+					if chart.Metadata.Tags == nil {
+						chart.Metadata.Tags = map[string]string{}
+					}
 				}
 			}
 
@@ -2243,16 +2262,18 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		}
 
 		versionHash := computeVersionHash(chart)
+		tagsJSON, _ := json.Marshal(chart.Metadata.Tags)
 		queryMergeVersion := `
 			MATCH (u:User {name: $maintainer})-[:HAS_NAMESPACE]->(n:Namespace {name: $namespace})-[:HAS_CHART]->(c:Chart {id: $id})
 			MERGE (c)-[r:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 			SET r.createdAt = $createdAt,
-				v.hash = $versionHash
+				v.hash = $versionHash,
+				v.tags = $tags
 
 			WITH c, v, n
 
 			MATCH (n)-[hc:HAS_CHART]->(c)
-			SET hc.versions = CASE 
+			SET hc.versions = CASE
 				WHEN $schemaVersion IN coalesce(hc.versions, []) THEN hc.versions
 				ELSE coalesce(hc.versions, []) + $schemaVersion
 			END
@@ -2266,6 +2287,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			"namespace":     chart.Metadata.Namespace,
 			"maintainer":    chart.Metadata.Maintainer,
 			"versionHash":   versionHash,
+			"tags":          string(tagsJSON),
 		})
 		if err != nil {
 			return nil, err
@@ -3006,6 +3028,10 @@ func (r *RegistryRepo) Timeline(ctx context.Context, namespace, maintainer, char
 			if v, ok := record.Get("v"); ok {
 				if node, ok := v.(neo4j.Node); ok {
 					chart.SchemaVersion = getStringProp(node, "schemaVersion")
+					chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+					if chart.Metadata.Tags == nil {
+						chart.Metadata.Tags = map[string]string{}
+					}
 				}
 			}
 
@@ -3108,6 +3134,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 	_, err = writeSession.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 
 		versionHash := computeVersionHash(chart)
+		tagsExtendJSON, _ := json.Marshal(chart.Metadata.Tags)
 		// Version node
 		queryVersion := `
 			MATCH (c:Chart {id: $id})
@@ -3118,7 +3145,8 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			WITH c, coalesce(v_direct, v_extend) AS v1
 
 			CREATE (v:Version {hash: $versionHash})
-			SET v.schemaVersion = $schemaVersion
+			SET v.schemaVersion = $schemaVersion,
+				v.tags = $tags
 
 			MERGE (v)-[r:EXTEND]->(v1)
 			ON CREATE SET r.createdAt = $now
@@ -3131,6 +3159,7 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			"maintainer":      chart.Metadata.Maintainer,
 			"namespace":       chart.Metadata.Namespace,
 			"id":              chart.Metadata.Id,
+			"tags":            string(tagsExtendJSON),
 		}); err != nil {
 			return nil, fmt.Errorf("failed to create Version node: %w", err)
 		}
@@ -3545,108 +3574,226 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 	}, nil
 }
 
-func (r *RegistryRepo) Search(ctx context.Context, name, description string, tags map[string]string) (*domain.SearchResp, error) {
+func (r *RegistryRepo) Search(ctx context.Context, name, description string, tags map[string]string, deepSearch bool, componentTags map[string]string) (*domain.GetChartsLabelsResp, error) {
 	session := r.driver.NewSession(ctx, neo4j.SessionConfig{
 		AccessMode: neo4j.AccessModeRead,
 	})
 	defer session.Close(ctx)
 
-	var tagsStr string
-	if len(tags) == 0 {
-		tagsStr = "{}"
-	} else {
-		tagsJSON, _ := json.Marshal(tags)
-		tagsStr = string(tagsJSON)
-	}
-
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-		query := `
-			OPTIONAL MATCH (ds:DataSource)
-			WHERE ($name = '' OR toLower(ds.name) CONTAINS toLower($name))
-			AND ($description = '' OR toLower(ds.description) CONTAINS toLower($description))
-			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(ds.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
-			WITH collect(DISTINCT {node: ds, relProps: {}}) AS dataSources
-
-			OPTIONAL MATCH ()-[spRel:HAS_PROCEDURE]->(sp:StoredProcedure)
-			WHERE ($name = '' OR toLower(spRel.name) CONTAINS toLower($name))
-			AND ($description = '' OR toLower(spRel.description) CONTAINS toLower($description))
-			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(spRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
-			WITH dataSources, collect(DISTINCT {nodeProps: properties(sp), relProps: properties(spRel)}) AS storedProcedures
-
-			OPTIONAL MATCH ()-[tRel:HAS_TRIGGER]->(t:Trigger)
-			WHERE ($name = '' OR toLower(tRel.name) CONTAINS toLower($name))
-			AND ($description = '' OR toLower(tRel.description) CONTAINS toLower($description))
-			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(tRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
-			WITH dataSources, storedProcedures, collect(DISTINCT {nodeProps: properties(t), relProps: properties(tRel)}) AS eventTriggers
-
-			OPTIONAL MATCH ()-[eRel:EVENT_LINK]->(e:Event)
-			WHERE ($name = '' OR toLower(eRel.name) CONTAINS toLower($name))
-			AND ($description = '' OR toLower(eRel.description) CONTAINS toLower($description))
-			AND ($tags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($tags)) WHERE apoc.convert.fromJsonMap(eRel.tags)[key] = apoc.convert.fromJsonMap($tags)[key]))
-			WITH dataSources, storedProcedures, eventTriggers, collect(DISTINCT {nodeProps: properties(e), relProps: properties(eRel)}) AS events
-
-			// Labels
-			OPTIONAL MATCH (ent)
-			WHERE ent.id IN (
-				[ds IN dataSources | ds.node.id] +
-				[sp IN storedProcedures | sp.nodeProps.id] +
-				[et IN eventTriggers | et.nodeProps.id] +
-				[ev IN events | ev.nodeProps.id]
-			)
-			OPTIONAL MATCH (ent)-[:HAS_LABEL]->(lab:Label)
-			WITH dataSources, storedProcedures, eventTriggers, events,
-				collect(CASE WHEN ent.id IN [ds IN dataSources | ds.node.id]
-					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS dataSourceLabels,
-				collect(CASE WHEN ent.id IN [sp IN storedProcedures | sp.nodeProps.id]
-					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS spLabels,
-				collect(CASE WHEN ent.id IN [et IN eventTriggers | et.nodeProps.id]
-					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS triggerLabels,
-				collect(CASE WHEN ent.id IN [ev IN events | ev.nodeProps.id]
-					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS eventLabels
-
-			RETURN dataSources, storedProcedures, eventTriggers, events,
-				dataSourceLabels, spLabels, triggerLabels, eventLabels
-		`
-
-		rec, err := tx.Run(ctx, query, map[string]any{
+		params := map[string]any{
 			"name":        name,
 			"description": description,
-			"tags":        tagsStr,
-		})
+		}
+
+		// Chart tag filter (na v.tags JSON - per version)
+		chartTagFilter := ""
+		if len(tags) > 0 {
+			tagsBytes, _ := json.Marshal(tags)
+			params["chartTags"] = string(tagsBytes)
+
+			chartTagFilter = `
+			AND ALL(key IN keys(apoc.convert.fromJsonMap($chartTags))
+				WHERE apoc.convert.fromJsonMap(v.tags)[key] = apoc.convert.fromJsonMap($chartTags)[key]
+			)`
+		}
+
+		// Component tag filter
+		spCompFilter := ""
+		trigCompFilter := ""
+		evCompFilter := ""
+		dsCompFilter := ""
+
+		if deepSearch && len(componentTags) > 0 {
+			compTagsBytes, _ := json.Marshal(componentTags)
+			params["compTags"] = string(compTagsBytes)
+
+			spCompFilter = `WHERE sp IS NULL OR ($compTags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($compTags)) WHERE apoc.convert.fromJsonMap(spRels.tags)[key] = apoc.convert.fromJsonMap($compTags)[key]))`
+			trigCompFilter = `WHERE t IS NULL OR ($compTags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($compTags)) WHERE apoc.convert.fromJsonMap(tRels.tags)[key] = apoc.convert.fromJsonMap($compTags)[key]))`
+			evCompFilter = `WHERE e IS NULL OR ($compTags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($compTags)) WHERE apoc.convert.fromJsonMap(eRels.tags)[key] = apoc.convert.fromJsonMap($compTags)[key]))`
+
+			dsCompFilter = `WHERE ds IS NULL OR ($compTags = '{}' OR ALL(key IN keys(apoc.convert.fromJsonMap($compTags)) WHERE apoc.convert.fromJsonMap(ds.tags)[key] = apoc.convert.fromJsonMap($compTags)[key]))`
+		}
+
+		query := fmt.Sprintf(`
+			MATCH (u:User)-[:HAS_NAMESPACE]->(n:Namespace)-[nsRel:HAS_CHART]->(c:Chart)
+			WHERE ($name = '' OR toLower(c.name) CONTAINS toLower($name))
+			AND ($description = '' OR toLower(c.description) CONTAINS toLower($description))
+			WITH u.name AS maintainer, n.name AS namespace, c, nsRel.versions AS userVersions
+			WHERE size(userVersions) > 0
+
+			OPTIONAL MATCH (c)-[:HAS_LABEL]->(l:Label)
+			WITH maintainer, namespace, c, userVersions,
+				collect({key: l.key, value: l.value}) AS labels
+
+			UNWIND userVersions AS versionStr
+
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(v_direct:Version {schemaVersion: versionStr})
+			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v_extend:Version {schemaVersion: versionStr})
+			WITH maintainer, namespace, c, labels,
+				CASE WHEN v_direct IS NOT NULL THEN v_direct ELSE v_extend END AS v
+
+			WHERE v IS NOT NULL
+			%s
+
+			OPTIONAL MATCH (v)-[:EXTEND*0..]->(base:Version)
+			WITH maintainer, namespace, c, labels, v, collect(DISTINCT base) AS versions
+
+			UNWIND versions AS ver
+			OPTIONAL MATCH (ver)-[spRels:HAS_PROCEDURE]->(sp:StoredProcedure)
+			%s
+			WITH maintainer, namespace, c, labels, v, versions,
+				collect(DISTINCT {nodeProps: properties(sp), relProps: properties(spRels)}) AS storedProcedures
+
+			UNWIND storedProcedures AS sp
+			OPTIONAL MATCH (ds:DataSource)<-[rel:HARD_LINK|SOFT_LINK]-(spNode:StoredProcedure {id: sp.nodeProps.id})
+			%s
+			WITH maintainer, namespace, c, labels, v, versions, storedProcedures,
+				collect(DISTINCT {node: ds, relProps: properties(rel)}) AS spDataSources
+
+			WITH maintainer, namespace, c, labels, v, versions, storedProcedures,
+				collect({dataSources: spDataSources}) AS spDataSourcesList
+
+			UNWIND versions AS ver
+			OPTIONAL MATCH (ver)-[tRels:HAS_TRIGGER]->(t:Trigger)
+			%s
+			WITH maintainer, namespace, c, labels, v, versions, storedProcedures, spDataSourcesList,
+				collect(DISTINCT {nodeProps: properties(t), relProps: properties(tRels)}) AS triggers
+
+			UNWIND triggers AS tr
+			OPTIONAL MATCH (trNode:Trigger {id: tr.nodeProps.id})
+			OPTIONAL MATCH (ds:DataSource)<-[rel:HARD_LINK|SOFT_LINK]-(trNode)
+			%s
+			OPTIONAL MATCH (trNode)-[eRels:EVENT_LINK]->(e:Event)
+			%s
+			WITH maintainer, namespace, c, v, labels, storedProcedures, spDataSourcesList, triggers, tr, trNode,
+				collect(DISTINCT {node: ds, relProps: properties(rel)}) AS triggerDataSources,
+				collect({nodeProps: properties(e), relProps: properties(eRels)}) AS triggerEvents
+
+			WITH maintainer, namespace, c, labels, storedProcedures, v, spDataSourcesList,
+				collect({trigger: tr, dataSources: triggerDataSources, events: triggerEvents}) AS triggersWithData
+
+			WITH maintainer, namespace, c, labels, storedProcedures, v,
+				[tr IN triggersWithData | tr.trigger] AS triggers,
+				apoc.coll.flatten([tr IN triggersWithData | tr.events]) AS allEvents,
+				apoc.coll.flatten([tr IN triggersWithData | tr.dataSources] + spDataSourcesList) AS allDataSources
+
+			OPTIONAL MATCH (ent)-[:HAS_LABEL]->(lab)
+			WHERE ent.id IN (
+				[sp IN storedProcedures | sp.nodeProps.id] +
+				[tr IN triggers | tr.nodeProps.id] +
+				[ev IN allEvents | ev.nodeProps.id] +
+				[ds IN allDataSources | ds.node.id]
+			)
+			WITH maintainer, namespace, c, labels, storedProcedures, triggers, allEvents, allDataSources, v,
+				collect(CASE WHEN ent.id IN [sp IN storedProcedures | sp.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS spLabels,
+				collect(CASE WHEN ent.id IN [tr IN triggers | tr.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS triggerLabels,
+				collect(CASE WHEN ent.id IN [ev IN allEvents | ev.nodeProps.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS eventLabels,
+				collect(CASE WHEN ent.id IN [ds IN allDataSources | ds.node.id]
+					THEN {id: ent.id, key: lab.key, value: lab.value} END) AS dataSourceLabels
+
+			RETURN maintainer, namespace, c, labels, v,
+				storedProcedures, triggers,
+				allEvents AS events,
+				allDataSources AS dataSources,
+				spLabels, triggerLabels, eventLabels, dataSourceLabels
+		`, chartTagFilter, spCompFilter, dsCompFilter, trigCompFilter, dsCompFilter, evCompFilter)
+
+		rec, err := tx.Run(ctx, query, params)
 		if err != nil {
 			return nil, fmt.Errorf("search query failed: %w", err)
 		}
 
-		if !rec.Next(ctx) {
-			return &domain.SearchResp{}, nil
+		charts := &domain.GetChartsLabelsResp{
+			Charts: []domain.GetChartMetadataResp{},
 		}
 
-		record := rec.Record()
-		resp := &domain.SearchResp{}
+		for rec.Next(ctx) {
+			record := rec.Record()
 
-		if v, ok := record.Get("dataSources"); ok {
-			labels, _ := record.Get("dataSourceLabels")
-			resp.DataSources = parseDataSources(v, parseLabelsIntoMap(labels))
-		}
-		if v, ok := record.Get("storedProcedures"); ok {
-			labels, _ := record.Get("spLabels")
-			resp.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
-		}
-		if v, ok := record.Get("eventTriggers"); ok {
-			labels, _ := record.Get("triggerLabels")
-			resp.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
-		}
-		if v, ok := record.Get("events"); ok {
-			labels, _ := record.Get("eventLabels")
-			resp.Events = parseEvents(v, parseLabelsIntoMap(labels))
+			chart := domain.GetChartMetadataResp{
+				DataSources:      make(map[string]*domain.DataSource),
+				StoredProcedures: make(map[string]*domain.StoredProcedure),
+				EventTriggers:    make(map[string]*domain.EventTrigger),
+				Events:           make(map[string]*domain.Event),
+			}
+
+			if v, ok := record.Get("c"); ok {
+				if node, ok := v.(neo4j.Node); ok {
+					chart.Metadata.Id = getStringProp(node, "id")
+					chart.Metadata.Name = getStringProp(node, "name")
+					chart.ApiVersion = getStringProp(node, "apiVersion")
+					chart.Metadata.Description = getStringProp(node, "description")
+					chart.Metadata.Visibility = getStringProp(node, "visibility")
+					chart.Metadata.Engine = getStringProp(node, "engine")
+				}
+			}
+
+			if v, ok := record.Get("maintainer"); ok {
+				if m, ok := v.(string); ok {
+					chart.Metadata.Maintainer = m
+				}
+			}
+
+			if v, ok := record.Get("namespace"); ok {
+				if ns, ok := v.(string); ok {
+					chart.Metadata.Namespace = ns
+				}
+			}
+
+			if v, ok := record.Get("v"); ok {
+				if node, ok := v.(neo4j.Node); ok {
+					chart.SchemaVersion = getStringProp(node, "schemaVersion")
+					chart.Metadata.Tags = parseLabels(getStringProp(node, "tags"))
+					if chart.Metadata.Tags == nil {
+						chart.Metadata.Tags = map[string]string{}
+					}
+				}
+			}
+
+			if v, ok := record.Get("labels"); ok {
+				chart.Metadata.Labels = parseLabelList(v)
+			}
+			if chart.Metadata.Labels == nil {
+				chart.Metadata.Labels = map[string]string{}
+			}
+
+			if v, ok := record.Get("dataSources"); ok {
+				labels, _ := record.Get("dataSourceLabels")
+				chart.DataSources = parseDataSources(v, parseLabelsIntoMap(labels))
+			}
+
+			if v, ok := record.Get("storedProcedures"); ok {
+				labels, _ := record.Get("spLabels")
+				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
+			}
+
+			if v, ok := record.Get("events"); ok {
+				labels, _ := record.Get("eventLabels")
+				chart.Events = parseEvents(v, parseLabelsIntoMap(labels))
+			}
+
+			if v, ok := record.Get("triggers"); ok {
+				labels, _ := record.Get("triggerLabels")
+				chart.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
+			}
+
+			charts.Charts = append(charts.Charts, chart)
 		}
 
-		return resp, nil
+		if err := rec.Err(); err != nil {
+			return nil, fmt.Errorf("iteration error: %w", err)
+		}
+
+		return charts, nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.(*domain.SearchResp), nil
+	return result.(*domain.GetChartsLabelsResp), nil
 }

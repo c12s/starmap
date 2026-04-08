@@ -6,7 +6,7 @@
     "id": "a0715e59-49c3-4323-bf34-fbb4ccb7e8r4",
     "name": "My chart",
     "namespace": "namespace1",
-    "maintainer": "Nikola",
+    "maintainer": "Milan",
     "description": "My test chart.",
     "visibility": "public",
     "engine": "unikraft",
