@@ -398,7 +398,7 @@ message PutChartResp {
 ```
 
 #### /Search
-Searches for components (DataSources, StoredProcedures, EventTriggers, Events) across all charts based on name, description, and tags.
+Searches for charts by name, description, and chart tags, then filters components by componentTags when deep search is enabled. Returns all matching chart versions with their complete component hierarchy, optionally filtered to only specified component tags.
 
 #### Request body
 ```proto
@@ -406,15 +406,14 @@ message SearchReq {
   string name = 1;
   string description = 2;
   map<string, string> tags = 3;
+  bool deepSearch = 4;
+  map<string, string> componentTags = 5;
 }
 ```
 
 #### Response - 0 OK
 ```proto
-message LayersResp {
-  map<string, DataSource> dataSources = 1;
-  map<string, StoredProcedure> storedProcedures = 2;
-  map<string, EventTrigger> eventTriggers = 3;
-  map<string, Event> events = 4;
+message GetChartsLabelsResp {
+  repeated GetChartResp charts = 1;
 }
 ```

@@ -48,7 +48,7 @@ type RegistryServiceClient interface {
 	SwitchCheckpoint(ctx context.Context, in *SwitchCheckpointReq, opts ...grpc.CallOption) (*SwitchCheckpointResp, error)
 	Timeline(ctx context.Context, in *TimelineReq, opts ...grpc.CallOption) (*TimelineResp, error)
 	Extend(ctx context.Context, in *ExtendReq, opts ...grpc.CallOption) (*PutChartResp, error)
-	Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*LayersResp, error)
+	Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*GetChartsLabelsResp, error)
 }
 
 type registryServiceClient struct {
@@ -169,9 +169,9 @@ func (c *registryServiceClient) Extend(ctx context.Context, in *ExtendReq, opts 
 	return out, nil
 }
 
-func (c *registryServiceClient) Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*LayersResp, error) {
+func (c *registryServiceClient) Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*GetChartsLabelsResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LayersResp)
+	out := new(GetChartsLabelsResp)
 	err := c.cc.Invoke(ctx, RegistryService_Search_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ type RegistryServiceServer interface {
 	SwitchCheckpoint(context.Context, *SwitchCheckpointReq) (*SwitchCheckpointResp, error)
 	Timeline(context.Context, *TimelineReq) (*TimelineResp, error)
 	Extend(context.Context, *ExtendReq) (*PutChartResp, error)
-	Search(context.Context, *SearchReq) (*LayersResp, error)
+	Search(context.Context, *SearchReq) (*GetChartsLabelsResp, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -238,7 +238,7 @@ func (UnimplementedRegistryServiceServer) Timeline(context.Context, *TimelineReq
 func (UnimplementedRegistryServiceServer) Extend(context.Context, *ExtendReq) (*PutChartResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Extend not implemented")
 }
-func (UnimplementedRegistryServiceServer) Search(context.Context, *SearchReq) (*LayersResp, error) {
+func (UnimplementedRegistryServiceServer) Search(context.Context, *SearchReq) (*GetChartsLabelsResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}

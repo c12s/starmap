@@ -17,13 +17,15 @@ service RegistryService{
     rpc SwitchCheckpoint(SwitchCheckpointReq) returns(SwitchCheckpointResp){}
     rpc Timeline(TimelineReq) returns(TimelineResp){} 
     rpc Extend(ExtendReq) returns(PutChartResp){}
-    rpc Search(SearchReq) returns(LayersResp){}
+    rpc Search(SearchReq) returns(GetChartsLabelsResp){}
 }
 
 message SearchReq {
   string name = 1;
   string description = 2;
   map<string, string> tags = 3;
+  bool deepSearch = 4;
+  map<string, string> componentTags = 5;
 }
 
 message ExtendReq {

@@ -26,6 +26,8 @@ type SearchReq struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	Tags          map[string]string      `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	DeepSearch    bool                   `protobuf:"varint,4,opt,name=deepSearch,proto3" json:"deepSearch,omitempty"`
+	ComponentTags map[string]string      `protobuf:"bytes,5,rep,name=componentTags,proto3" json:"componentTags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,6 +79,20 @@ func (x *SearchReq) GetDescription() string {
 func (x *SearchReq) GetTags() map[string]string {
 	if x != nil {
 		return x.Tags
+	}
+	return nil
+}
+
+func (x *SearchReq) GetDeepSearch() bool {
+	if x != nil {
+		return x.DeepSearch
+	}
+	return false
+}
+
+func (x *SearchReq) GetComponentTags() map[string]string {
+	if x != nil {
+		return x.ComponentTags
 	}
 	return nil
 }
@@ -1129,12 +1145,19 @@ var File_starmap_proto protoreflect.FileDescriptor
 
 const file_starmap_proto_rawDesc = "" +
 	"\n" +
-	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"\xaa\x01\n" +
+	"\rstarmap.proto\x12\x05proto\x1a\x13starmap_model.proto\"\xd7\x02\n" +
 	"\tSearchReq\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12.\n" +
-	"\x04tags\x18\x03 \x03(\v2\x1a.proto.SearchReq.TagsEntryR\x04tags\x1a7\n" +
+	"\x04tags\x18\x03 \x03(\v2\x1a.proto.SearchReq.TagsEntryR\x04tags\x12\x1e\n" +
+	"\n" +
+	"deepSearch\x18\x04 \x01(\bR\n" +
+	"deepSearch\x12I\n" +
+	"\rcomponentTags\x18\x05 \x03(\v2#.proto.SearchReq.ComponentTagsEntryR\rcomponentTags\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
+	"\x12ComponentTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"S\n" +
 	"\tExtendReq\x12\x1e\n" +
@@ -1272,7 +1295,7 @@ const file_starmap_proto_rawDesc = "" +
 	"\tnamespace\x18\x06 \x01(\tR\tnamespace\x12\x1e\n" +
 	"\n" +
 	"maintainer\x18\a \x01(\tR\n" +
-	"maintainer2\x86\x06\n" +
+	"maintainer2\x8f\x06\n" +
 	"\x0fRegistryService\x123\n" +
 	"\bPutChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12I\n" +
 	"\x10GetChartMetadata\x12\x1e.proto.GetChartFromMetadataReq\x1a\x13.proto.GetChartResp\"\x00\x12J\n" +
@@ -1285,8 +1308,8 @@ const file_starmap_proto_rawDesc = "" +
 	"\vUpdateChart\x12\x10.proto.StarChart\x1a\x13.proto.PutChartResp\"\x00\x12M\n" +
 	"\x10SwitchCheckpoint\x12\x1a.proto.SwitchCheckpointReq\x1a\x1b.proto.SwitchCheckpointResp\"\x00\x125\n" +
 	"\bTimeline\x12\x12.proto.TimelineReq\x1a\x13.proto.TimelineResp\"\x00\x121\n" +
-	"\x06Extend\x12\x10.proto.ExtendReq\x1a\x13.proto.PutChartResp\"\x00\x12/\n" +
-	"\x06Search\x12\x10.proto.SearchReq\x1a\x11.proto.LayersResp\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
+	"\x06Extend\x12\x10.proto.ExtendReq\x1a\x13.proto.PutChartResp\"\x00\x128\n" +
+	"\x06Search\x12\x10.proto.SearchReq\x1a\x1a.proto.GetChartsLabelsResp\"\x00B\x1dZ\x1bgithub.com/c12s/starmap/apib\x06proto3"
 
 var (
 	file_starmap_proto_rawDescOnce sync.Once
@@ -1300,7 +1323,7 @@ func file_starmap_proto_rawDescGZIP() []byte {
 	return file_starmap_proto_rawDescData
 }
 
-var file_starmap_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_starmap_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_starmap_proto_goTypes = []any{
 	(*SearchReq)(nil),               // 0: proto.SearchReq
 	(*ExtendReq)(nil),               // 1: proto.ExtendReq
@@ -1319,80 +1342,82 @@ var file_starmap_proto_goTypes = []any{
 	(*GetChartResp)(nil),            // 14: proto.GetChartResp
 	(*PutChartResp)(nil),            // 15: proto.PutChartResp
 	nil,                             // 16: proto.SearchReq.TagsEntry
-	nil,                             // 17: proto.LayersResp.DataSourcesEntry
-	nil,                             // 18: proto.LayersResp.StoredProceduresEntry
-	nil,                             // 19: proto.LayersResp.EventTriggersEntry
-	nil,                             // 20: proto.LayersResp.EventsEntry
-	nil,                             // 21: proto.GetMissingLayersResp.DataSourcesEntry
-	nil,                             // 22: proto.GetMissingLayersResp.StoredProceduresEntry
-	nil,                             // 23: proto.GetMissingLayersResp.EventTriggersEntry
-	nil,                             // 24: proto.GetMissingLayersResp.EventsEntry
-	nil,                             // 25: proto.GetChartsLabelsReq.LabelsEntry
-	(*StarChart)(nil),               // 26: proto.StarChart
-	(*MetadataChart)(nil),           // 27: proto.MetadataChart
-	(*Chart)(nil),                   // 28: proto.Chart
-	(*DataSource)(nil),              // 29: proto.DataSource
-	(*StoredProcedure)(nil),         // 30: proto.StoredProcedure
-	(*EventTrigger)(nil),            // 31: proto.EventTrigger
-	(*Event)(nil),                   // 32: proto.Event
-	(*EmptyMessage)(nil),            // 33: proto.EmptyMessage
+	nil,                             // 17: proto.SearchReq.ComponentTagsEntry
+	nil,                             // 18: proto.LayersResp.DataSourcesEntry
+	nil,                             // 19: proto.LayersResp.StoredProceduresEntry
+	nil,                             // 20: proto.LayersResp.EventTriggersEntry
+	nil,                             // 21: proto.LayersResp.EventsEntry
+	nil,                             // 22: proto.GetMissingLayersResp.DataSourcesEntry
+	nil,                             // 23: proto.GetMissingLayersResp.StoredProceduresEntry
+	nil,                             // 24: proto.GetMissingLayersResp.EventTriggersEntry
+	nil,                             // 25: proto.GetMissingLayersResp.EventsEntry
+	nil,                             // 26: proto.GetChartsLabelsReq.LabelsEntry
+	(*StarChart)(nil),               // 27: proto.StarChart
+	(*MetadataChart)(nil),           // 28: proto.MetadataChart
+	(*Chart)(nil),                   // 29: proto.Chart
+	(*DataSource)(nil),              // 30: proto.DataSource
+	(*StoredProcedure)(nil),         // 31: proto.StoredProcedure
+	(*EventTrigger)(nil),            // 32: proto.EventTrigger
+	(*Event)(nil),                   // 33: proto.Event
+	(*EmptyMessage)(nil),            // 34: proto.EmptyMessage
 }
 var file_starmap_proto_depIdxs = []int32{
 	16, // 0: proto.SearchReq.tags:type_name -> proto.SearchReq.TagsEntry
-	26, // 1: proto.ExtendReq.chart:type_name -> proto.StarChart
-	14, // 2: proto.TimelineResp.charts:type_name -> proto.GetChartResp
-	6,  // 3: proto.SwitchCheckpointResp.start:type_name -> proto.LayersResp
-	6,  // 4: proto.SwitchCheckpointResp.stop:type_name -> proto.LayersResp
-	6,  // 5: proto.SwitchCheckpointResp.download:type_name -> proto.LayersResp
-	17, // 6: proto.LayersResp.dataSources:type_name -> proto.LayersResp.DataSourcesEntry
-	18, // 7: proto.LayersResp.storedProcedures:type_name -> proto.LayersResp.StoredProceduresEntry
-	19, // 8: proto.LayersResp.eventTriggers:type_name -> proto.LayersResp.EventTriggersEntry
-	20, // 9: proto.LayersResp.events:type_name -> proto.LayersResp.EventsEntry
-	21, // 10: proto.GetMissingLayersResp.dataSources:type_name -> proto.GetMissingLayersResp.DataSourcesEntry
-	22, // 11: proto.GetMissingLayersResp.storedProcedures:type_name -> proto.GetMissingLayersResp.StoredProceduresEntry
-	23, // 12: proto.GetMissingLayersResp.eventTriggers:type_name -> proto.GetMissingLayersResp.EventTriggersEntry
-	24, // 13: proto.GetMissingLayersResp.events:type_name -> proto.GetMissingLayersResp.EventsEntry
-	25, // 14: proto.GetChartsLabelsReq.labels:type_name -> proto.GetChartsLabelsReq.LabelsEntry
-	14, // 15: proto.GetChartsLabelsResp.charts:type_name -> proto.GetChartResp
-	27, // 16: proto.GetChartResp.metadata:type_name -> proto.MetadataChart
-	28, // 17: proto.GetChartResp.chart:type_name -> proto.Chart
-	29, // 18: proto.LayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
-	30, // 19: proto.LayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	31, // 20: proto.LayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	32, // 21: proto.LayersResp.EventsEntry.value:type_name -> proto.Event
-	29, // 22: proto.GetMissingLayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
-	30, // 23: proto.GetMissingLayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
-	31, // 24: proto.GetMissingLayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
-	32, // 25: proto.GetMissingLayersResp.EventsEntry.value:type_name -> proto.Event
-	26, // 26: proto.RegistryService.PutChart:input_type -> proto.StarChart
-	13, // 27: proto.RegistryService.GetChartMetadata:input_type -> proto.GetChartFromMetadataReq
-	11, // 28: proto.RegistryService.GetChartsLabels:input_type -> proto.GetChartsLabelsReq
-	9,  // 29: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
-	33, // 30: proto.RegistryService.GetCharts:input_type -> proto.EmptyMessage
-	7,  // 31: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
-	10, // 32: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
-	26, // 33: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
-	5,  // 34: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
-	2,  // 35: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
-	1,  // 36: proto.RegistryService.Extend:input_type -> proto.ExtendReq
-	0,  // 37: proto.RegistryService.Search:input_type -> proto.SearchReq
-	15, // 38: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
-	14, // 39: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
-	12, // 40: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
-	14, // 41: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
-	12, // 42: proto.RegistryService.GetCharts:output_type -> proto.GetChartsLabelsResp
-	8,  // 43: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
-	33, // 44: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
-	15, // 45: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
-	4,  // 46: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
-	3,  // 47: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
-	15, // 48: proto.RegistryService.Extend:output_type -> proto.PutChartResp
-	6,  // 49: proto.RegistryService.Search:output_type -> proto.LayersResp
-	38, // [38:50] is the sub-list for method output_type
-	26, // [26:38] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	17, // 1: proto.SearchReq.componentTags:type_name -> proto.SearchReq.ComponentTagsEntry
+	27, // 2: proto.ExtendReq.chart:type_name -> proto.StarChart
+	14, // 3: proto.TimelineResp.charts:type_name -> proto.GetChartResp
+	6,  // 4: proto.SwitchCheckpointResp.start:type_name -> proto.LayersResp
+	6,  // 5: proto.SwitchCheckpointResp.stop:type_name -> proto.LayersResp
+	6,  // 6: proto.SwitchCheckpointResp.download:type_name -> proto.LayersResp
+	18, // 7: proto.LayersResp.dataSources:type_name -> proto.LayersResp.DataSourcesEntry
+	19, // 8: proto.LayersResp.storedProcedures:type_name -> proto.LayersResp.StoredProceduresEntry
+	20, // 9: proto.LayersResp.eventTriggers:type_name -> proto.LayersResp.EventTriggersEntry
+	21, // 10: proto.LayersResp.events:type_name -> proto.LayersResp.EventsEntry
+	22, // 11: proto.GetMissingLayersResp.dataSources:type_name -> proto.GetMissingLayersResp.DataSourcesEntry
+	23, // 12: proto.GetMissingLayersResp.storedProcedures:type_name -> proto.GetMissingLayersResp.StoredProceduresEntry
+	24, // 13: proto.GetMissingLayersResp.eventTriggers:type_name -> proto.GetMissingLayersResp.EventTriggersEntry
+	25, // 14: proto.GetMissingLayersResp.events:type_name -> proto.GetMissingLayersResp.EventsEntry
+	26, // 15: proto.GetChartsLabelsReq.labels:type_name -> proto.GetChartsLabelsReq.LabelsEntry
+	14, // 16: proto.GetChartsLabelsResp.charts:type_name -> proto.GetChartResp
+	28, // 17: proto.GetChartResp.metadata:type_name -> proto.MetadataChart
+	29, // 18: proto.GetChartResp.chart:type_name -> proto.Chart
+	30, // 19: proto.LayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
+	31, // 20: proto.LayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	32, // 21: proto.LayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	33, // 22: proto.LayersResp.EventsEntry.value:type_name -> proto.Event
+	30, // 23: proto.GetMissingLayersResp.DataSourcesEntry.value:type_name -> proto.DataSource
+	31, // 24: proto.GetMissingLayersResp.StoredProceduresEntry.value:type_name -> proto.StoredProcedure
+	32, // 25: proto.GetMissingLayersResp.EventTriggersEntry.value:type_name -> proto.EventTrigger
+	33, // 26: proto.GetMissingLayersResp.EventsEntry.value:type_name -> proto.Event
+	27, // 27: proto.RegistryService.PutChart:input_type -> proto.StarChart
+	13, // 28: proto.RegistryService.GetChartMetadata:input_type -> proto.GetChartFromMetadataReq
+	11, // 29: proto.RegistryService.GetChartsLabels:input_type -> proto.GetChartsLabelsReq
+	9,  // 30: proto.RegistryService.GetChartId:input_type -> proto.GetChartIdReq
+	34, // 31: proto.RegistryService.GetCharts:input_type -> proto.EmptyMessage
+	7,  // 32: proto.RegistryService.GetMissingLayers:input_type -> proto.GetMissingLayersReq
+	10, // 33: proto.RegistryService.DeleteChart:input_type -> proto.DeleteChartReq
+	27, // 34: proto.RegistryService.UpdateChart:input_type -> proto.StarChart
+	5,  // 35: proto.RegistryService.SwitchCheckpoint:input_type -> proto.SwitchCheckpointReq
+	2,  // 36: proto.RegistryService.Timeline:input_type -> proto.TimelineReq
+	1,  // 37: proto.RegistryService.Extend:input_type -> proto.ExtendReq
+	0,  // 38: proto.RegistryService.Search:input_type -> proto.SearchReq
+	15, // 39: proto.RegistryService.PutChart:output_type -> proto.PutChartResp
+	14, // 40: proto.RegistryService.GetChartMetadata:output_type -> proto.GetChartResp
+	12, // 41: proto.RegistryService.GetChartsLabels:output_type -> proto.GetChartsLabelsResp
+	14, // 42: proto.RegistryService.GetChartId:output_type -> proto.GetChartResp
+	12, // 43: proto.RegistryService.GetCharts:output_type -> proto.GetChartsLabelsResp
+	8,  // 44: proto.RegistryService.GetMissingLayers:output_type -> proto.GetMissingLayersResp
+	34, // 45: proto.RegistryService.DeleteChart:output_type -> proto.EmptyMessage
+	15, // 46: proto.RegistryService.UpdateChart:output_type -> proto.PutChartResp
+	4,  // 47: proto.RegistryService.SwitchCheckpoint:output_type -> proto.SwitchCheckpointResp
+	3,  // 48: proto.RegistryService.Timeline:output_type -> proto.TimelineResp
+	15, // 49: proto.RegistryService.Extend:output_type -> proto.PutChartResp
+	12, // 50: proto.RegistryService.Search:output_type -> proto.GetChartsLabelsResp
+	39, // [39:51] is the sub-list for method output_type
+	27, // [27:39] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_starmap_proto_init() }
@@ -1407,7 +1432,7 @@ func file_starmap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_starmap_proto_rawDesc), len(file_starmap_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
