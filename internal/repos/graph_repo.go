@@ -1885,7 +1885,6 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(direct:Version {schemaVersion: $schemaVersion})
 
 			OPTIONAL MATCH (c)-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(extended:Version {schemaVersion: $schemaVersion})
-			WHERE NOT (:Version)-[:EXTEND]->(extended)
 
 			WITH c, direct, extended
 			RETURN
@@ -2005,7 +2004,6 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		} else {
 			queryDeleteExtended := `
 				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(:Version)<-[:EXTEND*1..]-(v:Version {schemaVersion: $schemaVersion})
-				WHERE NOT (:Version)-[:EXTEND]->(v)
 
 				MATCH (v)-[:EXTEND]->(parent:Version)
 
@@ -3167,16 +3165,14 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 		queryUpdateHasChart := `
 			MATCH (c:Chart {id: $id})
 			MATCH (n:Namespace {name: $namespace})-[hc:HAS_CHART]->(c)
-			SET hc.versions = CASE 
+			SET hc.versions = CASE
 				WHEN $newSchemaVersion IN coalesce(hc.versions, []) THEN hc.versions
 				ELSE coalesce(hc.versions, []) + $newSchemaVersion
 			END
-			SET hc.versions = [v IN hc.versions WHERE v <> $oldSchemaVersion]
 		`
 		if _, err := tx.Run(ctx, queryUpdateHasChart, map[string]any{
 			"id":               chart.Metadata.Id,
 			"newSchemaVersion": chart.SchemaVersion,
-			"oldSchemaVersion": forExtend.SchemaVersion,
 			"namespace":        chart.Metadata.Namespace,
 		}); err != nil {
 			return nil, fmt.Errorf("failed to update HAS_CHART versions: %w", err)
