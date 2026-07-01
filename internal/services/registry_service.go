@@ -46,7 +46,7 @@ func (s *RegistryService) PutChart(ctx context.Context, req *proto.StarChart) (*
 }
 
 func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartResp, error) {
-	chart, err := s.repo.GetChartMetadata(ctx, req.SchemaVersion, req.Name, req.Namespace, req.Maintainer)
+	chart, err := s.repo.GetChartMetadata(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart metadata: %v", err)
 	}

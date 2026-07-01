@@ -250,6 +250,110 @@ func parseEvents(v any, evLabels map[string]map[string]string) map[string]*domai
 	return result
 }
 
+func parseEntrypoints(v any, epLabels map[string]map[string]string) map[string]*domain.Entrypoint {
+	result := make(map[string]*domain.Entrypoint)
+	if v == nil {
+		return result
+	}
+
+	combinedList, ok := v.([]interface{})
+	if !ok {
+		return result
+	}
+
+	for _, item := range combinedList {
+		entityMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		nodeProps, ok := entityMap["nodeProps"].(map[string]any)
+		if !ok {
+			continue
+		}
+		relProps, _ := entityMap["relProps"].(map[string]any)
+		destination, _ := entityMap["destination"].(string)
+
+		metadata := domain.Metadata{
+			Id:          getStringFromMap(nodeProps, "id"),
+			Name:        getStringFromMap(nodeProps, "name"),
+			Hash:        getStringFromMap(nodeProps, "hash"),
+			Prefix:      getStringFromMap(nodeProps, "prefix"),
+			Topic:       getStringFromMap(nodeProps, "topic"),
+			Description: getStringFromMap(nodeProps, "description"),
+		}
+
+		image := getStringFromMap(nodeProps, "image")
+		if image != "" {
+			metadata.Image = image
+		}
+
+		if tagsStr := getStringFromMap(nodeProps, "tags"); tagsStr != "" {
+			json.Unmarshal([]byte(tagsStr), &metadata.Tags)
+		}
+
+		control := domain.Control{
+			DisableVirtualization: getBoolFromMap(nodeProps, "disableVirtualization"),
+			RunDetached:           getBoolFromMap(nodeProps, "runDetached"),
+			RemoveOnStop:          getBoolFromMap(nodeProps, "removeOnStop"),
+			Memory:                getStringFromMap(nodeProps, "memory"),
+			KernelArgs:            getStringFromMap(nodeProps, "kernelArgs"),
+		}
+
+		features := domain.Features{
+			Networks: getStringSliceFromMap(nodeProps, "networks"),
+			Ports:    getStringSliceFromMap(nodeProps, "ports"),
+			Volumes:  getStringSliceFromMap(nodeProps, "volumes"),
+			Targets:  getStringSliceFromMap(nodeProps, "targets"),
+			EnvVars:  getStringSliceFromMap(nodeProps, "envVars"),
+		}
+
+		if epLabels != nil {
+			metadata.Labels = epLabels[metadata.Id]
+		}
+
+		ep := &domain.Entrypoint{
+			Metadata: metadata,
+			Control:  control,
+			Features: features,
+		}
+
+		_, hasResult := relProps["result"]
+		_, hasParams := relProps["params"]
+
+		switch {
+		case hasResult:
+			ep.Run = &domain.RunLink{
+				Destination: destination,
+				Metadata: domain.RunLinkMetadata{
+					Result: getStringFromMap(relProps, "result"),
+				},
+			}
+		case hasParams:
+			ep.Command = &domain.CommandLink{
+				Destination: destination,
+				Metadata: domain.CommandLinkMetadata{
+					Params: getStringFromMap(relProps, "params"),
+					Path:   getStringFromMap(relProps, "path"),
+					Type:   getStringFromMap(relProps, "type"),
+				},
+			}
+		default:
+			ep.EntryPoint = &domain.EntrypointLink{
+				Destination: destination,
+				Metadata: domain.EntrypointLinkMetadata{
+					Path: getStringFromMap(relProps, "path"),
+					Type: getStringFromMap(relProps, "type"),
+				},
+			}
+		}
+
+		result[metadata.Name] = ep
+	}
+
+	return result
+}
+
 func getStringFromMap(m map[string]any, key string) string {
 	if v, ok := m[key]; ok {
 		if s, ok := v.(string); ok {
@@ -434,45 +538,67 @@ func incrementVersion(ver string) string {
 	return fmt.Sprintf("v%d.%d.%d", major, minor, patch)
 }
 
+func computeComponentHashes(chart *domain.StarChart) {
+	for _, ds := range chart.Chart.DataSources {
+		ds.Hash = computeHash(ds.Type + ds.Path)
+	}
+	for _, sp := range chart.Chart.StoredProcedures {
+		sp.Metadata.Hash = computeLayerHash(sp.Metadata)
+	}
+	for _, et := range chart.Chart.EventTriggers {
+		et.Metadata.Hash = computeLayerHash(et.Metadata)
+	}
+	for _, ev := range chart.Chart.Events {
+		ev.Metadata.Hash = computeLayerHash(ev.Metadata)
+	}
+	for _, ep := range chart.Chart.Entrypoints {
+		ep.Metadata.Hash = computeHash(ep.Metadata.Image)
+	}
+}
+
+func computeLayerHash(m domain.Metadata) string {
+	if m.Image != "" {
+		return computeHash(m.Image)
+	}
+	return computeHash(m.Build.Pull + m.Build.Command)
+}
+
 func computeVersionHash(chart domain.StarChart) string {
-	b, _ := json.Marshal(chart.Chart)
-	sum := sha256.Sum256(b)
-	return hex.EncodeToString(sum[:])
+	var hashes []string
+	for _, ds := range chart.Chart.DataSources {
+		hashes = append(hashes, ds.Hash)
+	}
+	for _, sp := range chart.Chart.StoredProcedures {
+		hashes = append(hashes, sp.Metadata.Hash)
+	}
+	for _, et := range chart.Chart.EventTriggers {
+		hashes = append(hashes, et.Metadata.Hash)
+	}
+	for _, ev := range chart.Chart.Events {
+		hashes = append(hashes, ev.Metadata.Hash)
+	}
+	for _, ep := range chart.Chart.Entrypoints {
+		hashes = append(hashes, ep.Metadata.Hash)
+	}
+	sort.Strings(hashes)
+	return computeHash(strings.Join(hashes, ""))
 }
 
-func computeTriggerEventHash(etev domain.TriggerHashStruct) (string, error) {
-	for i := range etev.Events {
-		sortEvent(&etev.Events[i])
-	}
-	b, err := json.Marshal(etev)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(b)
-	return hex.EncodeToString(sum[:]), nil
+func computeTriggerEventHash(triggerHash string, eventHashes []string) string {
+	sorted := make([]string, len(eventHashes))
+	copy(sorted, eventHashes)
+	sort.Strings(sorted)
+	return computeHash(triggerHash + strings.Join(sorted, ""))
 }
 
-func sortEvent(e *domain.Event) {
-	sort.Strings(e.Features.Networks)
-	sort.Strings(e.Features.Ports)
-	sort.Strings(e.Features.Volumes)
-	sort.Strings(e.Features.Targets)
-	sort.Strings(e.Features.EnvVars)
-	e.Metadata.Labels = sortStringMap(e.Metadata.Labels)
-}
-
-func sortStringMap(m map[string]string) map[string]string {
-	if m == nil {
-		return nil
+func entrypointDestination(ep *domain.Entrypoint) string {
+	switch {
+	case ep.Command != nil:
+		return ep.Command.Destination
+	case ep.EntryPoint != nil:
+		return ep.EntryPoint.Destination
+	case ep.Run != nil:
+		return ep.Run.Destination
 	}
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	sorted := make(map[string]string, len(m))
-	for _, k := range keys {
-		sorted[k] = m[k]
-	}
-	return sorted
+	return ""
 }

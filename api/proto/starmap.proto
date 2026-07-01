@@ -63,6 +63,7 @@ message LayersResp {
   map<string, StoredProcedure> storedProcedures = 2;
   map<string, EventTrigger> eventTriggers = 3;
   map<string, Event> events = 4;
+  map<string, Entrypoint> entrypoints = 5;
 }
 
 message GetMissingLayersReq {
@@ -83,6 +84,7 @@ message GetMissingLayersResp {
   map<string, StoredProcedure> storedProcedures = 7;
   map<string, EventTrigger> eventTriggers = 8;
   map<string, Event> events = 9;
+  map<string, Entrypoint> entrypoints = 10;
 }
 
 message GetChartIdReq {

@@ -121,6 +121,55 @@ func eventToProto(ev *domain.Event) *proto.Event {
 	}
 }
 
+func entrypointToProto(ep *domain.Entrypoint) *proto.Entrypoint {
+	if ep == nil {
+		return nil
+	}
+
+	protoEp := &proto.Entrypoint{
+		Metadata: metadataToProto(&ep.Metadata),
+		Control:  controlToProto(&ep.Control),
+		Features: featuresToProto(&ep.Features),
+	}
+
+	links := &proto.EntrypointLinks{}
+	switch {
+	case ep.Command != nil:
+		links.Link = &proto.EntrypointLinks_Command{
+			Command: &proto.CommandLink{
+				Metadata: &proto.CommandLink_CommandLinkMetadata{
+					Params: ep.Command.Metadata.Params,
+					Path:   ep.Command.Metadata.Path,
+					Type:   ep.Command.Metadata.Type,
+				},
+				Destination: ep.Command.Destination,
+			},
+		}
+	case ep.EntryPoint != nil:
+		links.Link = &proto.EntrypointLinks_Entrypoint{
+			Entrypoint: &proto.EntrypointLink{
+				Metadata: &proto.EntrypointLink_EntrypointLinkMetadata{
+					Path: ep.EntryPoint.Metadata.Path,
+					Type: ep.EntryPoint.Metadata.Type,
+				},
+				Destination: ep.EntryPoint.Destination,
+			},
+		}
+	case ep.Run != nil:
+		links.Link = &proto.EntrypointLinks_Run{
+			Run: &proto.RunLink{
+				Metadata: &proto.RunLink_RunLinkMetadata{
+					Result: ep.Run.Metadata.Result,
+				},
+				Destination: ep.Run.Destination,
+			},
+		}
+	}
+	protoEp.Links = links
+
+	return protoEp
+}
+
 func mapDataSourcesToProto(dataSources map[string]*domain.DataSource) map[string]*proto.DataSource {
 	result := make(map[string]*proto.DataSource)
 	for key, ds := range dataSources {
@@ -156,6 +205,16 @@ func mapEventsToProto(events map[string]*domain.Event) map[string]*proto.Event {
 	for key, ev := range events {
 		if protoEv := eventToProto(ev); protoEv != nil {
 			result[key] = protoEv
+		}
+	}
+	return result
+}
+
+func mapEntrypointsToProto(entrypoints map[string]*domain.Entrypoint) map[string]*proto.Entrypoint {
+	result := make(map[string]*proto.Entrypoint)
+	for key, ep := range entrypoints {
+		if protoEp := entrypointToProto(ep); protoEp != nil {
+			result[key] = protoEp
 		}
 	}
 	return result

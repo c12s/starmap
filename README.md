@@ -108,11 +108,56 @@ message EventTrigger {
   Links links = 4;
 }
 
+message Entrypoint {
+  Metadata metadata = 1;
+  Control control = 2;
+  Features features = 3;
+  EntrypointLinks links = 4;
+}
+
+message EntrypointLinks {
+  // NOTE: some gRPC clients (Postman) don't serialize this oneof correctly,
+  // so send entrypoints through the lunar-gateway or curl instead.
+  oneof link {
+    CommandLink command = 1;
+    EntrypointLink entrypoint = 2;
+    RunLink run = 3;
+  }
+}
+
+message CommandLink {
+  message CommandLinkMetadata {
+    string params = 1;
+    string path = 2;
+    string type = 3;
+  }
+  CommandLinkMetadata metadata = 1;
+  string destination = 2;
+}
+
+message EntrypointLink {
+  message EntrypointLinkMetadata {
+    string path = 1;
+    string type = 2;
+  }
+  EntrypointLinkMetadata metadata = 1;
+  string destination = 2;
+}
+
+message RunLink {
+  message RunLinkMetadata {
+    string result = 1;
+  }
+  RunLinkMetadata metadata = 1;
+  string destination = 2;
+}
+
 message Chart {
   map<string, DataSource> dataSources = 1;
   map<string, StoredProcedure> storedProcedures = 2;
   map<string, EventTrigger> eventTriggers = 3;
   map<string, Event> events = 4;
+  map<string, Entrypoint> entrypoints = 5;
 }
 
 message MetadataChart {
@@ -153,7 +198,7 @@ message StarChart {
 ```
 
 Full example json request:
-starmap/putStarChart.json
+starmap/chart-example.json
 
 #### Response - 0 OK
 ```proto
@@ -261,6 +306,7 @@ message GetMissingLayersResp {
   map<string, StoredProcedure> storedProcedures = 7;
   map<string, EventTrigger> eventTriggers = 8;
   map<string, Event> events = 9;
+  map<string, Entrypoint> entrypoints = 10;
 }
 ```
 
