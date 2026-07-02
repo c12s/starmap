@@ -34,6 +34,7 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			StoredProcedures: make(map[string]*domain.StoredProcedure),
 			EventTriggers:    make(map[string]*domain.EventTrigger),
 			Events:           make(map[string]*domain.Event),
+			Entrypoints:      make(map[string]*domain.Entrypoint),
 		},
 	}
 
@@ -190,6 +191,85 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 		}
 	}
 
+	for key, ep := range chart.Chart.Entrypoints {
+		if ep == nil {
+			continue
+		}
+		metadata := domain.Metadata{
+			Id:          ep.Metadata.Id,
+			Name:        ep.Metadata.Name,
+			Prefix:      ep.Metadata.Prefix,
+			Topic:       ep.Metadata.Topic,
+			Description: ep.Metadata.Description,
+			Labels:      ep.Metadata.Labels,
+			Tags:        ep.Metadata.Tags,
+		}
+		if ep.Metadata.Image != "" {
+			metadata.Image = ep.Metadata.Image
+		} else {
+			metadata.Build = domain.Build{
+				Pull:    ep.Metadata.Build.Pull,
+				Workdir: ep.Metadata.Build.Workdir,
+				Command: ep.Metadata.Build.Command,
+			}
+		}
+
+		domainEp := &domain.Entrypoint{
+			Metadata: metadata,
+			Control: domain.Control{
+				DisableVirtualization: ep.Control.DisableVirtualization,
+				RunDetached:           ep.Control.RunDetached,
+				RemoveOnStop:          ep.Control.RemoveOnStop,
+				Memory:                ep.Control.Memory,
+				KernelArgs:            ep.Control.KernelArgs,
+			},
+			Features: domain.Features{
+				Networks: ep.Features.Networks,
+				Ports:    ep.Features.Ports,
+				Volumes:  ep.Features.Volumes,
+				Targets:  ep.Features.Targets,
+				EnvVars:  ep.Features.EnvVars,
+			},
+		}
+
+		if links := ep.GetLinks(); links != nil {
+			switch l := links.Link.(type) {
+			case *proto.EntrypointLinks_Command:
+				if l.Command != nil {
+					domainEp.Command = &domain.CommandLink{Destination: l.Command.Destination}
+					if l.Command.Metadata != nil {
+						domainEp.Command.Metadata = domain.CommandLinkMetadata{
+							Params: l.Command.Metadata.Params,
+							Path:   l.Command.Metadata.Path,
+							Type:   l.Command.Metadata.Type,
+						}
+					}
+				}
+			case *proto.EntrypointLinks_Entrypoint:
+				if l.Entrypoint != nil {
+					domainEp.EntryPoint = &domain.EntrypointLink{Destination: l.Entrypoint.Destination}
+					if l.Entrypoint.Metadata != nil {
+						domainEp.EntryPoint.Metadata = domain.EntrypointLinkMetadata{
+							Path: l.Entrypoint.Metadata.Path,
+							Type: l.Entrypoint.Metadata.Type,
+						}
+					}
+				}
+			case *proto.EntrypointLinks_Run:
+				if l.Run != nil {
+					domainEp.Run = &domain.RunLink{Destination: l.Run.Destination}
+					if l.Run.Metadata != nil {
+						domainEp.Run.Metadata = domain.RunLinkMetadata{
+							Result: l.Run.Metadata.Result,
+						}
+					}
+				}
+			}
+		}
+
+		domainChart.Chart.Entrypoints[key] = domainEp
+	}
+
 	return domainChart, nil
 }
 
@@ -213,6 +293,7 @@ func ChartMetadataToProto(chart domain.GetChartMetadataResp) *proto.GetChartResp
 			StoredProcedures: mapStoredProceduresToProto(chart.StoredProcedures),
 			EventTriggers:    mapEventTriggersToProto(chart.EventTriggers),
 			Events:           mapEventsToProto(chart.Events),
+			Entrypoints:      mapEntrypointsToProto(chart.Entrypoints),
 		},
 	}
 }
@@ -228,6 +309,7 @@ func GetMissingLayersToProto(layers domain.GetMissingLayers) *proto.GetMissingLa
 		StoredProcedures: mapStoredProceduresToProto(layers.StoredProcedures),
 		EventTriggers:    mapEventTriggersToProto(layers.EventTriggers),
 		Events:           mapEventsToProto(layers.Events),
+		Entrypoints:      mapEntrypointsToProto(layers.Entrypoint),
 	}
 }
 
@@ -238,18 +320,21 @@ func SwitchCheckpointMapperToProto(sc domain.SwitchCheckpointResp) *proto.Switch
 			StoredProcedures: mapStoredProceduresToProto(sc.Start.StoredProcedures),
 			EventTriggers:    mapEventTriggersToProto(sc.Start.EventTriggers),
 			Events:           mapEventsToProto(sc.Start.Events),
+			Entrypoints:      mapEntrypointsToProto(sc.Start.Entrypoints),
 		},
 		Stop: &proto.LayersResp{
 			DataSources:      mapDataSourcesToProto(sc.Stop.DataSources),
 			StoredProcedures: mapStoredProceduresToProto(sc.Stop.StoredProcedures),
 			EventTriggers:    mapEventTriggersToProto(sc.Stop.EventTriggers),
 			Events:           mapEventsToProto(sc.Stop.Events),
+			Entrypoints:      mapEntrypointsToProto(sc.Stop.Entrypoints),
 		},
 		Download: &proto.LayersResp{
 			DataSources:      mapDataSourcesToProto(sc.Download.DataSources),
 			StoredProcedures: mapStoredProceduresToProto(sc.Download.StoredProcedures),
 			EventTriggers:    mapEventTriggersToProto(sc.Download.EventTriggers),
 			Events:           mapEventsToProto(sc.Download.Events),
+			Entrypoints:      mapEntrypointsToProto(sc.Download.Entrypoints),
 		},
 	}
 }

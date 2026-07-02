@@ -77,6 +77,7 @@ type Chart struct {
 	StoredProcedures map[string]*StoredProcedure
 	EventTriggers    map[string]*EventTrigger
 	Events           map[string]*Event
+	Entrypoints      map[string]*Entrypoint
 }
 type StoredProcedure struct {
 	Metadata Metadata
@@ -98,6 +99,45 @@ type Event struct {
 	Features Features
 }
 
+type CommandLinkMetadata struct {
+	Params string
+	Path   string
+	Type   string
+}
+
+type EntrypointLinkMetadata struct {
+	Path string
+	Type string
+}
+
+type RunLinkMetadata struct {
+	Result string
+}
+
+type CommandLink struct {
+	Metadata    CommandLinkMetadata
+	Destination string
+}
+
+type EntrypointLink struct {
+	Metadata    EntrypointLinkMetadata
+	Destination string
+}
+
+type RunLink struct {
+	Metadata    RunLinkMetadata
+	Destination string
+}
+
+type Entrypoint struct {
+	Metadata   Metadata
+	Control    Control
+	Features   Features
+	Command    *CommandLink
+	EntryPoint *EntrypointLink
+	Run        *RunLink
+}
+
 type GetMissingLayers struct {
 	Metadata struct {
 		Id            string
@@ -110,6 +150,7 @@ type GetMissingLayers struct {
 	StoredProcedures map[string]*StoredProcedure
 	EventTriggers    map[string]*EventTrigger
 	Events           map[string]*Event
+	Entrypoint       map[string]*Entrypoint
 }
 
 type GetChartMetadataResp struct {
@@ -130,6 +171,7 @@ type GetChartMetadataResp struct {
 	StoredProcedures map[string]*StoredProcedure
 	EventTriggers    map[string]*EventTrigger
 	Events           map[string]*Event
+	Entrypoints      map[string]*Entrypoint
 }
 
 type GetChartsLabelsResp struct {
@@ -148,34 +190,27 @@ type MetadataResp struct {
 	}
 }
 
-type TriggerHashStruct struct {
-	Trigger EventTrigger
-	Events  []Event
-}
-
-type TriggerEventExtendHash struct {
-	Trigger EventTrigger
-	Events  []string
-}
-
 type SwitchCheckpointResp struct {
 	Start struct {
 		DataSources      map[string]*DataSource
 		StoredProcedures map[string]*StoredProcedure
 		EventTriggers    map[string]*EventTrigger
 		Events           map[string]*Event
+		Entrypoints      map[string]*Entrypoint
 	}
 	Stop struct {
 		DataSources      map[string]*DataSource
 		StoredProcedures map[string]*StoredProcedure
 		EventTriggers    map[string]*EventTrigger
 		Events           map[string]*Event
+		Entrypoints      map[string]*Entrypoint
 	}
 	Download struct {
 		DataSources      map[string]*DataSource
 		StoredProcedures map[string]*StoredProcedure
 		EventTriggers    map[string]*EventTrigger
 		Events           map[string]*Event
+		Entrypoints      map[string]*Entrypoint
 	}
 }
 
@@ -184,4 +219,5 @@ type SearchResp struct {
 	StoredProcedures map[string]*StoredProcedure
 	EventTriggers    map[string]*EventTrigger
 	Events           map[string]*Event
+	Entrypoints      map[string]*Entrypoint
 }

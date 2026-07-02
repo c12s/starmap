@@ -1,0 +1,334 @@
+{
+  "apiVersion": "v1.0.0",
+  "schemaVersion": "v1.0.0",
+  "kind": "StarChart",
+  "metadata": {
+    "id": "a0715e59-49c3-4323-bf34-fbb4ccb7e8r4",
+    "name": "My chart2",
+    "namespace": "namespace1",
+    "maintainer": "Nikola",
+    "description": "My test chart.",
+    "visibility": "public",
+    "engine": "unikraft",
+    "labels": {
+      "key": "value"
+    },
+    "tags": {
+      "key": "value"
+    }
+  },
+  "chart": {
+    "dataSources": {
+      "datasource_2": {
+        "id": "e7fd471c-3e43-4c9f-b4b3-0a6a5bf1e128",
+        "name": "Data Source 2",
+        "type": "file",
+        "path": "./data_2.csv",
+        "resourceName": "Data 2",
+        "description": "This data source also contains some data.",
+        "labels": {
+          "key1": "value"
+        },
+        "tags": {
+          "key": "value"
+        }
+      }
+    },
+    "storedProcedures": {
+      "procedure_2": {
+        "metadata": {
+          "id": "b3f94a2b-b302-4227-9205-85c8604639c4",
+          "name": "Stored Procedure 2",
+          "image": "unikernel://image_2",
+          "prefix": "DEBUG",
+          "topic": "",
+          "description": "Stored Procedure 2",
+          "labels": {
+            "key2": "value"
+          },
+          "tags": {
+            "key": "value"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": true,
+          "removeOnStop": true,
+          "memory": "128Ki",
+          "kernelArgs": "run process data_2.csv"
+        },
+        "features": {
+          "networks": [
+            "network2:172.100.1.2"
+          ],
+          "ports": [
+            "9000:9000"
+          ],
+          "volumes": [],
+          "targets": [
+            "firecracker/arm64"
+          ],
+          "envVars": [
+            "MODE=production"
+          ]
+        },
+        "links": {
+          "softLinks": [
+            "Data Source 2"
+          ],
+          "hardLinks": [],
+          "eventLinks": []
+        }
+      },
+      "procedure_3": {
+        "metadata": {
+          "id": "c1a82d3e-f451-4b38-a716-96d7e5c20f11",
+          "name": "Stored Procedure 3",
+          "image": "unikernel://image_3",
+          "prefix": "INFO",
+          "topic": "",
+          "description": "Stored Procedure 3",
+          "labels": {
+            "key3": "value"
+          },
+          "tags": {
+            "key": "value"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": false,
+          "removeOnStop": true,
+          "memory": "256Mi",
+          "kernelArgs": "run process data_3.csv"
+        },
+        "features": {
+          "networks": [
+            "network5:172.100.2.1"
+          ],
+          "ports": [
+            "9001:9001"
+          ],
+          "volumes": [],
+          "targets": [
+            "qemu/x86_64"
+          ],
+          "envVars": [
+            "MODE=production"
+          ]
+        },
+        "links": {
+          "softLinks": [],
+          "hardLinks": [
+            "Data Source 2"
+          ],
+          "eventLinks": []
+        }
+      }
+    },
+    "eventTriggers": {
+      "trigger_1": {
+        "metadata": {
+          "id": "1f9f4dff-8f6a-44a2-98a6-256ab48b61dc",
+          "name": "Event Trigger 2",
+          "image": "abc://abc2",
+          "prefix": "DEBUG",
+          "topic": "",
+          "description": "Event Trigger 2",
+          "labels": {
+            "key3": "value"
+          },
+          "tags": {
+            "key": "value"
+          }
+        },
+        "control": {
+          "disableVirtualization": true,
+          "runDetached": true,
+          "removeOnStop": true,
+          "memory": "16K",
+          "kernelArgs": "run process"
+        },
+        "features": {
+          "networks": [
+            "network3:172.102.0.1",
+            "network4:172.102.0.2"
+          ],
+          "ports": [],
+          "volumes": [],
+          "targets": [
+            "qemu/x86_64"
+          ],
+          "envVars": []
+        },
+        "links": {
+          "softLinks": [
+            "Data Source 2"
+          ],
+          "hardLinks": [],
+          "eventLinks": [
+            "Event 2"
+          ]
+        }
+      }
+    },
+    "events": {
+      "event_2": {
+        "metadata": {
+          "id": "35a2f847-b640-4a19-b0ec-5aebd26aa548",
+          "name": "Event 2",
+          "image": "unikernel://image_e2",
+          "prefix": "DEBUG",
+          "topic": "Delete",
+          "description": "Event 2",
+          "labels": {},
+          "tags": {
+            "key": "value"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": false,
+          "removeOnStop": true,
+          "memory": "64G",
+          "kernelArgs": "event2"
+        },
+        "features": {
+          "networks": [],
+          "ports": [],
+          "volumes": [],
+          "targets": [
+            "qemu/arm64"
+          ],
+          "envVars": []
+        }
+      }
+    },
+    "entrypoints": {
+      "entrypoint_1": {
+        "metadata": {
+          "id": "d4e92f1a-3c07-4b55-8e29-17f3a6d80c42",
+          "name": "Command Entrypoint",
+          "image": "unikernel://image_ep1",
+          "prefix": "INFO",
+          "labels": {
+            "type": "command"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": false,
+          "removeOnStop": false,
+          "memory": "128Mi",
+          "kernelArgs": ""
+        },
+        "features": {
+          "networks": [
+            "network2:172.100.1.2"
+          ],
+          "ports": [
+            "9000:9000"
+          ],
+          "volumes": [],
+          "targets": [
+            "qemu/x86_64"
+          ],
+          "envVars": [
+            "MODE=production"
+          ]
+        },
+        "links": {
+          "command": {
+            "metadata": {
+              "params": "id INT, name STRING",
+              "path": "/procedure/{id}/run/{name}",
+              "type": "rest"
+            },
+            "destination": "Stored Procedure 2"
+          }
+        }
+      },
+      "entrypoint_2": {
+        "metadata": {
+          "id": "e5f03g2b-4d18-5c66-9f30-28g4b7e91d53",
+          "name": "Function Entrypoint",
+          "image": "unikernel://image_ep2",
+          "prefix": "DEBUG",
+          "labels": {
+            "type": "entrypoint"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": true,
+          "removeOnStop": false,
+          "memory": "64Mi",
+          "kernelArgs": ""
+        },
+        "features": {
+          "networks": [
+            "network3:172.102.0.1"
+          ],
+          "ports": [],
+          "volumes": [],
+          "targets": [
+            "qemu/x86_64"
+          ],
+          "envVars": []
+        },
+        "links": {
+          "entrypoint": {
+            "metadata": {
+              "path": "./trigger_handler",
+              "type": "function"
+            },
+            "destination": "Event Trigger 2"
+          }
+        }
+      },
+      "entrypoint_3": {
+        "metadata": {
+          "id": "f6g14h3c-5e29-6d77-ag41-39h5c8f02e64",
+          "name": "Run Entrypoint",
+          "image": "unikernel://image_ep3",
+          "prefix": "INFO",
+          "labels": {
+            "type": "run"
+          }
+        },
+        "control": {
+          "disableVirtualization": false,
+          "runDetached": false,
+          "removeOnStop": true,
+          "memory": "256Mi",
+          "kernelArgs": ""
+        },
+        "features": {
+          "networks": [
+            "network5:172.100.2.1"
+          ],
+          "ports": [
+            "9001:9001"
+          ],
+          "volumes": [
+            "./output:/results"
+          ],
+          "targets": [
+            "qemu/x86_64"
+          ],
+          "envVars": [
+            "MODE=production"
+          ]
+        },
+        "links": {
+          "run": {
+            "metadata": {
+              "result": "./output/results"
+            },
+            "destination": "Stored Procedure 3"
+          }
+        }
+      }
+    }
+  }
+}
