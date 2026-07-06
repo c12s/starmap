@@ -223,11 +223,22 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 
 			querySP := `
 				MERGE (s:StoredProcedure {hash: $hash})
-				SET s.id = $id
+				SET s.id = $id,
+					s:Layer,
+					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					s.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					s.sourceType = $sourceType
 			`
 			tx.Run(ctx, querySP, map[string]any{
-				"id":   sp.Metadata.Id,
-				"hash": sp.Metadata.Hash,
+				"id":         sp.Metadata.Id,
+				"hash":       sp.Metadata.Hash,
+				"image":      stripTag(sp.Metadata.Image),
+				"pull":       sp.Metadata.Build.Pull,
+				"command":    sp.Metadata.Build.Command,
+				"workdir":    sp.Metadata.Build.Workdir,
+				"sourceType": layerSourceType(sp.Metadata),
 			})
 
 			queryDeleteSP := `
@@ -254,15 +265,12 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-				    r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.pin = $pin
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"name":                  sp.Metadata.Name,
-				"image":                 sp.Metadata.Image,
+				"pin":                   layerPin(sp.Metadata),
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"description":           sp.Metadata.Description,
@@ -329,11 +337,22 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 
 			querySP := `
 				MERGE (t:Trigger {id: $id})
-				SET t.hash = $hash
+				SET t.hash = $hash,
+					t:Layer,
+					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					t.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					t.sourceType = $sourceType
 			`
 			tx.Run(ctx, querySP, map[string]any{
-				"id":   tr.Metadata.Id,
-				"hash": tr.Metadata.Hash,
+				"id":         tr.Metadata.Id,
+				"hash":       tr.Metadata.Hash,
+				"image":      stripTag(tr.Metadata.Image),
+				"pull":       tr.Metadata.Build.Pull,
+				"command":    tr.Metadata.Build.Command,
+				"workdir":    tr.Metadata.Build.Workdir,
+				"sourceType": layerSourceType(tr.Metadata),
 			})
 
 			queryDeleteSP := `
@@ -360,15 +379,12 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.pin = $pin
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    tr.Metadata.Id,
 				"name":                  tr.Metadata.Name,
-				"image":                 tr.Metadata.Image,
+				"pin":                   layerPin(tr.Metadata),
 				"prefix":                tr.Metadata.Prefix,
 				"topic":                 tr.Metadata.Topic,
 				"description":           tr.Metadata.Description,

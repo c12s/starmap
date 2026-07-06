@@ -558,9 +558,23 @@ func computeComponentHashes(chart *domain.StarChart) {
 
 func computeLayerHash(m domain.Metadata) string {
 	if m.Image != "" {
-		return computeHash(m.Image)
+		return computeHash(stripTag(m.Image))
 	}
 	return computeHash(m.Build.Pull + m.Build.Command)
+}
+
+func layerPin(m domain.Metadata) string {
+	if m.Image != "" {
+		return extractTag(m.Image)
+	}
+	return "latest"
+}
+
+func layerSourceType(m domain.Metadata) string {
+	if m.Image != "" {
+		return "oci"
+	}
+	return "git"
 }
 
 func computeVersionHash(chart domain.StarChart) string {
@@ -569,10 +583,10 @@ func computeVersionHash(chart domain.StarChart) string {
 		hashes = append(hashes, ds.Hash)
 	}
 	for _, sp := range chart.Chart.StoredProcedures {
-		hashes = append(hashes, sp.Metadata.Hash)
+		hashes = append(hashes, sp.Metadata.Hash+layerPin(sp.Metadata))
 	}
 	for _, et := range chart.Chart.EventTriggers {
-		hashes = append(hashes, et.Metadata.Hash)
+		hashes = append(hashes, et.Metadata.Hash+layerPin(et.Metadata))
 	}
 	for _, ev := range chart.Chart.Events {
 		hashes = append(hashes, ev.Metadata.Hash)
@@ -582,6 +596,21 @@ func computeVersionHash(chart domain.StarChart) string {
 	}
 	sort.Strings(hashes)
 	return computeHash(strings.Join(hashes, ""))
+}
+
+func extractTag(image string) string {
+	idx := strings.LastIndex(image, ":")
+	if idx == -1 || strings.Contains(image[idx+1:], "/") {
+		return "latest"
+	}
+	tag := image[idx+1:]
+	if tag == "" || tag == "latest" {
+		return "latest"
+	}
+	if !strings.HasPrefix(tag, "v") {
+		return "v" + tag
+	}
+	return tag
 }
 
 func computeTriggerEventHash(triggerHash string, eventHashes []string) string {

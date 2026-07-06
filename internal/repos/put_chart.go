@@ -176,11 +176,17 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				MERGE (s:StoredProcedure {hash: $hash})
 				ON CREATE SET
 					s.id = $id
+				SET s:Layer,
+					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					s.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					s.sourceType = $sourceType
 				WITH s
 				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 				WITH s, v
 				MERGE (v)-[r:HAS_PROCEDURE]->(s)
-				SET 
+				SET
 					r.name = $name,
 					r.prefix = $prefix,
 					r.topic = $topic,
@@ -196,16 +202,15 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.targets = $targets,
 					r.envVars = $envVars,
 					r.tags = $tags,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.pin = $pin
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"hash":                  sp.Metadata.Hash,
 				"name":                  sp.Metadata.Name,
-				"image":                 sp.Metadata.Image,
+				"image":                 stripTag(sp.Metadata.Image),
+				"pin":                   layerPin(sp.Metadata),
+				"sourceType":            layerSourceType(sp.Metadata),
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"description":           sp.Metadata.Description,
@@ -308,6 +313,12 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				MERGE (t:Trigger {triggerEventHash: $triggerEventHash})
 				ON CREATE SET
 					t.id = $id
+				SET t:Layer,
+					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					t.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					t.sourceType = $sourceType
 				WITH t
 				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 				WITH t, v
@@ -329,15 +340,14 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.targets = $targets,
 					r.envVars = $envVars,
 					r.tags = $tags,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				t.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.pin = $pin
 			`
 			_, err = tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
 				"name":                  et.Metadata.Name,
-				"image":                 et.Metadata.Image,
+				"image":                 stripTag(et.Metadata.Image),
+				"pin":                   layerPin(et.Metadata),
+				"sourceType":            layerSourceType(et.Metadata),
 				"hash":                  et.Metadata.Hash,
 				"prefix":                et.Metadata.Prefix,
 				"topic":                 et.Metadata.Topic,
