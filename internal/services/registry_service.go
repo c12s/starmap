@@ -4,6 +4,7 @@ import (
 	"context"
 
 	proto "github.com/c12s/starmap/api"
+	"github.com/c12s/starmap/internal/domain"
 	protomappers "github.com/c12s/starmap/internal/proto_mappers"
 	"github.com/c12s/starmap/internal/repos"
 
@@ -190,6 +191,49 @@ func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*pr
 		Namespace:     result.Metadata.Namespace,
 		Maintainer:    result.Metadata.Maintainer,
 	}, nil
+}
+
+func (s *RegistryService) PushLayer(ctx context.Context, req *proto.PushLayerReq) (*proto.PushLayerResp, error) {
+	result, err := s.repo.PushLayer(ctx, domain.PushLayerInput{
+		SourceType: req.SourceType,
+		Image:      req.Image,
+		Pull:       req.Pull,
+		Command:    req.Command,
+		Sha:        req.Sha,
+		Semver:     req.Semver,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to push layer: %v", err)
+	}
+
+	return &proto.PushLayerResp{
+		Sha:            result.Sha,
+		Semver:         result.Semver,
+		PreviousSemver: result.PreviousSemver,
+	}, nil
+}
+
+func (s *RegistryService) ListLayerVersions(ctx context.Context, req *proto.ListLayerVersionsReq) (*proto.ListLayerVersionsResp, error) {
+	sourceType := "oci"
+	if req.Image == "" && req.Pull != "" {
+		sourceType = "git"
+	}
+
+	result, err := s.repo.ListLayerVersions(ctx, sourceType, req.Image, req.Pull, req.Command)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list layer versions: %v", err)
+	}
+
+	resp := &proto.ListLayerVersionsResp{SourceType: result.SourceType}
+	for _, v := range result.Versions {
+		resp.Versions = append(resp.Versions, &proto.LayerVersionInfo{
+			Sha:       v.Sha,
+			Semver:    v.Semver,
+			CreatedAt: v.CreatedAt,
+			IsLatest:  v.IsLatest,
+		})
+	}
+	return resp, nil
 }
 
 func (s *RegistryService) Search(ctx context.Context, req *proto.SearchReq) (*proto.GetChartsLabelsResp, error) {

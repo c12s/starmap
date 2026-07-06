@@ -20,6 +20,33 @@ type Build struct {
 	Command string
 }
 
+type LayerVersion struct {
+	Sha       string
+	Semver    string
+	CreatedAt int64
+	IsLatest  bool
+}
+
+type PushLayerInput struct {
+	SourceType string
+	Image      string
+	Pull       string
+	Command    string
+	Sha        string
+	Semver     string
+}
+
+type PushLayerResult struct {
+	Sha            string
+	Semver         string
+	PreviousSemver string
+}
+
+type ListLayerVersionsResult struct {
+	SourceType string
+	Versions   []LayerVersion
+}
+
 type Control struct {
 	DisableVirtualization bool
 	RunDetached           bool
