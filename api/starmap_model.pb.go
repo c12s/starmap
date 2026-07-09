@@ -493,6 +493,9 @@ type Metadata struct {
 	Description   string                 `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Tags          map[string]string      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Pin           string                 `protobuf:"bytes,10,opt,name=pin,proto3" json:"pin,omitempty"`
+	Sha           string                 `protobuf:"bytes,11,opt,name=sha,proto3" json:"sha,omitempty"`
+	Semver        string                 `protobuf:"bytes,12,opt,name=semver,proto3" json:"semver,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -588,6 +591,27 @@ func (x *Metadata) GetTags() map[string]string {
 		return x.Tags
 	}
 	return nil
+}
+
+func (x *Metadata) GetPin() string {
+	if x != nil {
+		return x.Pin
+	}
+	return ""
+}
+
+func (x *Metadata) GetSha() string {
+	if x != nil {
+		return x.Sha
+	}
+	return ""
+}
+
+func (x *Metadata) GetSemver() string {
+	if x != nil {
+		return x.Semver
+	}
+	return ""
 }
 
 type Build struct {
@@ -1526,7 +1550,7 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcc\x03\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -1536,7 +1560,11 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x05topic\x18\x06 \x01(\tR\x05topic\x12 \n" +
 	"\vdescription\x18\a \x01(\tR\vdescription\x123\n" +
 	"\x06labels\x18\b \x03(\v2\x1b.proto.Metadata.LabelsEntryR\x06labels\x12-\n" +
-	"\x04tags\x18\t \x03(\v2\x19.proto.Metadata.TagsEntryR\x04tags\x1a9\n" +
+	"\x04tags\x18\t \x03(\v2\x19.proto.Metadata.TagsEntryR\x04tags\x12\x10\n" +
+	"\x03pin\x18\n" +
+	" \x01(\tR\x03pin\x12\x10\n" +
+	"\x03sha\x18\v \x01(\tR\x03sha\x12\x16\n" +
+	"\x06semver\x18\f \x01(\tR\x06semver\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +

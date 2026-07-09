@@ -3,15 +3,18 @@ package domain
 type Metadata struct {
 	Id          string
 	Name        string
-	Image       string
-	Build       Build
-	Hash        string
+	Image       string // Layer node (stored without tag)
+	Build       Build  // Layer node
+	Hash        string // Layer node identity (MERGE key)
 	Prefix      string
 	Topic       string
 	Description string
 	Labels      map[string]string
 	Tags        map[string]string
 	TriggerHash string
+	Pin         string // HAS_PROCEDURE/HAS_TRIGGER edge: which version this chart wants
+	Sha         string // resolved from the pinned LayerVersion node
+	Semver      string // resolved from the pinned LayerVersion node
 }
 
 type Build struct {

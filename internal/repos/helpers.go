@@ -78,15 +78,16 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 		Prefix:      getStringFromMap(relProps, "prefix"),
 		Topic:       getStringFromMap(relProps, "topic"),
 		Description: getStringFromMap(relProps, "description"),
+		Pin:         getStringFromMap(relProps, "pin"),
 	}
 
-	image := getStringFromMap(relProps, "image")
+	image := getStringFromMap(nodeProps, "image")
 	if image != "" {
 		metadata.Image = image
 	} else {
 		metadata.Build = domain.Build{
 			Pull:    getStringFromMap(nodeProps, "pull"),
-			Workdir: getStringFromMap(relProps, "workdir"),
+			Workdir: getStringFromMap(nodeProps, "workdir"),
 			Command: getStringFromMap(nodeProps, "command"),
 		}
 	}
@@ -149,6 +150,8 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 			Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
 		}
 
+		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, "StoredProcedure", metadata.Id, metadata.Pin)
+
 		if spLabels != nil {
 			sp.Metadata.Labels = spLabels[sp.Metadata.Id]
 		}
@@ -198,6 +201,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
 		}
 		tr.Metadata.Hash = getStringFromMap(relProps, "hash")
+		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, "Trigger", metadata.Id, metadata.Pin)
 
 		result[metadata.Name] = tr
 	}
@@ -385,6 +389,38 @@ func getStringSliceFromMap(m map[string]any, key string) []string {
 		}
 	}
 	return nil
+}
+
+func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel, nodeID, pin string) (sha, semver string) {
+	var query string
+	params := map[string]any{"id": nodeID}
+	if pin == "" || pin == "latest" {
+		query = fmt.Sprintf(`
+			MATCH (n:%s {id: $id})-[:HAS_LATEST]->(lv:LayerVersion)
+			RETURN lv.sha AS sha, lv.semver AS semver
+		`, nodeLabel)
+	} else {
+		query = fmt.Sprintf(`
+			MATCH (n:%s {id: $id})-[:HAS_LAYER_VERSION]->(lv:LayerVersion {semver: $semver})
+			RETURN lv.sha AS sha, lv.semver AS semver
+		`, nodeLabel)
+		params["semver"] = pin
+	}
+
+	res, err := tx.Run(ctx, query, params)
+	if err != nil {
+		return "", ""
+	}
+	if res.Next(ctx) {
+		rec := res.Record()
+		if v, ok := rec.Get("sha"); ok {
+			sha, _ = v.(string)
+		}
+		if v, ok := rec.Get("semver"); ok {
+			semver, _ = v.(string)
+		}
+	}
+	return sha, semver
 }
 
 func getLinksForNode(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel, nodeID string) domain.Links {

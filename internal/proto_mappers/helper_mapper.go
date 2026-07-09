@@ -34,6 +34,9 @@ func metadataToProto(metadata *domain.Metadata) *proto.Metadata {
 		Description: metadata.Description,
 		Labels:      metadata.Labels,
 		Tags:        metadata.Tags,
+		Pin:         metadata.Pin,
+		Sha:         metadata.Sha,
+		Semver:      metadata.Semver,
 	}
 
 	if metadata.Image != "" {
