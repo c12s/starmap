@@ -33,6 +33,7 @@ const (
 	RegistryService_Search_FullMethodName            = "/proto.RegistryService/Search"
 	RegistryService_PushLayer_FullMethodName         = "/proto.RegistryService/PushLayer"
 	RegistryService_ListLayerVersions_FullMethodName = "/proto.RegistryService/ListLayerVersions"
+	RegistryService_DeleteLayer_FullMethodName       = "/proto.RegistryService/DeleteLayer"
 )
 
 // RegistryServiceClient is the client API for RegistryService service.
@@ -53,6 +54,7 @@ type RegistryServiceClient interface {
 	Search(ctx context.Context, in *SearchReq, opts ...grpc.CallOption) (*GetChartsLabelsResp, error)
 	PushLayer(ctx context.Context, in *PushLayerReq, opts ...grpc.CallOption) (*PushLayerResp, error)
 	ListLayerVersions(ctx context.Context, in *ListLayerVersionsReq, opts ...grpc.CallOption) (*ListLayerVersionsResp, error)
+	DeleteLayer(ctx context.Context, in *DeleteLayerReq, opts ...grpc.CallOption) (*EmptyMessage, error)
 }
 
 type registryServiceClient struct {
@@ -203,6 +205,16 @@ func (c *registryServiceClient) ListLayerVersions(ctx context.Context, in *ListL
 	return out, nil
 }
 
+func (c *registryServiceClient) DeleteLayer(ctx context.Context, in *DeleteLayerReq, opts ...grpc.CallOption) (*EmptyMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyMessage)
+	err := c.cc.Invoke(ctx, RegistryService_DeleteLayer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility.
@@ -221,6 +233,7 @@ type RegistryServiceServer interface {
 	Search(context.Context, *SearchReq) (*GetChartsLabelsResp, error)
 	PushLayer(context.Context, *PushLayerReq) (*PushLayerResp, error)
 	ListLayerVersions(context.Context, *ListLayerVersionsReq) (*ListLayerVersionsResp, error)
+	DeleteLayer(context.Context, *DeleteLayerReq) (*EmptyMessage, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -272,6 +285,9 @@ func (UnimplementedRegistryServiceServer) PushLayer(context.Context, *PushLayerR
 }
 func (UnimplementedRegistryServiceServer) ListLayerVersions(context.Context, *ListLayerVersionsReq) (*ListLayerVersionsResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListLayerVersions not implemented")
+}
+func (UnimplementedRegistryServiceServer) DeleteLayer(context.Context, *DeleteLayerReq) (*EmptyMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteLayer not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 func (UnimplementedRegistryServiceServer) testEmbeddedByValue()                         {}
@@ -546,6 +562,24 @@ func _RegistryService_ListLayerVersions_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_DeleteLayer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteLayerReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).DeleteLayer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RegistryService_DeleteLayer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).DeleteLayer(ctx, req.(*DeleteLayerReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -608,6 +642,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListLayerVersions",
 			Handler:    _RegistryService_ListLayerVersions_Handler,
+		},
+		{
+			MethodName: "DeleteLayer",
+			Handler:    _RegistryService_DeleteLayer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

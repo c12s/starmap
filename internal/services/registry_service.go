@@ -236,6 +236,14 @@ func (s *RegistryService) ListLayerVersions(ctx context.Context, req *proto.List
 	return resp, nil
 }
 
+func (s *RegistryService) DeleteLayer(ctx context.Context, req *proto.DeleteLayerReq) (*proto.EmptyMessage, error) {
+	err := s.repo.DeleteLayer(ctx, req.Image, req.Pull, req.Command)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "failed to delete layer: %v", err)
+	}
+	return &proto.EmptyMessage{}, nil
+}
+
 func (s *RegistryService) Search(ctx context.Context, req *proto.SearchReq) (*proto.GetChartsLabelsResp, error) {
 	charts, err := s.repo.Search(ctx, req.Name, req.Description, req.Tags, req.DeepSearch, req.ComponentTags)
 	if err != nil {

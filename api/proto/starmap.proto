@@ -20,6 +20,13 @@ service RegistryService{
     rpc Search(SearchReq) returns(GetChartsLabelsResp){}
     rpc PushLayer(PushLayerReq) returns(PushLayerResp){}
     rpc ListLayerVersions(ListLayerVersionsReq) returns(ListLayerVersionsResp){}
+    rpc DeleteLayer(DeleteLayerReq) returns(EmptyMessage){}
+}
+
+message DeleteLayerReq {
+  string image = 1;
+  string pull = 2;
+  string command = 3;
 }
 
 // PushLayer: CI/CD javlja novu verziju layera.
