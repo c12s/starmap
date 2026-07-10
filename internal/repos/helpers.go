@@ -150,7 +150,7 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 			Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
 		}
 
-		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, "StoredProcedure", metadata.Id, metadata.Pin)
+		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, metadata.Pin)
 
 		if spLabels != nil {
 			sp.Metadata.Labels = spLabels[sp.Metadata.Id]
@@ -201,7 +201,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
 		}
 		tr.Metadata.Hash = getStringFromMap(relProps, "hash")
-		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, "Trigger", metadata.Id, metadata.Pin)
+		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, metadata.Pin)
 
 		result[metadata.Name] = tr
 	}
@@ -391,19 +391,19 @@ func getStringSliceFromMap(m map[string]any, key string) []string {
 	return nil
 }
 
-func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel, nodeID, pin string) (sha, semver string) {
+func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, hash, pin string) (sha, semver string) {
 	var query string
-	params := map[string]any{"id": nodeID}
+	params := map[string]any{"hash": hash}
 	if pin == "" || pin == "latest" {
-		query = fmt.Sprintf(`
-			MATCH (n:%s {id: $id})-[:HAS_LATEST]->(lv:LayerVersion)
+		query = `
+			MATCH (n:Layer {hash: $hash})-[:HAS_LATEST]->(lv:LayerVersion)
 			RETURN lv.sha AS sha, lv.semver AS semver
-		`, nodeLabel)
+		`
 	} else {
-		query = fmt.Sprintf(`
-			MATCH (n:%s {id: $id})-[:HAS_LAYER_VERSION]->(lv:LayerVersion {semver: $semver})
+		query = `
+			MATCH (n:Layer {hash: $hash})-[:HAS_LAYER_VERSION]->(lv:LayerVersion {semver: $semver})
 			RETURN lv.sha AS sha, lv.semver AS semver
-		`, nodeLabel)
+		`
 		params["semver"] = pin
 	}
 
