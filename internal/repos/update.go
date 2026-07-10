@@ -222,9 +222,9 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		for _, sp := range chart.Chart.StoredProcedures {
 
 			querySP := `
-				MERGE (s:StoredProcedure {hash: $hash})
+				MERGE (s:Layer {hash: $hash})
 				SET s.id = $id,
-					s:Layer,
+					s:StoredProcedure,
 					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
 					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
 					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,

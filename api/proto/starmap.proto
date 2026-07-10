@@ -32,12 +32,13 @@ message DeleteLayerReq {
 // PushLayer: CI/CD javlja novu verziju layera.
 // Layer se identifikuje po image (oci) ILI pull+command (git) — isto kao hash u modelu.
 message PushLayerReq {
-  string sourceType = 1;   // "oci" | "git"
-  string image = 2;        // oci: image BEZ taga (ghcr.io/ana/api)
-  string pull = 3;         // git: repo URL
-  string command = 4;      // git: build komanda
-  string sha = 5;          // OBAVEZNO: OCI digest ili git commit — tacno sta povuci
-  string semver = 6;       // opciono: ako prazno -> auto-increment
+  string sourceType = 1;
+  string image = 2;
+  string pull = 3;
+  string command = 4;
+  string sha = 5;
+  string semver = 6;
+  string nodeType = 7;
 }
 
 message PushLayerResp {

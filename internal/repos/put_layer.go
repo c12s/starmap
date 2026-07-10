@@ -51,6 +51,15 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 	})
 	defer session.Close(ctx)
 
+	typeLabel := ""
+	switch in.NodeType {
+	case "StoredProcedure", "Trigger":
+		typeLabel = ", l:" + in.NodeType
+	case "":
+	default:
+		return nil, fmt.Errorf("nodeType must be 'StoredProcedure', 'Trigger' or empty")
+	}
+
 	result, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		mergeLayer := `
 			MERGE (l:Layer {hash: $hash})
@@ -59,7 +68,7 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 				l.image = $image,
 				l.pull = $pull,
 				l.command = $command,
-				l.managed = true
+				l.managed = true` + typeLabel + `
 			RETURN l.sourceType AS existingType
 		`
 		res, err := tx.Run(ctx, mergeLayer, map[string]any{

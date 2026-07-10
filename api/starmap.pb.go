@@ -85,12 +85,13 @@ func (x *DeleteLayerReq) GetCommand() string {
 // Layer se identifikuje po image (oci) ILI pull+command (git) — isto kao hash u modelu.
 type PushLayerReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SourceType    string                 `protobuf:"bytes,1,opt,name=sourceType,proto3" json:"sourceType,omitempty"` // "oci" | "git"
-	Image         string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`           // oci: image BEZ taga (ghcr.io/ana/api)
-	Pull          string                 `protobuf:"bytes,3,opt,name=pull,proto3" json:"pull,omitempty"`             // git: repo URL
-	Command       string                 `protobuf:"bytes,4,opt,name=command,proto3" json:"command,omitempty"`       // git: build komanda
-	Sha           string                 `protobuf:"bytes,5,opt,name=sha,proto3" json:"sha,omitempty"`               // OBAVEZNO: OCI digest ili git commit — tacno sta povuci
-	Semver        string                 `protobuf:"bytes,6,opt,name=semver,proto3" json:"semver,omitempty"`         // opciono: ako prazno -> auto-increment
+	SourceType    string                 `protobuf:"bytes,1,opt,name=sourceType,proto3" json:"sourceType,omitempty"`
+	Image         string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	Pull          string                 `protobuf:"bytes,3,opt,name=pull,proto3" json:"pull,omitempty"`
+	Command       string                 `protobuf:"bytes,4,opt,name=command,proto3" json:"command,omitempty"`
+	Sha           string                 `protobuf:"bytes,5,opt,name=sha,proto3" json:"sha,omitempty"`
+	Semver        string                 `protobuf:"bytes,6,opt,name=semver,proto3" json:"semver,omitempty"`
+	NodeType      string                 `protobuf:"bytes,7,opt,name=nodeType,proto3" json:"nodeType,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,6 +164,13 @@ func (x *PushLayerReq) GetSha() string {
 func (x *PushLayerReq) GetSemver() string {
 	if x != nil {
 		return x.Semver
+	}
+	return ""
+}
+
+func (x *PushLayerReq) GetNodeType() string {
+	if x != nil {
+		return x.NodeType
 	}
 	return ""
 }
@@ -1551,7 +1559,7 @@ const file_starmap_proto_rawDesc = "" +
 	"\x0eDeleteLayerReq\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x12\n" +
 	"\x04pull\x18\x02 \x01(\tR\x04pull\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\tR\acommand\"\x9c\x01\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\"\xb8\x01\n" +
 	"\fPushLayerReq\x12\x1e\n" +
 	"\n" +
 	"sourceType\x18\x01 \x01(\tR\n" +
@@ -1560,7 +1568,8 @@ const file_starmap_proto_rawDesc = "" +
 	"\x04pull\x18\x03 \x01(\tR\x04pull\x12\x18\n" +
 	"\acommand\x18\x04 \x01(\tR\acommand\x12\x10\n" +
 	"\x03sha\x18\x05 \x01(\tR\x03sha\x12\x16\n" +
-	"\x06semver\x18\x06 \x01(\tR\x06semver\"a\n" +
+	"\x06semver\x18\x06 \x01(\tR\x06semver\x12\x1a\n" +
+	"\bnodeType\x18\a \x01(\tR\bnodeType\"a\n" +
 	"\rPushLayerResp\x12\x10\n" +
 	"\x03sha\x18\x01 \x01(\tR\x03sha\x12\x16\n" +
 	"\x06semver\x18\x02 \x01(\tR\x06semver\x12&\n" +

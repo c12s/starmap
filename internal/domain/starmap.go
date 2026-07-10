@@ -32,6 +32,7 @@ type LayerVersion struct {
 
 type PushLayerInput struct {
 	SourceType string
+	NodeType   string
 	Image      string
 	Pull       string
 	Command    string

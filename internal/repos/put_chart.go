@@ -173,10 +173,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			tagsJSON, _ := json.Marshal(sp.Metadata.Tags)
 
 			querySP := `
-				MERGE (s:StoredProcedure {hash: $hash})
+				MERGE (s:Layer {hash: $hash})
 				ON CREATE SET
 					s.id = $id
-				SET s:Layer,
+				SET s:StoredProcedure,
 					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
 					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
 					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,

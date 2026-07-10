@@ -196,6 +196,7 @@ func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*pr
 func (s *RegistryService) PushLayer(ctx context.Context, req *proto.PushLayerReq) (*proto.PushLayerResp, error) {
 	result, err := s.repo.PushLayer(ctx, domain.PushLayerInput{
 		SourceType: req.SourceType,
+		NodeType:   req.NodeType,
 		Image:      req.Image,
 		Pull:       req.Pull,
 		Command:    req.Command,
