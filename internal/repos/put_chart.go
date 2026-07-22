@@ -299,21 +299,22 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			tagsJSON, _ := json.Marshal(et.Metadata.Tags)
 
 			sort.Strings(et.Links.EventLinks)
-			var eventHashes []string
 
-			for _, eventName := range et.Links.EventLinks {
-				if ev, ok := chart.Chart.Events[eventName]; ok {
-					eventHashes = append(eventHashes, ev.Metadata.Hash)
-				}
-			}
-
-			triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
+			// Trigger hash now depends only on image/pull+command (like SP), so CI/CD
+			// can MERGE the same node. Old triggerEventHash logic kept for reference:
+			// var eventHashes []string
+			// for _, eventName := range et.Links.EventLinks {
+			// 	if ev, ok := chart.Chart.Events[eventName]; ok {
+			// 		eventHashes = append(eventHashes, ev.Metadata.Hash)
+			// 	}
+			// }
+			// triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
 
 			queryET := `
-				MERGE (t:Trigger {triggerEventHash: $triggerEventHash})
+				MERGE (t:Layer {hash: $hash})
 				ON CREATE SET
 					t.id = $id
-				SET t:Layer,
+				SET t:Trigger,
 					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
 					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
 					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
@@ -364,7 +365,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"envVars":               et.Features.EnvVars,
 				"schemaVersion":         chart.SchemaVersion,
 				"chartId":               chart.Metadata.Id,
-				"triggerEventHash":      triggerEventHash,
 				"pull":                  et.Metadata.Build.Pull,
 				"command":               et.Metadata.Build.Command,
 				"workdir":               et.Metadata.Build.Workdir,

@@ -336,9 +336,9 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		for _, tr := range chart.Chart.EventTriggers {
 
 			querySP := `
-				MERGE (t:Trigger {id: $id})
-				SET t.hash = $hash,
-					t:Layer,
+				MERGE (t:Layer {hash: $hash})
+				SET t.id = $id,
+					t:Trigger,
 					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
 					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
 					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,

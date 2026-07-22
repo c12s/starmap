@@ -279,21 +279,21 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 		for key, et := range chart.Chart.EventTriggers {
 
 			sort.Strings(et.Links.EventLinks)
-			var eventHashes []string
 
-			for _, eventName := range et.Links.EventLinks {
-				if ev, ok := chart.Chart.Events[eventName]; ok {
-					eventHashes = append(eventHashes, ev.Metadata.Hash)
-				}
-			}
-
-			triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
+			// Trigger hash depends only on image/pull+command (like SP). Old logic:
+			// var eventHashes []string
+			// for _, eventName := range et.Links.EventLinks {
+			// 	if ev, ok := chart.Chart.Events[eventName]; ok {
+			// 		eventHashes = append(eventHashes, ev.Metadata.Hash)
+			// 	}
+			// }
+			// triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
 
 			queryET := `
-				MERGE (t:Trigger {triggerEventHash: $triggerEventHash})
+				MERGE (t:Layer {hash: $hash})
 				ON CREATE SET
 					t.id = $id
-				SET t:Layer,
+				SET t:Trigger,
 					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
 					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
 					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
@@ -346,7 +346,6 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				"envVars":               et.Features.EnvVars,
 				"schemaVersion":         chart.SchemaVersion,
 				"chartId":               chart.Metadata.Id,
-				"triggerEventHash":      triggerEventHash,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
