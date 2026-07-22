@@ -53,11 +53,11 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 
 	typeLabel := ""
 	switch in.NodeType {
-	case "StoredProcedure", "Trigger":
+	case "StoredProcedure", "Trigger", "Event":
 		typeLabel = ", l:" + in.NodeType
 	case "":
 	default:
-		return nil, fmt.Errorf("nodeType must be 'StoredProcedure', 'Trigger' or empty")
+		return nil, fmt.Errorf("nodeType must be 'StoredProcedure', 'Trigger', 'Event' or empty")
 	}
 
 	result, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {

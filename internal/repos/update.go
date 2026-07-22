@@ -450,12 +450,22 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				}
 
 				_, err = tx.Run(ctx, `
-					MERGE (e:Event {hash: $hash})
-					ON CREATE SET e.id = $id
-					ON MATCH SET  e.id = $id
+					MERGE (e:Layer {hash: $hash})
+					SET e.id = $id,
+						e:Event,
+						e.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+						e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+						e.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+						e.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+						e.sourceType = $sourceType
 				`, map[string]any{
-					"id":   ev.Metadata.Id,
-					"hash": ev.Metadata.Hash,
+					"id":         ev.Metadata.Id,
+					"hash":       ev.Metadata.Hash,
+					"image":      stripTag(ev.Metadata.Image),
+					"pull":       ev.Metadata.Build.Pull,
+					"command":    ev.Metadata.Build.Command,
+					"workdir":    ev.Metadata.Build.Workdir,
+					"sourceType": layerSourceType(ev.Metadata),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed event upsert: %w", err)
@@ -479,11 +489,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				e.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.envVars = $envVars
 				`, map[string]any{
 					"triggerId":             tr.Metadata.Id,
 					"eventId":               ev.Metadata.Id,

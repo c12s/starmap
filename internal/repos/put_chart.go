@@ -437,11 +437,20 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 
 				evTagsJSON, _ := json.Marshal(ev.Metadata.Tags)
 
+				// Event is now a versioned layer (:Layer:Event), same as SP/Trigger:
+				// image/pull/command live on the node; runtime config on the EVENT_LINK edge.
+				// Old thin-event version (all on edge) kept for reference:
+				// MERGE (e:Event {hash: $eventHash}) ON CREATE SET e.id=$eventId, e.hash=$eventHash
+				// ... r.image / e.pull / r.workdir / e.command on edge ...
 				queryLink := `
-					MERGE (e:Event {hash: $eventHash})
-					ON CREATE SET
-						e.id = $eventId,
-						e.hash = $eventHash
+					MERGE (e:Layer {hash: $eventHash})
+					ON CREATE SET e.id = $eventId
+					SET e:Event,
+						e.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+						e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+						e.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+						e.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+						e.sourceType = $sourceType
 					WITH e
 					MATCH (t:Trigger {id: $triggerId})
 					MERGE (t)-[r:EVENT_LINK]->(e)
@@ -460,20 +469,17 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 						r.volumes = $volumes,
 						r.targets = $targets,
 						r.envVars = $envVars,
-						r.tags = $tags,
-						r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    					e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    					r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    					e.command = CASE WHEN $command <> '' THEN $command ELSE null END
+						r.tags = $tags
 				`
 
 				_, err := tx.Run(ctx, queryLink, map[string]any{
-					"triggerId": et.Metadata.Id,
-					"eventId":   ev.Metadata.Id,
-					"eventHash": ev.Metadata.Hash,
+					"triggerId":  et.Metadata.Id,
+					"eventId":    ev.Metadata.Id,
+					"eventHash":  ev.Metadata.Hash,
+					"sourceType": layerSourceType(ev.Metadata),
 
 					"name":                  ev.Metadata.Name,
-					"image":                 ev.Metadata.Image,
+					"image":                 stripTag(ev.Metadata.Image),
 					"hash":                  ev.Metadata.Hash,
 					"prefix":                ev.Metadata.Prefix,
 					"topic":                 ev.Metadata.Topic,

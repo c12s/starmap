@@ -417,16 +417,19 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				}
 
 				queryLink := `
-					MERGE (e:Event {hash: $eventHash})
-					ON CREATE SET
-						e.id = $eventId,
-						e.hash = $eventHash
+					MERGE (e:Layer {hash: $eventHash})
+					ON CREATE SET e.id = $eventId
+					SET e:Event,
+						e.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+						e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+						e.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+						e.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+						e.sourceType = $sourceType
 					WITH e
 					MATCH (t:Trigger {id: $triggerId})
 					MERGE (t)-[r:EVENT_LINK]->(e)
 					SET
 						r.name = $name,
-						r.image = $image,
 						r.prefix = $prefix,
 						r.topic = $topic,
 						r.description = $description,
@@ -443,12 +446,16 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 				`
 
 				_, err := tx.Run(ctx, queryLink, map[string]any{
-					"triggerId": et.Metadata.Id,
-					"eventId":   ev.Metadata.Id,
-					"eventHash": ev.Metadata.Hash,
+					"triggerId":  et.Metadata.Id,
+					"eventId":    ev.Metadata.Id,
+					"eventHash":  ev.Metadata.Hash,
+					"sourceType": layerSourceType(ev.Metadata),
+					"pull":       ev.Metadata.Build.Pull,
+					"command":    ev.Metadata.Build.Command,
+					"workdir":    ev.Metadata.Build.Workdir,
 
 					"name":                  ev.Metadata.Name,
-					"image":                 ev.Metadata.Image,
+					"image":                 stripTag(ev.Metadata.Image),
 					"hash":                  ev.Metadata.Hash,
 					"prefix":                ev.Metadata.Prefix,
 					"topic":                 ev.Metadata.Topic,
