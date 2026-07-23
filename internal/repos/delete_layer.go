@@ -41,9 +41,11 @@ func (r *RegistryRepo) DeleteLayer(ctx context.Context, image, pull, command str
 			return nil, fmt.Errorf("layer is used by %d chart version(s), cannot delete", usedBy)
 		}
 
+		// old: OPTIONAL MATCH (l)-[:HAS_LAYER_VERSION]->(v)
 		deleteLayer := `
 			MATCH (l:Layer {hash: $hash})
-			OPTIONAL MATCH (l)-[:HAS_LAYER_VERSION]->(v:LayerVersion)
+			OPTIONAL MATCH (l)-[:HAS_LATEST]->(head:LayerVersion)
+			OPTIONAL MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion)
 			DETACH DELETE l, v
 		`
 		if _, err := tx.Run(ctx, deleteLayer, map[string]any{"hash": hash}); err != nil {

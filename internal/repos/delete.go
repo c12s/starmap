@@ -213,7 +213,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		querySP := `
 			MATCH (s:StoredProcedure)
 			WHERE NOT (:Version)-[:HAS_PROCEDURE]->(s)
-			AND NOT (s)-[:HAS_LAYER_VERSION]->(:LayerVersion)
+			AND NOT (s)-[:HAS_LATEST]->(:LayerVersion)
 			DETACH DELETE s
 		`
 		_, err = tx.Run(ctx, querySP, nil)
@@ -225,7 +225,7 @@ func (r *RegistryRepo) DeleteChart(ctx context.Context, id, name, namespace, mai
 		queryTriggers := `
 			MATCH (t:Trigger)
 			WHERE NOT (:Version)-[:HAS_TRIGGER]->(t)
-			AND NOT (t)-[:HAS_LAYER_VERSION]->(:LayerVersion)
+			AND NOT (t)-[:HAS_LATEST]->(:LayerVersion)
 			DETACH DELETE t
 		`
 		_, err = tx.Run(ctx, queryTriggers, nil)

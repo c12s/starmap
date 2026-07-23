@@ -91,9 +91,12 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 			}
 		}
 
+		// old: MATCH (l:Layer {hash})-[:HAS_LAYER_VERSION]->(v {sha})
 		checkSha := `
-			MATCH (l:Layer {hash: $hash})-[:HAS_LAYER_VERSION]->(v:LayerVersion {sha: $sha})
+			MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+			MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {sha: $sha})
 			RETURN v.semver AS semver
+			LIMIT 1
 		`
 		res, err = tx.Run(ctx, checkSha, map[string]any{"hash": hash, "sha": in.Sha})
 		if err != nil {
@@ -127,9 +130,12 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 				semver = incrementVersion(prevSemver)
 			}
 		} else {
+			// old: MATCH (l:Layer {hash})-[:HAS_LAYER_VERSION]->(v {semver})
 			checkSemver := `
-				MATCH (l:Layer {hash: $hash})-[:HAS_LAYER_VERSION]->(v:LayerVersion {semver: $semver})
+				MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+				MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {semver: $semver})
 				RETURN v.sha AS sha
+				LIMIT 1
 			`
 			res, err = tx.Run(ctx, checkSemver, map[string]any{"hash": hash, "semver": semver})
 			if err != nil {
@@ -143,7 +149,7 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 		createVersion := `
 			MATCH (l:Layer {hash: $hash})
 			CREATE (v:LayerVersion {sha: $sha, semver: $semver, createdAt: $now})
-			MERGE (l)-[:HAS_LAYER_VERSION]->(v)
+			// benchmark: MERGE (l)-[:HAS_LAYER_VERSION]->(v)
 			WITH l, v
 			OPTIONAL MATCH (l)-[old:HAS_LATEST]->(prev:LayerVersion)
 			FOREACH (_ IN CASE WHEN prev IS NOT NULL THEN [1] ELSE [] END |

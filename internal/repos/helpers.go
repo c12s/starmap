@@ -400,9 +400,12 @@ func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, hash,
 			RETURN lv.sha AS sha, lv.semver AS semver
 		`
 	} else {
+		// old (direct edge): MATCH (n:Layer {hash:$hash})-[:HAS_LAYER_VERSION]->(lv {semver:$semver})
 		query = `
-			MATCH (n:Layer {hash: $hash})-[:HAS_LAYER_VERSION]->(lv:LayerVersion {semver: $semver})
+			MATCH (n:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+			MATCH (head)-[:PREVIOUS*0..]->(lv:LayerVersion {semver: $semver})
 			RETURN lv.sha AS sha, lv.semver AS semver
+			LIMIT 1
 		`
 		params["semver"] = pin
 	}

@@ -22,10 +22,11 @@ func (r *RegistryRepo) ListLayerVersions(ctx context.Context, sourceType, image,
 	defer session.Close(ctx)
 
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		// old: OPTIONAL MATCH (l)-[:HAS_LAYER_VERSION]->(v)
 		query := `
 			MATCH (l:Layer {hash: $hash})
 			OPTIONAL MATCH (l)-[:HAS_LATEST]->(latest:LayerVersion)
-			OPTIONAL MATCH (l)-[:HAS_LAYER_VERSION]->(v:LayerVersion)
+			OPTIONAL MATCH (latest)-[:PREVIOUS*0..]->(v:LayerVersion)
 			RETURN l.sourceType AS sourceType,
 				collect({
 					sha: v.sha,
