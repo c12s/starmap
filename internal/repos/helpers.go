@@ -588,7 +588,7 @@ func computeComponentHashes(chart *domain.StarChart) {
 		ev.Metadata.Hash = computeLayerHash(ev.Metadata)
 	}
 	for _, ep := range chart.Chart.Entrypoints {
-		ep.Metadata.Hash = computeHash(ep.Metadata.Image)
+		ep.Metadata.Hash = computeLayerHash(ep.Metadata)
 	}
 }
 
@@ -666,4 +666,17 @@ func entrypointDestination(ep *domain.Entrypoint) string {
 		return ep.Run.Destination
 	}
 	return ""
+}
+
+// entrypointType returns the entrypoint kind: CMD (with params), ENTRYPOINT
+// (function, no params) or RUN (default, auto-run).
+func entrypointType(ep *domain.Entrypoint) string {
+	switch {
+	case ep.Command != nil:
+		return "CMD"
+	case ep.EntryPoint != nil:
+		return "ENTRYPOINT"
+	default:
+		return "RUN"
+	}
 }

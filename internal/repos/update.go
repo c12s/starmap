@@ -547,8 +547,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			tagsJSON, _ := json.Marshal(ep.Metadata.Tags)
 
 			queryEP := `
-				MERGE (ep:Entrypoint {id: $id})
-				SET ep.hash = $hash,
+				MERGE (ep:Layer {hash: $hash})
+				SET ep.id = $id,
+					ep:Entrypoint,
+					ep.epType = $epType,
+					ep.sourceType = $sourceType,
 					ep.name = $name,
 					ep.prefix = $prefix,
 					ep.topic = $topic,
@@ -569,8 +572,10 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			tx.Run(ctx, queryEP, map[string]any{
 				"id":                    ep.Metadata.Id,
 				"hash":                  ep.Metadata.Hash,
+				"epType":                entrypointType(ep),
+				"sourceType":            layerSourceType(ep.Metadata),
 				"name":                  ep.Metadata.Name,
-				"image":                 ep.Metadata.Image,
+				"image":                 stripTag(ep.Metadata.Image),
 				"prefix":                ep.Metadata.Prefix,
 				"topic":                 ep.Metadata.Topic,
 				"description":           ep.Metadata.Description,

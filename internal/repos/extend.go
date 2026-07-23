@@ -502,9 +502,11 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			tagsJSON, _ := json.Marshal(ep.Metadata.Tags)
 
 			queryEP := `
-				MERGE (ep:Entrypoint {hash: $hash})
+				MERGE (ep:Layer {hash: $hash})
 				ON CREATE SET ep.id = $id
-				SET
+				SET ep:Entrypoint,
+					ep.epType = $epType,
+					ep.sourceType = $sourceType,
 					ep.name = $name,
 					ep.prefix = $prefix,
 					ep.topic = $topic,
@@ -528,8 +530,10 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 			_, err := tx.Run(ctx, queryEP, map[string]any{
 				"id":                    ep.Metadata.Id,
 				"hash":                  ep.Metadata.Hash,
+				"epType":                entrypointType(ep),
+				"sourceType":            layerSourceType(ep.Metadata),
 				"name":                  ep.Metadata.Name,
-				"image":                 ep.Metadata.Image,
+				"image":                 stripTag(ep.Metadata.Image),
 				"prefix":                ep.Metadata.Prefix,
 				"topic":                 ep.Metadata.Topic,
 				"description":           ep.Metadata.Description,
