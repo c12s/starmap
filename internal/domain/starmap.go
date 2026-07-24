@@ -28,6 +28,7 @@ type LayerVersion struct {
 	Semver    string
 	CreatedAt int64
 	IsLatest  bool
+	Arch      string
 }
 
 type PushLayerInput struct {
@@ -38,6 +39,7 @@ type PushLayerInput struct {
 	Command    string
 	Sha        string
 	Semver     string
+	Arch       string
 }
 
 type PushLayerResult struct {

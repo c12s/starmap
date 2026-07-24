@@ -90,6 +90,7 @@ type PushLayerReq struct {
 	Sha           string                 `protobuf:"bytes,5,opt,name=sha,proto3" json:"sha,omitempty"`
 	Semver        string                 `protobuf:"bytes,6,opt,name=semver,proto3" json:"semver,omitempty"`
 	NodeType      string                 `protobuf:"bytes,7,opt,name=nodeType,proto3" json:"nodeType,omitempty"`
+	Arch          string                 `protobuf:"bytes,8,opt,name=arch,proto3" json:"arch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -169,6 +170,13 @@ func (x *PushLayerReq) GetSemver() string {
 func (x *PushLayerReq) GetNodeType() string {
 	if x != nil {
 		return x.NodeType
+	}
+	return ""
+}
+
+func (x *PushLayerReq) GetArch() string {
+	if x != nil {
+		return x.Arch
 	}
 	return ""
 }
@@ -299,6 +307,7 @@ type LayerVersionInfo struct {
 	Semver        string                 `protobuf:"bytes,2,opt,name=semver,proto3" json:"semver,omitempty"`
 	CreatedAt     int64                  `protobuf:"varint,3,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	IsLatest      bool                   `protobuf:"varint,4,opt,name=isLatest,proto3" json:"isLatest,omitempty"`
+	Arch          string                 `protobuf:"bytes,5,opt,name=arch,proto3" json:"arch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -359,6 +368,13 @@ func (x *LayerVersionInfo) GetIsLatest() bool {
 		return x.IsLatest
 	}
 	return false
+}
+
+func (x *LayerVersionInfo) GetArch() string {
+	if x != nil {
+		return x.Arch
+	}
+	return ""
 }
 
 type ListLayerVersionsResp struct {
@@ -1573,7 +1589,7 @@ const file_starmap_proto_rawDesc = "" +
 	"\x0eDeleteLayerReq\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x12\n" +
 	"\x04pull\x18\x02 \x01(\tR\x04pull\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\tR\acommand\"\xb8\x01\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\"\xcc\x01\n" +
 	"\fPushLayerReq\x12\x1e\n" +
 	"\n" +
 	"sourceType\x18\x01 \x01(\tR\n" +
@@ -1583,7 +1599,8 @@ const file_starmap_proto_rawDesc = "" +
 	"\acommand\x18\x04 \x01(\tR\acommand\x12\x10\n" +
 	"\x03sha\x18\x05 \x01(\tR\x03sha\x12\x16\n" +
 	"\x06semver\x18\x06 \x01(\tR\x06semver\x12\x1a\n" +
-	"\bnodeType\x18\a \x01(\tR\bnodeType\"a\n" +
+	"\bnodeType\x18\a \x01(\tR\bnodeType\x12\x12\n" +
+	"\x04arch\x18\b \x01(\tR\x04arch\"a\n" +
 	"\rPushLayerResp\x12\x10\n" +
 	"\x03sha\x18\x01 \x01(\tR\x03sha\x12\x16\n" +
 	"\x06semver\x18\x02 \x01(\tR\x06semver\x12&\n" +
@@ -1591,12 +1608,13 @@ const file_starmap_proto_rawDesc = "" +
 	"\x14ListLayerVersionsReq\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x12\n" +
 	"\x04pull\x18\x02 \x01(\tR\x04pull\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\tR\acommand\"v\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\"\x8a\x01\n" +
 	"\x10LayerVersionInfo\x12\x10\n" +
 	"\x03sha\x18\x01 \x01(\tR\x03sha\x12\x16\n" +
 	"\x06semver\x18\x02 \x01(\tR\x06semver\x12\x1c\n" +
 	"\tcreatedAt\x18\x03 \x01(\x03R\tcreatedAt\x12\x1a\n" +
-	"\bisLatest\x18\x04 \x01(\bR\bisLatest\"l\n" +
+	"\bisLatest\x18\x04 \x01(\bR\bisLatest\x12\x12\n" +
+	"\x04arch\x18\x05 \x01(\tR\x04arch\"l\n" +
 	"\x15ListLayerVersionsResp\x12\x1e\n" +
 	"\n" +
 	"sourceType\x18\x01 \x01(\tR\n" +

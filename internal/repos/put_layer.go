@@ -148,7 +148,7 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 
 		createVersion := `
 			MATCH (l:Layer {hash: $hash})
-			CREATE (v:LayerVersion {sha: $sha, semver: $semver, createdAt: $now})
+			CREATE (v:LayerVersion {sha: $sha, semver: $semver, createdAt: $now, arch: $arch})
 			// benchmark: MERGE (l)-[:HAS_LAYER_VERSION]->(v)
 			WITH l, v
 			OPTIONAL MATCH (l)-[old:HAS_LATEST]->(prev:LayerVersion)
@@ -163,6 +163,7 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 			"sha":    in.Sha,
 			"semver": semver,
 			"now":    time.Now().Unix(),
+			"arch":   in.Arch,
 		}); err != nil {
 			return nil, fmt.Errorf("create version: %w", err)
 		}

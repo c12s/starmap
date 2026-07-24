@@ -37,6 +37,7 @@ message PushLayerReq {
   string sha = 5;
   string semver = 6;
   string nodeType = 7;
+  string arch = 8;
 }
 
 message PushLayerResp {
@@ -56,6 +57,7 @@ message LayerVersionInfo {
   string semver = 2;
   int64 createdAt = 3;
   bool isLatest = 4;
+  string arch = 5;
 }
 
 message ListLayerVersionsResp {

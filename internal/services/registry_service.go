@@ -202,6 +202,7 @@ func (s *RegistryService) PushLayer(ctx context.Context, req *proto.PushLayerReq
 		Command:    req.Command,
 		Sha:        req.Sha,
 		Semver:     req.Semver,
+		Arch:       req.Arch,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to push layer: %v", err)
@@ -232,6 +233,7 @@ func (s *RegistryService) ListLayerVersions(ctx context.Context, req *proto.List
 			Semver:    v.Semver,
 			CreatedAt: v.CreatedAt,
 			IsLatest:  v.IsLatest,
+			Arch:      v.Arch,
 		})
 	}
 	return resp, nil

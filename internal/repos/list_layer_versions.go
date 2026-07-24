@@ -32,6 +32,7 @@ func (r *RegistryRepo) ListLayerVersions(ctx context.Context, sourceType, image,
 					sha: v.sha,
 					semver: v.semver,
 					createdAt: v.createdAt,
+					arch: v.arch,
 					isLatest: (latest IS NOT NULL AND v.sha = latest.sha)
 				}) AS versions
 		`
@@ -58,6 +59,7 @@ func (r *RegistryRepo) ListLayerVersions(ctx context.Context, sourceType, image,
 					lv := domain.LayerVersion{}
 					lv.Sha, _ = m["sha"].(string)
 					lv.Semver, _ = m["semver"].(string)
+					lv.Arch, _ = m["arch"].(string)
 					if c, ok := m["createdAt"].(int64); ok {
 						lv.CreatedAt = c
 					}
