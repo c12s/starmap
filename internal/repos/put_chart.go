@@ -201,15 +201,13 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-					r.tags = $tags,
-					r.pin = $pin
+					r.tags = $tags
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"hash":                  sp.Metadata.Hash,
 				"name":                  sp.Metadata.Name,
 				"image":                 stripTag(sp.Metadata.Image),
-				"pin":                   layerPin(sp.Metadata),
 				"sourceType":            layerSourceType(sp.Metadata),
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
@@ -340,14 +338,12 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-					r.tags = $tags,
-					r.pin = $pin
+					r.tags = $tags
 			`
 			_, err = tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
 				"name":                  et.Metadata.Name,
 				"image":                 stripTag(et.Metadata.Image),
-				"pin":                   layerPin(et.Metadata),
 				"sourceType":            layerSourceType(et.Metadata),
 				"hash":                  et.Metadata.Hash,
 				"prefix":                et.Metadata.Prefix,

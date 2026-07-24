@@ -14,7 +14,7 @@ import (
 
 func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart domain.StarChart) (*domain.MetadataResp, error) {
 
-	forExtend, err := r.GetChartId(ctx, oldVersion, chart.Metadata.Namespace, chart.Metadata.Maintainer, chart.Metadata.Id)
+	forExtend, err := r.GetChartId(ctx, oldVersion, chart.Metadata.Namespace, chart.Metadata.Maintainer, chart.Metadata.Id, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -184,15 +184,13 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.pin = $pin
+					r.envVars = $envVars
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"hash":                  sp.Metadata.Hash,
 				"name":                  sp.Metadata.Name,
 				"image":                 stripTag(sp.Metadata.Image),
-				"pin":                   layerPin(sp.Metadata),
 				"sourceType":            layerSourceType(sp.Metadata),
 				"pull":                  sp.Metadata.Build.Pull,
 				"command":               sp.Metadata.Build.Command,
@@ -318,14 +316,12 @@ func (r *RegistryRepo) Extend(ctx context.Context, oldVersion string, chart doma
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.pin = $pin
+					r.envVars = $envVars
 			`
 			_, err = tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
 				"name":                  et.Metadata.Name,
 				"image":                 stripTag(et.Metadata.Image),
-				"pin":                   layerPin(et.Metadata),
 				"sourceType":            layerSourceType(et.Metadata),
 				"pull":                  et.Metadata.Build.Pull,
 				"command":               et.Metadata.Build.Command,

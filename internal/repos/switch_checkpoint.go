@@ -9,12 +9,12 @@ import (
 
 func (r *RegistryRepo) SwitchCheckpoint(ctx context.Context, namespace, maintainer, chartId, oldVersion, newVersion string, layers []string) (*domain.SwitchCheckpointResp, error) {
 
-	old, err := r.GetChartId(ctx, oldVersion, namespace, maintainer, chartId)
+	old, err := r.GetChartId(ctx, oldVersion, namespace, maintainer, chartId, nil)
 	if err != nil {
 		return nil, fmt.Errorf("old version chart not found")
 	}
 
-	new, err := r.GetChartId(ctx, newVersion, namespace, maintainer, chartId)
+	new, err := r.GetChartId(ctx, newVersion, namespace, maintainer, chartId, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new version chart not found")
 	}

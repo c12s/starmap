@@ -29,8 +29,6 @@ message DeleteLayerReq {
   string command = 3;
 }
 
-// PushLayer: CI/CD javlja novu verziju layera.
-// Layer se identifikuje po image (oci) ILI pull+command (git) — isto kao hash u modelu.
 message PushLayerReq {
   string sourceType = 1;
   string image = 2;
@@ -44,7 +42,7 @@ message PushLayerReq {
 message PushLayerResp {
   string sha = 1;
   string semver = 2;
-  string previousSemver = 3;  // prazno ako je prva verzija
+  string previousSemver = 3; 
 }
 
 message ListLayerVersionsReq {
@@ -137,6 +135,7 @@ message GetChartIdReq {
   string chartId = 2;
   string namespace = 3;
   string maintainer = 4;
+  map<string, string> layerVersions = 5;
 }
 
 message DeleteChartReq {
@@ -164,6 +163,7 @@ message GetChartFromMetadataReq {
   string namespace = 2;
   string maintainer = 3;
   string schemaVersion = 4;
+  map<string, string> layerVersions = 5;
 }
 
 message GetChartResp {

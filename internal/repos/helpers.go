@@ -115,7 +115,17 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 	return
 }
 
-func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any, spLabels map[string]map[string]string) map[string]*domain.StoredProcedure {
+// wantedVersion picks the semver requested for a layer (by image), or "latest".
+func wantedVersion(layerVersions map[string]string, image string) string {
+	if layerVersions != nil {
+		if v, ok := layerVersions[image]; ok && v != "" {
+			return v
+		}
+	}
+	return "latest"
+}
+
+func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any, spLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.StoredProcedure {
 	result := make(map[string]*domain.StoredProcedure)
 	if v == nil {
 		return result
@@ -150,7 +160,7 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 			Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
 		}
 
-		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, metadata.Pin)
+		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
 
 		if spLabels != nil {
 			sp.Metadata.Labels = spLabels[sp.Metadata.Id]
@@ -162,7 +172,7 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 	return result
 }
 
-func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLabels map[string]map[string]string) map[string]*domain.EventTrigger {
+func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.EventTrigger {
 	result := make(map[string]*domain.EventTrigger)
 	if v == nil {
 		return result
@@ -201,7 +211,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
 		}
 		tr.Metadata.Hash = getStringFromMap(relProps, "hash")
-		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, metadata.Pin)
+		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
 
 		result[metadata.Name] = tr
 	}
@@ -209,7 +219,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 	return result
 }
 
-func parseEvents(v any, evLabels map[string]map[string]string) map[string]*domain.Event {
+func parseEvents(ctx context.Context, tx neo4j.ManagedTransaction, v any, evLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.Event {
 	result := make(map[string]*domain.Event)
 	if v == nil {
 		return result
@@ -244,6 +254,8 @@ func parseEvents(v any, evLabels map[string]map[string]string) map[string]*domai
 			Features: features,
 		}
 
+		ev.Metadata.Sha, ev.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
+
 		if evLabels != nil {
 			ev.Metadata.Labels = evLabels[ev.Metadata.Id]
 		}
@@ -254,7 +266,7 @@ func parseEvents(v any, evLabels map[string]map[string]string) map[string]*domai
 	return result
 }
 
-func parseEntrypoints(v any, epLabels map[string]map[string]string) map[string]*domain.Entrypoint {
+func parseEntrypoints(ctx context.Context, tx neo4j.ManagedTransaction, v any, epLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.Entrypoint {
 	result := make(map[string]*domain.Entrypoint)
 	if v == nil {
 		return result
@@ -351,6 +363,8 @@ func parseEntrypoints(v any, epLabels map[string]map[string]string) map[string]*
 				},
 			}
 		}
+
+		ep.Metadata.Sha, ep.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
 
 		result[metadata.Name] = ep
 	}
@@ -622,10 +636,10 @@ func computeVersionHash(chart domain.StarChart) string {
 		hashes = append(hashes, ds.Hash)
 	}
 	for _, sp := range chart.Chart.StoredProcedures {
-		hashes = append(hashes, sp.Metadata.Hash+layerPin(sp.Metadata))
+		hashes = append(hashes, sp.Metadata.Hash)
 	}
 	for _, et := range chart.Chart.EventTriggers {
-		hashes = append(hashes, et.Metadata.Hash+layerPin(et.Metadata))
+		hashes = append(hashes, et.Metadata.Hash)
 	}
 	for _, ev := range chart.Chart.Events {
 		hashes = append(hashes, ev.Metadata.Hash)

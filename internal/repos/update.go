@@ -264,13 +264,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.pin = $pin
+					r.envVars = $envVars
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"name":                  sp.Metadata.Name,
-				"pin":                   layerPin(sp.Metadata),
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"description":           sp.Metadata.Description,
@@ -378,13 +376,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.pin = $pin
+					r.envVars = $envVars
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    tr.Metadata.Id,
 				"name":                  tr.Metadata.Name,
-				"pin":                   layerPin(tr.Metadata),
 				"prefix":                tr.Metadata.Prefix,
 				"topic":                 tr.Metadata.Topic,
 				"description":           tr.Metadata.Description,
