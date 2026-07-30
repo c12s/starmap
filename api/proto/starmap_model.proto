@@ -73,6 +73,7 @@ message Metadata {
   string pin = 10;
   string sha = 11;
   string semver = 12;
+  string arch = 13;
 }
 
 message Build {

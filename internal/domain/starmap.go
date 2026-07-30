@@ -13,8 +13,9 @@ type Metadata struct {
 	Tags        map[string]string
 	TriggerHash string
 	Pin         string // HAS_PROCEDURE/HAS_TRIGGER edge: which version this chart wants
-	Sha         string // resolved from the pinned LayerVersion node
-	Semver      string // resolved from the pinned LayerVersion node
+	Sha         string // resolved from the pinned version + arch (Build node)
+	Semver      string // resolved layer version
+	Arch        string // resolved build arch
 }
 
 type Build struct {
@@ -23,12 +24,23 @@ type Build struct {
 	Command string
 }
 
+type LayerBuild struct {
+	Arch string
+	Sha  string
+}
+
+// LayerSelector is a per-layer version/arch request (both optional).
+type LayerSelector struct {
+	Semver string
+	Arch   string
+}
+
 type LayerVersion struct {
-	Sha       string
 	Semver    string
+	Sha       string // manifest-list digest (arch-agnostic default pull)
 	CreatedAt int64
 	IsLatest  bool
-	Arch      string
+	Builds    []LayerBuild
 }
 
 type PushLayerInput struct {
@@ -37,9 +49,9 @@ type PushLayerInput struct {
 	Image      string
 	Pull       string
 	Command    string
-	Sha        string
 	Semver     string
-	Arch       string
+	Sha        string // manifest-list digest
+	Builds     []LayerBuild
 }
 
 type PushLayerResult struct {

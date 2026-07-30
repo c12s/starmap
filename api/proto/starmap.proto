@@ -29,6 +29,11 @@ message DeleteLayerReq {
   string command = 3;
 }
 
+message LayerBuild {
+  string arch = 1;
+  string sha = 2;
+}
+
 message PushLayerReq {
   string sourceType = 1;
   string image = 2;
@@ -37,7 +42,7 @@ message PushLayerReq {
   string sha = 5;
   string semver = 6;
   string nodeType = 7;
-  string arch = 8;
+  repeated LayerBuild builds = 9;
 }
 
 message PushLayerResp {
@@ -53,11 +58,11 @@ message ListLayerVersionsReq {
 }
 
 message LayerVersionInfo {
-  string sha = 1;
   string semver = 2;
+  string sha = 1;
   int64 createdAt = 3;
   bool isLatest = 4;
-  string arch = 5;
+  repeated LayerBuild builds = 6;
 }
 
 message ListLayerVersionsResp {
@@ -132,12 +137,18 @@ message GetMissingLayersResp {
   map<string, Entrypoint> entrypoints = 10;
 }
 
+// per-layer selection: semver + arch, keyed by image (both optional)
+message LayerSelector {
+  string semver = 1;
+  string arch = 2;
+}
+
 message GetChartIdReq {
   string schemaVersion = 1;
   string chartId = 2;
   string namespace = 3;
   string maintainer = 4;
-  map<string, string> layerVersions = 5;
+  map<string, LayerSelector> layers = 5;
 }
 
 message DeleteChartReq {
@@ -165,7 +176,7 @@ message GetChartFromMetadataReq {
   string namespace = 2;
   string maintainer = 3;
   string schemaVersion = 4;
-  map<string, string> layerVersions = 5;
+  map<string, LayerSelector> layers = 5;
 }
 
 message GetChartResp {

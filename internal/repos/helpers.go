@@ -115,17 +115,20 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 	return
 }
 
-// wantedVersion picks the semver requested for a layer (by image), or "latest".
-func wantedVersion(layerVersions map[string]string, image string) string {
-	if layerVersions != nil {
-		if v, ok := layerVersions[image]; ok && v != "" {
-			return v
+// wantedSelector returns the requested semver+arch for a layer (by image).
+// missing semver -> "latest"; missing arch -> "" (manifest list).
+func wantedSelector(layers map[string]domain.LayerSelector, image string) (semver, arch string) {
+	semver = "latest"
+	if sel, ok := layers[image]; ok {
+		if sel.Semver != "" {
+			semver = sel.Semver
 		}
+		arch = sel.Arch
 	}
-	return "latest"
+	return semver, arch
 }
 
-func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any, spLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.StoredProcedure {
+func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v any, spLabels map[string]map[string]string, layers map[string]domain.LayerSelector) map[string]*domain.StoredProcedure {
 	result := make(map[string]*domain.StoredProcedure)
 	if v == nil {
 		return result
@@ -160,7 +163,8 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 			Links:    getLinksForNode(ctx, tx, "StoredProcedure", metadata.Id),
 		}
 
-		sp.Metadata.Sha, sp.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
+		selSemver, selArch := wantedSelector(layers, metadata.Image)
+		sp.Metadata.Sha, sp.Metadata.Semver, sp.Metadata.Arch = resolveLayerVersion(ctx, tx, metadata.Hash, selSemver, selArch)
 
 		if spLabels != nil {
 			sp.Metadata.Labels = spLabels[sp.Metadata.Id]
@@ -172,7 +176,7 @@ func parseStoredProcedures(ctx context.Context, tx neo4j.ManagedTransaction, v a
 	return result
 }
 
-func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.EventTrigger {
+func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLabels map[string]map[string]string, layers map[string]domain.LayerSelector) map[string]*domain.EventTrigger {
 	result := make(map[string]*domain.EventTrigger)
 	if v == nil {
 		return result
@@ -211,7 +215,8 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 			tr.Metadata.Labels = trLabels[tr.Metadata.Id]
 		}
 		tr.Metadata.Hash = getStringFromMap(relProps, "hash")
-		tr.Metadata.Sha, tr.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
+		selSemver, selArch := wantedSelector(layers, metadata.Image)
+		tr.Metadata.Sha, tr.Metadata.Semver, tr.Metadata.Arch = resolveLayerVersion(ctx, tx, metadata.Hash, selSemver, selArch)
 
 		result[metadata.Name] = tr
 	}
@@ -219,7 +224,7 @@ func parseTriggers(ctx context.Context, tx neo4j.ManagedTransaction, v any, trLa
 	return result
 }
 
-func parseEvents(ctx context.Context, tx neo4j.ManagedTransaction, v any, evLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.Event {
+func parseEvents(ctx context.Context, tx neo4j.ManagedTransaction, v any, evLabels map[string]map[string]string, layers map[string]domain.LayerSelector) map[string]*domain.Event {
 	result := make(map[string]*domain.Event)
 	if v == nil {
 		return result
@@ -254,7 +259,8 @@ func parseEvents(ctx context.Context, tx neo4j.ManagedTransaction, v any, evLabe
 			Features: features,
 		}
 
-		ev.Metadata.Sha, ev.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
+		selSemver, selArch := wantedSelector(layers, metadata.Image)
+		ev.Metadata.Sha, ev.Metadata.Semver, ev.Metadata.Arch = resolveLayerVersion(ctx, tx, metadata.Hash, selSemver, selArch)
 
 		if evLabels != nil {
 			ev.Metadata.Labels = evLabels[ev.Metadata.Id]
@@ -266,7 +272,7 @@ func parseEvents(ctx context.Context, tx neo4j.ManagedTransaction, v any, evLabe
 	return result
 }
 
-func parseEntrypoints(ctx context.Context, tx neo4j.ManagedTransaction, v any, epLabels map[string]map[string]string, layerVersions map[string]string) map[string]*domain.Entrypoint {
+func parseEntrypoints(ctx context.Context, tx neo4j.ManagedTransaction, v any, epLabels map[string]map[string]string, layers map[string]domain.LayerSelector) map[string]*domain.Entrypoint {
 	result := make(map[string]*domain.Entrypoint)
 	if v == nil {
 		return result
@@ -364,7 +370,8 @@ func parseEntrypoints(ctx context.Context, tx neo4j.ManagedTransaction, v any, e
 			}
 		}
 
-		ep.Metadata.Sha, ep.Metadata.Semver = resolveLayerVersion(ctx, tx, metadata.Hash, wantedVersion(layerVersions, metadata.Image))
+		selSemver, selArch := wantedSelector(layers, metadata.Image)
+		ep.Metadata.Sha, ep.Metadata.Semver, ep.Metadata.Arch = resolveLayerVersion(ctx, tx, metadata.Hash, selSemver, selArch)
 
 		result[metadata.Name] = ep
 	}
@@ -405,28 +412,39 @@ func getStringSliceFromMap(m map[string]any, key string) []string {
 	return nil
 }
 
-func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, hash, pin string) (sha, semver string) {
-	var query string
+func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, hash, pin, arch string) (sha, semver, resolvedArch string) {
 	params := map[string]any{"hash": hash}
+	// find the version node (latest or pinned)
+	var versionMatch string
 	if pin == "" || pin == "latest" {
-		query = `
-			MATCH (n:Layer {hash: $hash})-[:HAS_LATEST]->(lv:LayerVersion)
-			RETURN lv.sha AS sha, lv.semver AS semver
-		`
+		versionMatch = `MATCH (n:Layer {hash: $hash})-[:HAS_LATEST]->(lv:LayerVersion)`
 	} else {
-		// old (direct edge): MATCH (n:Layer {hash:$hash})-[:HAS_LAYER_VERSION]->(lv {semver:$semver})
-		query = `
+		versionMatch = `
 			MATCH (n:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
-			MATCH (head)-[:PREVIOUS*0..]->(lv:LayerVersion {semver: $semver})
-			RETURN lv.sha AS sha, lv.semver AS semver
+			MATCH (head)-[:PREVIOUS*0..]->(lv:LayerVersion {semver: $semver})`
+		params["semver"] = pin
+	}
+
+	var query string
+	if arch == "" {
+		// no arch -> manifest-list digest from LayerVersion (Docker picks arch)
+		query = versionMatch + `
+			RETURN lv.sha AS sha, lv.semver AS semver, '' AS arch
 			LIMIT 1
 		`
-		params["semver"] = pin
+	} else {
+		// specific arch -> per-arch Build digest
+		query = versionMatch + `
+			MATCH (lv)-[:HAS_BUILD]->(b:Build {arch: $arch})
+			RETURN b.sha AS sha, lv.semver AS semver, b.arch AS arch
+			LIMIT 1
+		`
+		params["arch"] = arch
 	}
 
 	res, err := tx.Run(ctx, query, params)
 	if err != nil {
-		return "", ""
+		return "", "", ""
 	}
 	if res.Next(ctx) {
 		rec := res.Record()
@@ -436,8 +454,11 @@ func resolveLayerVersion(ctx context.Context, tx neo4j.ManagedTransaction, hash,
 		if v, ok := rec.Get("semver"); ok {
 			semver, _ = v.(string)
 		}
+		if v, ok := rec.Get("arch"); ok {
+			resolvedArch, _ = v.(string)
+		}
 	}
-	return sha, semver
+	return sha, semver, resolvedArch
 }
 
 func getLinksForNode(ctx context.Context, tx neo4j.ManagedTransaction, nodeLabel, nodeID string) domain.Links {
@@ -616,12 +637,6 @@ func computeLayerHash(m domain.Metadata) string {
 	return computeHash(m.Build.Pull + m.Build.Command)
 }
 
-func layerPin(m domain.Metadata) string {
-	if m.Image != "" {
-		return extractTag(m.Image)
-	}
-	return "latest"
-}
 
 func layerSourceType(m domain.Metadata) string {
 	if m.Image != "" {
@@ -651,27 +666,7 @@ func computeVersionHash(chart domain.StarChart) string {
 	return computeHash(strings.Join(hashes, ""))
 }
 
-func extractTag(image string) string {
-	idx := strings.LastIndex(image, ":")
-	if idx == -1 || strings.Contains(image[idx+1:], "/") {
-		return "latest"
-	}
-	tag := image[idx+1:]
-	if tag == "" || tag == "latest" {
-		return "latest"
-	}
-	if !strings.HasPrefix(tag, "v") {
-		return "v" + tag
-	}
-	return tag
-}
 
-func computeTriggerEventHash(triggerHash string, eventHashes []string) string {
-	sorted := make([]string, len(eventHashes))
-	copy(sorted, eventHashes)
-	sort.Strings(sorted)
-	return computeHash(triggerHash + strings.Join(sorted, ""))
-}
 
 func entrypointDestination(ep *domain.Entrypoint) string {
 	switch {

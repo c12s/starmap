@@ -30,8 +30,13 @@ func layerIdentityHash(sourceType, image, pull, command string) string {
 }
 
 func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) (*domain.PushLayerResult, error) {
-	if in.Sha == "" {
-		return nil, fmt.Errorf("sha is required")
+	if len(in.Builds) == 0 {
+		return nil, fmt.Errorf("at least one build (arch + sha) is required")
+	}
+	for _, b := range in.Builds {
+		if b.Sha == "" || b.Arch == "" {
+			return nil, fmt.Errorf("each build needs arch and sha")
+		}
 	}
 	if in.SourceType != "oci" && in.SourceType != "git" {
 		return nil, fmt.Errorf("sourceType must be 'oci' or 'git'")
@@ -91,23 +96,7 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 			}
 		}
 
-		// old: MATCH (l:Layer {hash})-[:HAS_LAYER_VERSION]->(v {sha})
-		checkSha := `
-			MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
-			MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {sha: $sha})
-			RETURN v.semver AS semver
-			LIMIT 1
-		`
-		res, err = tx.Run(ctx, checkSha, map[string]any{"hash": hash, "sha": in.Sha})
-		if err != nil {
-			return nil, fmt.Errorf("check sha: %w", err)
-		}
-		if res.Next(ctx) {
-			semver, _ := res.Record().Get("semver")
-			s, _ := semver.(string)
-			return &domain.PushLayerResult{Sha: in.Sha, Semver: s}, nil
-		}
-
+		// current latest semver (for auto-increment + PREVIOUS)
 		findLatest := `
 			MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(v:LayerVersion)
 			RETURN v.semver AS semver
@@ -129,47 +118,84 @@ func (r *RegistryRepo) PushLayer(ctx context.Context, in domain.PushLayerInput) 
 			} else {
 				semver = incrementVersion(prevSemver)
 			}
-		} else {
-			// old: MATCH (l:Layer {hash})-[:HAS_LAYER_VERSION]->(v {semver})
-			checkSemver := `
+		}
+
+		// does this semver already exist (anywhere in the PREVIOUS chain)?
+		findVersion := `
+			MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+			MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {semver: $semver})
+			RETURN v.semver AS semver LIMIT 1
+		`
+		res, err = tx.Run(ctx, findVersion, map[string]any{"hash": hash, "semver": semver})
+		if err != nil {
+			return nil, fmt.Errorf("find version: %w", err)
+		}
+		versionExists := res.Next(ctx)
+
+		if !versionExists {
+			// new version node + move PREVIOUS/HAS_LATEST
+			createVersion := `
+				MATCH (l:Layer {hash: $hash})
+				CREATE (v:LayerVersion {semver: $semver, sha: $sha, createdAt: $now})
+				WITH l, v
+				OPTIONAL MATCH (l)-[old:HAS_LATEST]->(prev:LayerVersion)
+				FOREACH (_ IN CASE WHEN prev IS NOT NULL THEN [1] ELSE [] END |
+					MERGE (v)-[:PREVIOUS]->(prev)
+					DELETE old
+				)
+				MERGE (l)-[:HAS_LATEST]->(v)
+			`
+			if _, err := tx.Run(ctx, createVersion, map[string]any{
+				"hash": hash, "semver": semver, "sha": in.Sha, "now": time.Now().Unix(),
+			}); err != nil {
+				return nil, fmt.Errorf("create version: %w", err)
+			}
+		} else if in.Sha != "" {
+			// version exists (adding a new arch build) — keep list digest current
+			setSha := `
 				MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
 				MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {semver: $semver})
-				RETURN v.sha AS sha
-				LIMIT 1
+				SET v.sha = $sha
 			`
-			res, err = tx.Run(ctx, checkSemver, map[string]any{"hash": hash, "semver": semver})
-			if err != nil {
-				return nil, fmt.Errorf("check semver: %w", err)
-			}
-			if res.Next(ctx) {
-				return nil, fmt.Errorf("semver %q already exists with a different sha", semver)
+			if _, err := tx.Run(ctx, setSha, map[string]any{
+				"hash": hash, "semver": semver, "sha": in.Sha,
+			}); err != nil {
+				return nil, fmt.Errorf("update list sha: %w", err)
 			}
 		}
 
-		createVersion := `
-			MATCH (l:Layer {hash: $hash})
-			CREATE (v:LayerVersion {sha: $sha, semver: $semver, createdAt: $now, arch: $arch})
-			// benchmark: MERGE (l)-[:HAS_LAYER_VERSION]->(v)
-			WITH l, v
-			OPTIONAL MATCH (l)-[old:HAS_LATEST]->(prev:LayerVersion)
-			FOREACH (_ IN CASE WHEN prev IS NOT NULL THEN [1] ELSE [] END |
-				MERGE (v)-[:PREVIOUS]->(prev)
-				DELETE old
-			)
-			MERGE (l)-[:HAS_LATEST]->(v)
-		`
-		if _, err := tx.Run(ctx, createVersion, map[string]any{
-			"hash":   hash,
-			"sha":    in.Sha,
-			"semver": semver,
-			"now":    time.Now().Unix(),
-			"arch":   in.Arch,
-		}); err != nil {
-			return nil, fmt.Errorf("create version: %w", err)
+		// attach builds (per arch). same arch + different sha = immutable error.
+		for _, b := range in.Builds {
+			checkBuild := `
+				MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+				MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {semver: $semver})-[:HAS_BUILD]->(bld:Build {arch: $arch})
+				RETURN bld.sha AS sha LIMIT 1
+			`
+			cres, err := tx.Run(ctx, checkBuild, map[string]any{"hash": hash, "semver": semver, "arch": b.Arch})
+			if err != nil {
+				return nil, fmt.Errorf("check build: %w", err)
+			}
+			if cres.Next(ctx) {
+				existing, _ := cres.Record().Get("sha")
+				if es, _ := existing.(string); es != b.Sha {
+					return nil, fmt.Errorf("version %q arch %q already exists with a different sha", semver, b.Arch)
+				}
+				continue // same arch + same sha = no-op
+			}
+			addBuild := `
+				MATCH (l:Layer {hash: $hash})-[:HAS_LATEST]->(head:LayerVersion)
+				MATCH (head)-[:PREVIOUS*0..]->(v:LayerVersion {semver: $semver})
+				MERGE (v)-[:HAS_BUILD]->(b:Build {arch: $arch})
+				SET b.sha = $sha
+			`
+			if _, err := tx.Run(ctx, addBuild, map[string]any{
+				"hash": hash, "semver": semver, "arch": b.Arch, "sha": b.Sha,
+			}); err != nil {
+				return nil, fmt.Errorf("add build: %w", err)
+			}
 		}
 
 		return &domain.PushLayerResult{
-			Sha:            in.Sha,
 			Semver:         semver,
 			PreviousSemver: prevSemver,
 		}, nil

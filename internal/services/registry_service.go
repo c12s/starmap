@@ -46,8 +46,22 @@ func (s *RegistryService) PutChart(ctx context.Context, req *proto.StarChart) (*
 
 }
 
+func layersToDomain(in map[string]*proto.LayerSelector) map[string]domain.LayerSelector {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]domain.LayerSelector, len(in))
+	for img, sel := range in {
+		if sel == nil {
+			continue
+		}
+		out[img] = domain.LayerSelector{Semver: sel.Semver, Arch: sel.Arch}
+	}
+	return out
+}
+
 func (s *RegistryService) GetChartMetadata(ctx context.Context, req *proto.GetChartFromMetadataReq) (*proto.GetChartResp, error) {
-	chart, err := s.repo.GetChartMetadata(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.Name, req.LayerVersions)
+	chart, err := s.repo.GetChartMetadata(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.Name, layersToDomain(req.Layers))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart metadata: %v", err)
 	}
@@ -72,7 +86,7 @@ func (s *RegistryService) GetChartsLabels(ctx context.Context, req *proto.GetCha
 }
 
 func (s *RegistryService) GetChartId(ctx context.Context, req *proto.GetChartIdReq) (*proto.GetChartResp, error) {
-	chart, err := s.repo.GetChartId(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId, req.LayerVersions)
+	chart, err := s.repo.GetChartId(ctx, req.SchemaVersion, req.Namespace, req.Maintainer, req.ChartId, layersToDomain(req.Layers))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get chart by id: %v", err)
 	}
@@ -194,22 +208,26 @@ func (s *RegistryService) Extend(ctx context.Context, req *proto.ExtendReq) (*pr
 }
 
 func (s *RegistryService) PushLayer(ctx context.Context, req *proto.PushLayerReq) (*proto.PushLayerResp, error) {
+	builds := make([]domain.LayerBuild, 0, len(req.Builds))
+	for _, b := range req.Builds {
+		builds = append(builds, domain.LayerBuild{Arch: b.Arch, Sha: b.Sha})
+	}
+
 	result, err := s.repo.PushLayer(ctx, domain.PushLayerInput{
 		SourceType: req.SourceType,
 		NodeType:   req.NodeType,
 		Image:      req.Image,
 		Pull:       req.Pull,
 		Command:    req.Command,
-		Sha:        req.Sha,
 		Semver:     req.Semver,
-		Arch:       req.Arch,
+		Sha:        req.Sha,
+		Builds:     builds,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to push layer: %v", err)
 	}
 
 	return &proto.PushLayerResp{
-		Sha:            result.Sha,
 		Semver:         result.Semver,
 		PreviousSemver: result.PreviousSemver,
 	}, nil
@@ -228,13 +246,16 @@ func (s *RegistryService) ListLayerVersions(ctx context.Context, req *proto.List
 
 	resp := &proto.ListLayerVersionsResp{SourceType: result.SourceType}
 	for _, v := range result.Versions {
-		resp.Versions = append(resp.Versions, &proto.LayerVersionInfo{
-			Sha:       v.Sha,
+		info := &proto.LayerVersionInfo{
 			Semver:    v.Semver,
+			Sha:       v.Sha,
 			CreatedAt: v.CreatedAt,
 			IsLatest:  v.IsLatest,
-			Arch:      v.Arch,
-		})
+		}
+		for _, b := range v.Builds {
+			info.Builds = append(info.Builds, &proto.LayerBuild{Arch: b.Arch, Sha: b.Sha})
+		}
+		resp.Versions = append(resp.Versions, info)
 	}
 	return resp, nil
 }

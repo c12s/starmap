@@ -496,6 +496,7 @@ type Metadata struct {
 	Pin           string                 `protobuf:"bytes,10,opt,name=pin,proto3" json:"pin,omitempty"`
 	Sha           string                 `protobuf:"bytes,11,opt,name=sha,proto3" json:"sha,omitempty"`
 	Semver        string                 `protobuf:"bytes,12,opt,name=semver,proto3" json:"semver,omitempty"`
+	Arch          string                 `protobuf:"bytes,13,opt,name=arch,proto3" json:"arch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -610,6 +611,13 @@ func (x *Metadata) GetSha() string {
 func (x *Metadata) GetSemver() string {
 	if x != nil {
 		return x.Semver
+	}
+	return ""
+}
+
+func (x *Metadata) GetArch() string {
+	if x != nil {
+		return x.Arch
 	}
 	return ""
 }
@@ -1550,7 +1558,7 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcc\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe0\x03\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -1564,7 +1572,8 @@ const file_starmap_model_proto_rawDesc = "" +
 	"\x03pin\x18\n" +
 	" \x01(\tR\x03pin\x12\x10\n" +
 	"\x03sha\x18\v \x01(\tR\x03sha\x12\x16\n" +
-	"\x06semver\x18\f \x01(\tR\x06semver\x1a9\n" +
+	"\x06semver\x18\f \x01(\tR\x06semver\x12\x12\n" +
+	"\x04arch\x18\r \x01(\tR\x04arch\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +

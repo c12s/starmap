@@ -22,18 +22,19 @@ func (r *RegistryRepo) ListLayerVersions(ctx context.Context, sourceType, image,
 	defer session.Close(ctx)
 
 	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
-		// old: OPTIONAL MATCH (l)-[:HAS_LAYER_VERSION]->(v)
 		query := `
 			MATCH (l:Layer {hash: $hash})
 			OPTIONAL MATCH (l)-[:HAS_LATEST]->(latest:LayerVersion)
 			OPTIONAL MATCH (latest)-[:PREVIOUS*0..]->(v:LayerVersion)
+			OPTIONAL MATCH (v)-[:HAS_BUILD]->(b:Build)
+			WITH l, latest, v, collect({arch: b.arch, sha: b.sha}) AS builds
 			RETURN l.sourceType AS sourceType,
 				collect({
-					sha: v.sha,
 					semver: v.semver,
+					sha: v.sha,
 					createdAt: v.createdAt,
-					arch: v.arch,
-					isLatest: (latest IS NOT NULL AND v.sha = latest.sha)
+					isLatest: (latest IS NOT NULL AND v.semver = latest.semver),
+					builds: builds
 				}) AS versions
 		`
 		res, err := tx.Run(ctx, query, map[string]any{"hash": hash})
@@ -53,17 +54,28 @@ func (r *RegistryRepo) ListLayerVersions(ctx context.Context, sourceType, image,
 			if arr, ok := raw.([]any); ok {
 				for _, item := range arr {
 					m, ok := item.(map[string]any)
-					if !ok || m["sha"] == nil {
+					if !ok || m["semver"] == nil {
 						continue
 					}
 					lv := domain.LayerVersion{}
-					lv.Sha, _ = m["sha"].(string)
 					lv.Semver, _ = m["semver"].(string)
-					lv.Arch, _ = m["arch"].(string)
+					lv.Sha, _ = m["sha"].(string)
 					if c, ok := m["createdAt"].(int64); ok {
 						lv.CreatedAt = c
 					}
 					lv.IsLatest, _ = m["isLatest"].(bool)
+					if braw, ok := m["builds"].([]any); ok {
+						for _, bi := range braw {
+							bm, ok := bi.(map[string]any)
+							if !ok || bm["sha"] == nil {
+								continue
+							}
+							lb := domain.LayerBuild{}
+							lb.Arch, _ = bm["arch"].(string)
+							lb.Sha, _ = bm["sha"].(string)
+							lv.Builds = append(lv.Builds, lb)
+						}
+					}
 					out.Versions = append(out.Versions, lv)
 				}
 			}
