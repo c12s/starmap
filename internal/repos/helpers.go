@@ -115,8 +115,6 @@ func parseEntity(nodeProps, relProps map[string]any) (metadata domain.Metadata, 
 	return
 }
 
-// wantedSelector returns the requested semver+arch for a layer (by image).
-// missing semver -> "latest"; missing arch -> "" (manifest list).
 func wantedSelector(layers map[string]domain.LayerSelector, image string) (semver, arch string) {
 	semver = "latest"
 	if sel, ok := layers[image]; ok {

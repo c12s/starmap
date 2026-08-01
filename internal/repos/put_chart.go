@@ -233,6 +233,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				return nil, fmt.Errorf("failed to create StoredProcedure relation for %s: %w", key, err)
 			}
 
+			if err := ensureLayerVersionFromMetadata(ctx, tx, sp.Metadata.Hash, sp.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
+			}
+
 			for _, hardLink := range sp.Links.HardLinks {
 				queryLink := `
 					MATCH (sp:StoredProcedure {id: $spId})
@@ -370,6 +374,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
 			}
 
+			if err := ensureLayerVersionFromMetadata(ctx, tx, et.Metadata.Hash, et.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
+			}
+
 			for _, hardLink := range et.Links.HardLinks {
 				queryLink := `
 					MATCH (t:Trigger {id: $triggerId})
@@ -499,6 +507,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", eventName, err)
 				}
 
+				if err := ensureLayerVersionFromMetadata(ctx, tx, ev.Metadata.Hash, ev.Metadata); err != nil {
+					return nil, fmt.Errorf("layer version for %s: %w", eventName, err)
+				}
+
 				// Event Labels
 				labelsList := convertMapToList(ev.Metadata.Labels)
 				if len(labelsList) > 0 {
@@ -571,6 +583,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Entrypoint node for %s: %w", key, err)
+			}
+
+			if err := ensureLayerVersionFromMetadata(ctx, tx, ep.Metadata.Hash, ep.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
 			}
 
 			switch {

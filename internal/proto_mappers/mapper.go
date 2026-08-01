@@ -70,6 +70,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: sp.Metadata.Description,
 			Labels:      sp.Metadata.Labels,
 			Tags:        sp.Metadata.Tags,
+			Sha:         sp.Metadata.Sha,
+			Semver:      sp.Metadata.Semver,
+			Arch:        sp.Metadata.Arch,
 		}
 
 		if sp.Metadata.Image != "" {
@@ -115,6 +118,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: et.Metadata.Description,
 			Labels:      et.Metadata.Labels,
 			Tags:        et.Metadata.Tags,
+			Sha:         et.Metadata.Sha,
+			Semver:      et.Metadata.Semver,
+			Arch:        et.Metadata.Arch,
 		}
 
 		if et.Metadata.Image != "" {
@@ -160,6 +166,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: ev.Metadata.Description,
 			Labels:      ev.Metadata.Labels,
 			Tags:        ev.Metadata.Tags,
+			Sha:         ev.Metadata.Sha,
+			Semver:      ev.Metadata.Semver,
+			Arch:        ev.Metadata.Arch,
 		}
 
 		if ev.Metadata.Image != "" {
@@ -203,6 +212,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: ep.Metadata.Description,
 			Labels:      ep.Metadata.Labels,
 			Tags:        ep.Metadata.Tags,
+			Sha:         ep.Metadata.Sha,
+			Semver:      ep.Metadata.Semver,
+			Arch:        ep.Metadata.Arch,
 		}
 		if ep.Metadata.Image != "" {
 			metadata.Image = ep.Metadata.Image

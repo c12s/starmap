@@ -29,7 +29,6 @@ type LayerBuild struct {
 	Sha  string
 }
 
-// LayerSelector is a per-layer version/arch request (both optional).
 type LayerSelector struct {
 	Semver string
 	Arch   string
