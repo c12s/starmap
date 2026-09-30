@@ -3,21 +3,65 @@ package domain
 type Metadata struct {
 	Id          string
 	Name        string
-	Image       string
-	Build       Build
-	Hash        string
+	Image       string // Layer node (stored without tag)
+	Build       Build  // Layer node
+	Hash        string // Layer node identity (MERGE key)
 	Prefix      string
 	Topic       string
 	Description string
 	Labels      map[string]string
 	Tags        map[string]string
 	TriggerHash string
+	Pin         string // HAS_PROCEDURE/HAS_TRIGGER edge: which version this chart wants
+	Sha         string // resolved from the pinned version + arch (Build node)
+	Semver      string // resolved layer version
+	Arch        string // resolved build arch
 }
 
 type Build struct {
 	Pull    string
 	Workdir string
 	Command string
+}
+
+type LayerBuild struct {
+	Arch string
+	Sha  string
+}
+
+type LayerSelector struct {
+	Semver string
+	Arch   string
+}
+
+type LayerVersion struct {
+	Semver    string
+	Sha       string // manifest-list digest (arch-agnostic default pull)
+	CreatedAt int64
+	IsLatest  bool
+	Builds    []LayerBuild
+}
+
+type PushLayerInput struct {
+	SourceType string
+	NodeType   string
+	Image      string
+	Pull       string
+	Command    string
+	Semver     string
+	Sha        string // manifest-list digest
+	Builds     []LayerBuild
+}
+
+type PushLayerResult struct {
+	Sha            string
+	Semver         string
+	PreviousSemver string
+}
+
+type ListLayerVersionsResult struct {
+	SourceType string
+	Versions   []LayerVersion
 }
 
 type Control struct {

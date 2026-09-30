@@ -190,7 +190,7 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 		// StoredProcedures
 		if v, ok := record.Get("storedProcedures"); ok {
 			labels, _ := record.Get("spLabels")
-			spParsed := parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
+			spParsed := parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			for key, sp := range spParsed {
 				resp.StoredProcedures[key] = sp
 			}
@@ -199,7 +199,7 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 		// Events
 		if v, ok := record.Get("events"); ok {
 			labels, _ := record.Get("eventLabels")
-			evParsed := parseEvents(v, parseLabelsIntoMap(labels))
+			evParsed := parseEvents(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			for key, ev := range evParsed {
 				resp.Events[key] = ev
 			}
@@ -208,7 +208,7 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 		// Triggers
 		if v, ok := record.Get("triggers"); ok {
 			labels, _ := record.Get("triggerLabels")
-			trParsed := parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
+			trParsed := parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			for key, tr := range trParsed {
 				resp.EventTriggers[key] = tr
 			}
@@ -217,7 +217,7 @@ func (r *RegistryRepo) GetMissingLayers(ctx context.Context, schemaVersion, name
 		// Entrypoints
 		if v, ok := record.Get("entrypoints"); ok {
 			labels, _ := record.Get("entrypointLabels")
-			epParsed := parseEntrypoints(v, parseLabelsIntoMap(labels))
+			epParsed := parseEntrypoints(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			for key, ep := range epParsed {
 				resp.Entrypoint[key] = ep
 			}

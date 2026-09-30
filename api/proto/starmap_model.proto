@@ -70,6 +70,10 @@ message Metadata {
   string description = 7;
   map<string, string> labels = 8;
   map<string, string> tags = 9;
+  string pin = 10;
+  string sha = 11;
+  string semver = 12;
+  string arch = 13;
 }
 
 message Build {

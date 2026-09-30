@@ -18,6 +18,56 @@ service RegistryService{
     rpc Timeline(TimelineReq) returns(TimelineResp){} 
     rpc Extend(ExtendReq) returns(PutChartResp){}
     rpc Search(SearchReq) returns(GetChartsLabelsResp){}
+    rpc PushLayer(PushLayerReq) returns(PushLayerResp){}
+    rpc ListLayerVersions(ListLayerVersionsReq) returns(ListLayerVersionsResp){}
+    rpc DeleteLayer(DeleteLayerReq) returns(EmptyMessage){}
+}
+
+message DeleteLayerReq {
+  string image = 1;
+  string pull = 2;
+  string command = 3;
+}
+
+message LayerBuild {
+  string arch = 1;
+  string sha = 2;
+}
+
+message PushLayerReq {
+  string sourceType = 1;
+  string image = 2;
+  string pull = 3;
+  string command = 4;
+  string sha = 5;
+  string semver = 6;
+  string nodeType = 7;
+  repeated LayerBuild builds = 9;
+}
+
+message PushLayerResp {
+  string sha = 1;
+  string semver = 2;
+  string previousSemver = 3; 
+}
+
+message ListLayerVersionsReq {
+  string image = 1;
+  string pull = 2;
+  string command = 3;
+}
+
+message LayerVersionInfo {
+  string semver = 2;
+  string sha = 1;
+  int64 createdAt = 3;
+  bool isLatest = 4;
+  repeated LayerBuild builds = 6;
+}
+
+message ListLayerVersionsResp {
+  string sourceType = 1;
+  repeated LayerVersionInfo versions = 2;
 }
 
 message SearchReq {
@@ -87,11 +137,18 @@ message GetMissingLayersResp {
   map<string, Entrypoint> entrypoints = 10;
 }
 
+// per-layer selection: semver + arch, keyed by image (both optional)
+message LayerSelector {
+  string semver = 1;
+  string arch = 2;
+}
+
 message GetChartIdReq {
   string schemaVersion = 1;
   string chartId = 2;
   string namespace = 3;
   string maintainer = 4;
+  map<string, LayerSelector> layers = 5;
 }
 
 message DeleteChartReq {
@@ -119,6 +176,7 @@ message GetChartFromMetadataReq {
   string namespace = 2;
   string maintainer = 3;
   string schemaVersion = 4;
+  map<string, LayerSelector> layers = 5;
 }
 
 message GetChartResp {

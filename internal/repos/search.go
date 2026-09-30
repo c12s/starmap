@@ -214,22 +214,22 @@ func (r *RegistryRepo) Search(ctx context.Context, name, description string, tag
 
 			if v, ok := record.Get("storedProcedures"); ok {
 				labels, _ := record.Get("spLabels")
-				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels))
+				chart.StoredProcedures = parseStoredProcedures(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			}
 
 			if v, ok := record.Get("events"); ok {
 				labels, _ := record.Get("eventLabels")
-				chart.Events = parseEvents(v, parseLabelsIntoMap(labels))
+				chart.Events = parseEvents(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			}
 
 			if v, ok := record.Get("triggers"); ok {
 				labels, _ := record.Get("triggerLabels")
-				chart.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels))
+				chart.EventTriggers = parseTriggers(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			}
 
 			if v, ok := record.Get("entrypoints"); ok {
 				labels, _ := record.Get("entrypointLabels")
-				chart.Entrypoints = parseEntrypoints(v, parseLabelsIntoMap(labels))
+				chart.Entrypoints = parseEntrypoints(ctx, tx, v, parseLabelsIntoMap(labels), nil)
 			}
 
 			charts.Charts = append(charts.Charts, chart)

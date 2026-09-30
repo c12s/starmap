@@ -222,12 +222,23 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		for _, sp := range chart.Chart.StoredProcedures {
 
 			querySP := `
-				MERGE (s:StoredProcedure {hash: $hash})
-				SET s.id = $id
+				MERGE (s:Layer {hash: $hash})
+				SET s.id = $id,
+					s:StoredProcedure,
+					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					s.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					s.sourceType = $sourceType
 			`
 			tx.Run(ctx, querySP, map[string]any{
-				"id":   sp.Metadata.Id,
-				"hash": sp.Metadata.Hash,
+				"id":         sp.Metadata.Id,
+				"hash":       sp.Metadata.Hash,
+				"image":      stripTag(sp.Metadata.Image),
+				"pull":       sp.Metadata.Build.Pull,
+				"command":    sp.Metadata.Build.Command,
+				"workdir":    sp.Metadata.Build.Workdir,
+				"sourceType": layerSourceType(sp.Metadata),
 			})
 
 			queryDeleteSP := `
@@ -253,16 +264,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-				    r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.envVars = $envVars
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"name":                  sp.Metadata.Name,
-				"image":                 sp.Metadata.Image,
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"description":           sp.Metadata.Description,
@@ -328,12 +334,23 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 		for _, tr := range chart.Chart.EventTriggers {
 
 			querySP := `
-				MERGE (t:Trigger {id: $id})
-				SET t.hash = $hash
+				MERGE (t:Layer {hash: $hash})
+				SET t.id = $id,
+					t:Trigger,
+					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					t.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					t.sourceType = $sourceType
 			`
 			tx.Run(ctx, querySP, map[string]any{
-				"id":   tr.Metadata.Id,
-				"hash": tr.Metadata.Hash,
+				"id":         tr.Metadata.Id,
+				"hash":       tr.Metadata.Hash,
+				"image":      stripTag(tr.Metadata.Image),
+				"pull":       tr.Metadata.Build.Pull,
+				"command":    tr.Metadata.Build.Command,
+				"workdir":    tr.Metadata.Build.Workdir,
+				"sourceType": layerSourceType(tr.Metadata),
 			})
 
 			queryDeleteSP := `
@@ -359,16 +376,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.envVars = $envVars
 			`
 			tx.Run(ctx, queryRel, map[string]any{
 				"id":                    tr.Metadata.Id,
 				"name":                  tr.Metadata.Name,
-				"image":                 tr.Metadata.Image,
 				"prefix":                tr.Metadata.Prefix,
 				"topic":                 tr.Metadata.Topic,
 				"description":           tr.Metadata.Description,
@@ -434,12 +446,22 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 				}
 
 				_, err = tx.Run(ctx, `
-					MERGE (e:Event {hash: $hash})
-					ON CREATE SET e.id = $id
-					ON MATCH SET  e.id = $id
+					MERGE (e:Layer {hash: $hash})
+					SET e.id = $id,
+						e:Event,
+						e.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+						e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+						e.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+						e.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+						e.sourceType = $sourceType
 				`, map[string]any{
-					"id":   ev.Metadata.Id,
-					"hash": ev.Metadata.Hash,
+					"id":         ev.Metadata.Id,
+					"hash":       ev.Metadata.Hash,
+					"image":      stripTag(ev.Metadata.Image),
+					"pull":       ev.Metadata.Build.Pull,
+					"command":    ev.Metadata.Build.Command,
+					"workdir":    ev.Metadata.Build.Workdir,
+					"sourceType": layerSourceType(ev.Metadata),
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed event upsert: %w", err)
@@ -463,11 +485,7 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 					r.ports = $ports,
 					r.volumes = $volumes,
 					r.targets = $targets,
-					r.envVars = $envVars,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				e.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.envVars = $envVars
 				`, map[string]any{
 					"triggerId":             tr.Metadata.Id,
 					"eventId":               ev.Metadata.Id,
@@ -525,8 +543,11 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			tagsJSON, _ := json.Marshal(ep.Metadata.Tags)
 
 			queryEP := `
-				MERGE (ep:Entrypoint {id: $id})
-				SET ep.hash = $hash,
+				MERGE (ep:Layer {hash: $hash})
+				SET ep.id = $id,
+					ep:Entrypoint,
+					ep.epType = $epType,
+					ep.sourceType = $sourceType,
 					ep.name = $name,
 					ep.prefix = $prefix,
 					ep.topic = $topic,
@@ -547,8 +568,10 @@ func (r *RegistryRepo) UpdateChart(ctx context.Context, chart domain.StarChart) 
 			tx.Run(ctx, queryEP, map[string]any{
 				"id":                    ep.Metadata.Id,
 				"hash":                  ep.Metadata.Hash,
+				"epType":                entrypointType(ep),
+				"sourceType":            layerSourceType(ep.Metadata),
 				"name":                  ep.Metadata.Name,
-				"image":                 ep.Metadata.Image,
+				"image":                 stripTag(ep.Metadata.Image),
 				"prefix":                ep.Metadata.Prefix,
 				"topic":                 ep.Metadata.Topic,
 				"description":           ep.Metadata.Description,

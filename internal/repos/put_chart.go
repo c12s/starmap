@@ -173,14 +173,20 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			tagsJSON, _ := json.Marshal(sp.Metadata.Tags)
 
 			querySP := `
-				MERGE (s:StoredProcedure {hash: $hash})
+				MERGE (s:Layer {hash: $hash})
 				ON CREATE SET
 					s.id = $id
+				SET s:StoredProcedure,
+					s.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					s.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					s.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					s.sourceType = $sourceType
 				WITH s
 				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 				WITH s, v
 				MERGE (v)-[r:HAS_PROCEDURE]->(s)
-				SET 
+				SET
 					r.name = $name,
 					r.prefix = $prefix,
 					r.topic = $topic,
@@ -195,17 +201,14 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-					r.tags = $tags,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				s.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				s.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.tags = $tags
 			`
 			_, err := tx.Run(ctx, querySP, map[string]any{
 				"id":                    sp.Metadata.Id,
 				"hash":                  sp.Metadata.Hash,
 				"name":                  sp.Metadata.Name,
-				"image":                 sp.Metadata.Image,
+				"image":                 stripTag(sp.Metadata.Image),
+				"sourceType":            layerSourceType(sp.Metadata),
 				"prefix":                sp.Metadata.Prefix,
 				"topic":                 sp.Metadata.Topic,
 				"description":           sp.Metadata.Description,
@@ -228,6 +231,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create StoredProcedure relation for %s: %w", key, err)
+			}
+
+			if err := ensureLayerVersionFromMetadata(ctx, tx, sp.Metadata.Hash, sp.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
 			}
 
 			for _, hardLink := range sp.Links.HardLinks {
@@ -294,20 +301,27 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			tagsJSON, _ := json.Marshal(et.Metadata.Tags)
 
 			sort.Strings(et.Links.EventLinks)
-			var eventHashes []string
 
-			for _, eventName := range et.Links.EventLinks {
-				if ev, ok := chart.Chart.Events[eventName]; ok {
-					eventHashes = append(eventHashes, ev.Metadata.Hash)
-				}
-			}
-
-			triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
+			// Trigger hash now depends only on image/pull+command (like SP), so CI/CD
+			// can MERGE the same node. Old triggerEventHash logic kept for reference:
+			// var eventHashes []string
+			// for _, eventName := range et.Links.EventLinks {
+			// 	if ev, ok := chart.Chart.Events[eventName]; ok {
+			// 		eventHashes = append(eventHashes, ev.Metadata.Hash)
+			// 	}
+			// }
+			// triggerEventHash := computeTriggerEventHash(et.Metadata.Hash, eventHashes)
 
 			queryET := `
-				MERGE (t:Trigger {triggerEventHash: $triggerEventHash})
+				MERGE (t:Layer {hash: $hash})
 				ON CREATE SET
 					t.id = $id
+				SET t:Trigger,
+					t.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+					t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+					t.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+					t.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+					t.sourceType = $sourceType
 				WITH t
 				MATCH (c:Chart {id: $chartId})-[:HAS_VERSION]->(v:Version {schemaVersion: $schemaVersion})
 				WITH t, v
@@ -328,16 +342,13 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 					r.volumes = $volumes,
 					r.targets = $targets,
 					r.envVars = $envVars,
-					r.tags = $tags,
-					r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    				t.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    				r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    				t.command = CASE WHEN $command <> '' THEN $command ELSE null END
+					r.tags = $tags
 			`
 			_, err = tx.Run(ctx, queryET, map[string]any{
 				"id":                    et.Metadata.Id,
 				"name":                  et.Metadata.Name,
-				"image":                 et.Metadata.Image,
+				"image":                 stripTag(et.Metadata.Image),
+				"sourceType":            layerSourceType(et.Metadata),
 				"hash":                  et.Metadata.Hash,
 				"prefix":                et.Metadata.Prefix,
 				"topic":                 et.Metadata.Topic,
@@ -354,7 +365,6 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				"envVars":               et.Features.EnvVars,
 				"schemaVersion":         chart.SchemaVersion,
 				"chartId":               chart.Metadata.Id,
-				"triggerEventHash":      triggerEventHash,
 				"pull":                  et.Metadata.Build.Pull,
 				"command":               et.Metadata.Build.Command,
 				"workdir":               et.Metadata.Build.Workdir,
@@ -362,6 +372,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create EventTrigger node for %s: %w", key, err)
+			}
+
+			if err := ensureLayerVersionFromMetadata(ctx, tx, et.Metadata.Hash, et.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
 			}
 
 			for _, hardLink := range et.Links.HardLinks {
@@ -427,11 +441,20 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 
 				evTagsJSON, _ := json.Marshal(ev.Metadata.Tags)
 
+				// Event is now a versioned layer (:Layer:Event), same as SP/Trigger:
+				// image/pull/command live on the node; runtime config on the EVENT_LINK edge.
+				// Old thin-event version (all on edge) kept for reference:
+				// MERGE (e:Event {hash: $eventHash}) ON CREATE SET e.id=$eventId, e.hash=$eventHash
+				// ... r.image / e.pull / r.workdir / e.command on edge ...
 				queryLink := `
-					MERGE (e:Event {hash: $eventHash})
-					ON CREATE SET
-						e.id = $eventId,
-						e.hash = $eventHash
+					MERGE (e:Layer {hash: $eventHash})
+					ON CREATE SET e.id = $eventId
+					SET e:Event,
+						e.image = CASE WHEN $image <> '' THEN $image ELSE null END,
+						e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
+						e.command = CASE WHEN $command <> '' THEN $command ELSE null END,
+						e.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
+						e.sourceType = $sourceType
 					WITH e
 					MATCH (t:Trigger {id: $triggerId})
 					MERGE (t)-[r:EVENT_LINK]->(e)
@@ -450,20 +473,17 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 						r.volumes = $volumes,
 						r.targets = $targets,
 						r.envVars = $envVars,
-						r.tags = $tags,
-						r.image = CASE WHEN $image <> '' THEN $image ELSE null END,
-    					e.pull = CASE WHEN $pull <> '' THEN $pull ELSE null END,
-    					r.workdir = CASE WHEN $workdir <> '' THEN $workdir ELSE null END,
-    					e.command = CASE WHEN $command <> '' THEN $command ELSE null END
+						r.tags = $tags
 				`
 
 				_, err := tx.Run(ctx, queryLink, map[string]any{
-					"triggerId": et.Metadata.Id,
-					"eventId":   ev.Metadata.Id,
-					"eventHash": ev.Metadata.Hash,
+					"triggerId":  et.Metadata.Id,
+					"eventId":    ev.Metadata.Id,
+					"eventHash":  ev.Metadata.Hash,
+					"sourceType": layerSourceType(ev.Metadata),
 
 					"name":                  ev.Metadata.Name,
-					"image":                 ev.Metadata.Image,
+					"image":                 stripTag(ev.Metadata.Image),
 					"hash":                  ev.Metadata.Hash,
 					"prefix":                ev.Metadata.Prefix,
 					"topic":                 ev.Metadata.Topic,
@@ -485,6 +505,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to create trigger event link for %s: %w", eventName, err)
+				}
+
+				if err := ensureLayerVersionFromMetadata(ctx, tx, ev.Metadata.Hash, ev.Metadata); err != nil {
+					return nil, fmt.Errorf("layer version for %s: %w", eventName, err)
 				}
 
 				// Event Labels
@@ -513,9 +537,11 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			tagsJSON, _ := json.Marshal(ep.Metadata.Tags)
 
 			queryEP := `
-				MERGE (ep:Entrypoint {hash: $hash})
+				MERGE (ep:Layer {hash: $hash})
 				ON CREATE SET ep.id = $id
-				SET
+				SET ep:Entrypoint,
+					ep.epType = $epType,
+					ep.sourceType = $sourceType,
 					ep.name = $name,
 					ep.prefix = $prefix,
 					ep.topic = $topic,
@@ -536,8 +562,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			_, err := tx.Run(ctx, queryEP, map[string]any{
 				"id":                    ep.Metadata.Id,
 				"hash":                  ep.Metadata.Hash,
+				"epType":                entrypointType(ep),
+				"sourceType":            layerSourceType(ep.Metadata),
 				"name":                  ep.Metadata.Name,
-				"image":                 ep.Metadata.Image,
+				"image":                 stripTag(ep.Metadata.Image),
 				"prefix":                ep.Metadata.Prefix,
 				"topic":                 ep.Metadata.Topic,
 				"description":           ep.Metadata.Description,
@@ -555,6 +583,10 @@ func (r *RegistryRepo) PutChart(ctx context.Context, chart domain.StarChart) (*d
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Entrypoint node for %s: %w", key, err)
+			}
+
+			if err := ensureLayerVersionFromMetadata(ctx, tx, ep.Metadata.Hash, ep.Metadata); err != nil {
+				return nil, fmt.Errorf("layer version for %s: %w", key, err)
 			}
 
 			switch {

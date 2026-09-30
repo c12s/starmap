@@ -62,6 +62,18 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, sp := range chart.Chart.StoredProcedures {
+		if sp.Metadata == nil {
+			return nil, errors.New("stored procedure missing metadata")
+		}
+		if sp.Control == nil {
+			sp.Control = &proto.Control{}
+		}
+		if sp.Features == nil {
+			sp.Features = &proto.Features{}
+		}
+		if sp.Links == nil {
+			sp.Links = &proto.Links{}
+		}
 		metadata := domain.Metadata{
 			Id:          sp.Metadata.Id,
 			Name:        sp.Metadata.Name,
@@ -70,6 +82,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: sp.Metadata.Description,
 			Labels:      sp.Metadata.Labels,
 			Tags:        sp.Metadata.Tags,
+			Sha:         sp.Metadata.Sha,
+			Semver:      sp.Metadata.Semver,
+			Arch:        sp.Metadata.Arch,
 		}
 
 		if sp.Metadata.Image != "" {
@@ -107,6 +122,18 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, et := range chart.Chart.EventTriggers {
+		if et.Metadata == nil {
+			return nil, errors.New("event trigger missing metadata")
+		}
+		if et.Control == nil {
+			et.Control = &proto.Control{}
+		}
+		if et.Features == nil {
+			et.Features = &proto.Features{}
+		}
+		if et.Links == nil {
+			et.Links = &proto.Links{}
+		}
 		metadata := domain.Metadata{
 			Id:          et.Metadata.Id,
 			Name:        et.Metadata.Name,
@@ -115,6 +142,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: et.Metadata.Description,
 			Labels:      et.Metadata.Labels,
 			Tags:        et.Metadata.Tags,
+			Sha:         et.Metadata.Sha,
+			Semver:      et.Metadata.Semver,
+			Arch:        et.Metadata.Arch,
 		}
 
 		if et.Metadata.Image != "" {
@@ -152,6 +182,15 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 	}
 
 	for key, ev := range chart.Chart.Events {
+		if ev.Metadata == nil {
+			return nil, errors.New("event missing metadata")
+		}
+		if ev.Control == nil {
+			ev.Control = &proto.Control{}
+		}
+		if ev.Features == nil {
+			ev.Features = &proto.Features{}
+		}
 		metadata := domain.Metadata{
 			Id:          ev.Metadata.Id,
 			Name:        ev.Metadata.Name,
@@ -160,6 +199,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: ev.Metadata.Description,
 			Labels:      ev.Metadata.Labels,
 			Tags:        ev.Metadata.Tags,
+			Sha:         ev.Metadata.Sha,
+			Semver:      ev.Metadata.Semver,
+			Arch:        ev.Metadata.Arch,
 		}
 
 		if ev.Metadata.Image != "" {
@@ -195,6 +237,15 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 		if ep == nil {
 			continue
 		}
+		if ep.Metadata == nil {
+			return nil, errors.New("entrypoint missing metadata")
+		}
+		if ep.Control == nil {
+			ep.Control = &proto.Control{}
+		}
+		if ep.Features == nil {
+			ep.Features = &proto.Features{}
+		}
 		metadata := domain.Metadata{
 			Id:          ep.Metadata.Id,
 			Name:        ep.Metadata.Name,
@@ -203,6 +254,9 @@ func ProtoToStarChart(chart *proto.StarChart) (*domain.StarChart, error) {
 			Description: ep.Metadata.Description,
 			Labels:      ep.Metadata.Labels,
 			Tags:        ep.Metadata.Tags,
+			Sha:         ep.Metadata.Sha,
+			Semver:      ep.Metadata.Semver,
+			Arch:        ep.Metadata.Arch,
 		}
 		if ep.Metadata.Image != "" {
 			metadata.Image = ep.Metadata.Image
